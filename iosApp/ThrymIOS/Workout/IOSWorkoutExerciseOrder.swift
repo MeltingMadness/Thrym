@@ -2,8 +2,8 @@ import Foundation
 import Shared
 
 /// The display order of one workout, stored next to the rest timers in UserDefaults. It never
-/// enters the training graph: `orderIndex` stays the plan-slot identity that the coach, "Sätze
-/// in den Plan übernehmen" and readiness read, and the backup does not carry it. Session id and
+/// enters the training graph: `orderIndex` stays the plan-slot identity that the coach,
+/// "Satzwerte übernehmen" and readiness read, and the backup does not carry it. Session id and
 /// start time guard the payload, so an import that reuses the id finds no order of another
 /// workout. The codec and the ordering rules live in `:shared`, so Android computes the same.
 enum IOSWorkoutExerciseOrderPersistence {

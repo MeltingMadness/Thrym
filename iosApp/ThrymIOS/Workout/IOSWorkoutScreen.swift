@@ -283,6 +283,12 @@ struct IOSWorkoutScreen: View {
             return
         }
 
+        // A new workout ends the completion screen of the previous one. Loading the new
+        // workout's order removes the stored order of that screen, so it must not come back,
+        // for example after the new workout is discarded.
+        if completedSessionID != 0, completedSessionID != Int(activeSession.id) {
+            completedSessionID = 0
+        }
         loadAdHocExercises(for: activeSession.id)
         exerciseOrder = IOSWorkoutExerciseOrderPersistence.load(for: activeSession)
         if let data {
