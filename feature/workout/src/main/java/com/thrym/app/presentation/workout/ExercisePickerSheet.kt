@@ -238,32 +238,35 @@ fun ExercisePickerSheet(
         CreateExerciseDialog(
             state = createState,
             onStateChange = { createState = it },
-            onDismiss = { showCreateDialog = false },
+            // While a save runs the dialog stays open: its result belongs to this dialog, and a
+            // reopened one must not get the late error or lose its own double-tap guard.
+            onDismiss = { if (!createState.isSaving) showCreateDialog = false },
             onConfirm = {
                 // The name check runs in the repository, so a second tap while the first insert is
                 // still running could create the same exercise twice.
                 if (createState.isSaving) return@CreateExerciseDialog
-                createState = createState.copy(isSaving = true, errorMessage = null)
+                val request = createState
+                createState = request.copy(isSaving = true, errorMessage = null)
                 scope.launch {
                     runCatching {
                         val exerciseId = exerciseRepository.addCustomExercise(
                             Exercise(
-                                name = createState.name,
-                                primaryMuscleGroup = createState.primaryMuscleGroup,
-                                secondaryMuscleGroups = createState.secondaryMuscleGroups.toList(),
-                                category = createState.category,
+                                name = request.name,
+                                primaryMuscleGroup = request.primaryMuscleGroup,
+                                secondaryMuscleGroups = request.secondaryMuscleGroups.toList(),
+                                category = request.category,
                                 isCustom = true,
-                                notes = createState.notes
+                                notes = request.notes
                             )
                         )
                         exerciseRepository.getExerciseById(exerciseId) ?: Exercise(
                             id = exerciseId,
-                            name = createState.name.trim(),
-                            primaryMuscleGroup = createState.primaryMuscleGroup,
-                            secondaryMuscleGroups = createState.secondaryMuscleGroups.toList(),
-                            category = createState.category,
+                            name = request.name.trim(),
+                            primaryMuscleGroup = request.primaryMuscleGroup,
+                            secondaryMuscleGroups = request.secondaryMuscleGroups.toList(),
+                            category = request.category,
                             isCustom = true,
-                            notes = createState.notes.trim()
+                            notes = request.notes.trim()
                         )
                     }.onSuccess { exercise ->
                         showCreateDialog = false
@@ -439,7 +442,7 @@ private fun CreateExerciseDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, colors = ThrymInteractiveColors.textButton()) {
+            TextButton(onClick = onDismiss, enabled = !state.isSaving, colors = ThrymInteractiveColors.textButton()) {
                 Text(stringResource(id = R.string.common_cancel))
             }
         }
