@@ -14,8 +14,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
-import com.thrym.app.presentation.common.label
 import com.thrym.app.presentation.common.localizedName
+import com.thrym.app.presentation.common.rememberHapticFeedback
 import com.thrym.app.presentation.common.rememberUiStrings
 import com.thrym.app.presentation.common.userMessageOrNull
 import com.thrym.app.presentation.theme.accentText
@@ -26,6 +26,8 @@ import com.thrym.app.domain.repository.TrainingPlanRepository
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.shared.plans.PlannedSet
 import com.thrym.shared.plans.PlannedSets
+import com.thrym.shared.workout.RecordSetInput
+import com.thrym.shared.workout.SessionRecords
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 import org.koin.compose.koinInject
@@ -86,13 +88,27 @@ internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, err
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<ExerciseWithSets>, records: List<SessionRecordUi>, unitSystem: UnitSystem,
+internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<ExerciseWithSets>, recordInputs: List<RecordSetInput>?, unitSystem: UnitSystem,
     finishState: WorkoutFinishState, onClose: () -> Unit, onDetails: () -> Unit, onPlanEditor: () -> Unit,
     onProgression: () -> Unit, onRetryProgression: () -> Unit) {
     var showPlanChanges by rememberSaveable(session.id) { mutableStateOf(false) }
     var planApplied by rememberSaveable(session.id) { mutableStateOf(false) }
     val sets = rows.flatMap { it.sets }.filter { it.reps > 0 }.distinctBy { it.id }
     val remaining = rows.sumOf { it.openSlotCount() }
+    // Records follow the workout's display order; the rows keep it also after a cold restore.
+    val recordOrder = rows.filter { row -> row.sets.any { it.reps > 0 } }.map { it.exercise.id }.distinct()
+    val recordSummary = remember(recordInputs, recordOrder) {
+        recordInputs?.let { SessionRecords.summarize(session.id, recordOrder, it) }
+    }
+    // One haptic the first time the board shows records, not again after rotation or a restore.
+    val haptic = rememberHapticFeedback()
+    var recordsCelebrated by rememberSaveable(session.id) { mutableStateOf(false) }
+    LaunchedEffect(recordSummary) {
+        if (!recordsCelebrated && (recordSummary?.recordCount ?: 0) > 0) {
+            recordsCelebrated = true
+            haptic.confirm()
+        }
+    }
     // Follow-up actions are the same in both appearances.
     val followUps: @Composable () -> Unit = {
         if (session.planId != null && rows.any { it.planTarget != null }) {
@@ -111,7 +127,7 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
         GlassWorkoutCompletion(
             session = session,
             rows = rows,
-            records = records,
+            recordSummary = recordSummary,
             unitSystem = unitSystem,
             onClose = onClose,
             onDetails = onDetails,
@@ -152,30 +168,7 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
                 SummaryMetric(stringResource(R.string.workout_summary_sets), sets.size.toString(), Modifier.weight(1f))
             }
             SummaryMetric(stringResource(R.string.workout_summary_volume), WeightFormatting.formatVolume(sets.sumOf { it.weightKg * it.reps }, unitSystem), Modifier.fillMaxWidth())
-            if (records.isNotEmpty()) {
-                Card(
-                    Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            stringResource(R.string.workout_summary_records_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        records.forEach { record ->
-                            Text(
-                                stringResource(
-                                    R.string.workout_summary_record_line,
-                                    record.exerciseName,
-                                    record.types.map { it.label() }.joinToString(", ")
-                                ),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                }
-            }
+            recordSummary?.let { CompletionRecordsCard(it, rows, unitSystem) }
             rows.filter { it.sets.any { set -> set.reps > 0 } }.forEach { row ->
                 Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(row.exercise.localizedName(), style = MaterialTheme.typography.titleMedium)

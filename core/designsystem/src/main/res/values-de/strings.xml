@@ -82,7 +82,6 @@
     <string name="workout_summary_duration">Dauer</string>
     <string name="workout_summary_sets">Sätze</string>
     <string name="workout_summary_volume">Volumen</string>
-    <string name="workout_summary_records_title">🏆 Neue Rekorde</string>
     <string name="workout_summary_review_plan_changes">Planänderungen prüfen</string>
     <string name="workout_summary_plan_changes_applied">Satzwerte übernommen</string>
     <string name="workout_summary_review_progression">Progressionsvorschläge prüfen</string>
@@ -104,8 +103,6 @@
     <string name="workout_plan_changes_confirm_keep">Plan unverändert lassen</string>
     <string name="workout_plan_changes_confirm_apply">Satzwerte übernehmen</string>
     <string name="workout_plan_changes_confirm_editor">Planeditor öffnen</string>
-    <string name="workout_new_record_message">%1$s: neuer Rekord (%2$s)</string>
-    <string name="workout_new_records_message">%1$s: neue Rekorde (%2$s)</string>
     <string name="workout_target_with_weight">Ziel: %1$d x %2$d @ %3$s</string>
     <string name="workout_target_no_weight">Ziel: %1$d x %2$d</string>
     <string name="workout_target_completed">Ziel erreicht</string>

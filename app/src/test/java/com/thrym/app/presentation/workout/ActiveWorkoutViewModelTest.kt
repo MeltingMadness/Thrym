@@ -130,10 +130,23 @@ class ActiveWorkoutViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): ActiveWorkoutViewModel {
+    private fun createViewModel(statistics: StatisticsRepository = statsRepo): ActiveWorkoutViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statistics, progressionRepo, prefsRepo, strings = com.thrym.app.fakes.TestUiStrings)
     }
+
+    /** A set of [testExercise] as the statistics repository returns it for the record rules. */
+    private fun exerciseSet(id: Long, sessionId: Long, reps: Int, weightKg: Double, setType: SetType = SetType.NORMAL) =
+        WorkoutSet(
+            id = id,
+            sessionId = sessionId,
+            exerciseId = testExercise.id,
+            setNumber = 1,
+            reps = reps,
+            weightKg = weightKg,
+            setType = setType,
+            completedAt = LocalDateTime.of(2026, 10, 1, 18, 0).plusMinutes(id)
+        )
 
     private fun withMockedAppLoggerWarnings(block: () -> Unit) {
         mockkObject(AppLogger)
@@ -278,53 +291,48 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `logSet emittiert NewRecords aus Vergleich und schreibt keine PRs`() = runTest {
+    fun `logSet emittiert NewRecords mit Wert und bisheriger Bestmarke und schreibt keine PRs`() = runTest {
         val stats = mockk<StatisticsRepository>(relaxed = true)
-        val now = LocalDateTime.now()
-        val before = listOf(
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 1L, exerciseId = testExercise.id, type = RecordType.MAX_WEIGHT, value = 80.0, achievedAt = now
-            ),
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 2L, exerciseId = testExercise.id, type = RecordType.MAX_REPS, value = 6.0, achievedAt = now
-            ),
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 3L, exerciseId = testExercise.id, type = RecordType.MAX_E1RM, value = 100.0, achievedAt = now
-            ),
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 4L, exerciseId = testExercise.id, type = RecordType.MAX_VOLUME, value = 500.0, achievedAt = now
-            )
-        )
-        val after = listOf(
-            before[0].copy(value = 100.0),
-            before[1].copy(value = 8.0),
-            before[2].copy(value = 133.33),
-            before[3].copy(value = 800.0)
-        )
-        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } returnsMany listOf(before, after)
-
-        val vm = ActiveWorkoutViewModel(
-            SavedStateHandle(mapOf("sessionId" to sessionId)),
-            workoutRepo,
-            exerciseRepo,
-            stats,
-            progressionRepo,
-            prefsRepo,
-            strings = com.thrym.app.fakes.TestUiStrings
-        )
+        val earlier = exerciseSet(id = 50L, sessionId = 99L, reps = 6, weightKg = 80.0)
+        val logged = exerciseSet(id = 51L, sessionId = sessionId, reps = 10, weightKg = 100.0)
+        coEvery { stats.getSetsForExerciseList(testExercise.id) } returnsMany listOf(listOf(earlier), listOf(earlier, logged))
+        val vm = createViewModel(stats)
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
 
         vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(
-            setOf(RecordType.MAX_WEIGHT, RecordType.MAX_REPS, RecordType.MAX_E1RM, RecordType.MAX_VOLUME),
-            emitted.filterIsInstance<WorkoutEvent.NewRecords>().flatMap { it.types }.toSet()
-        )
-        // Alle Rekorde eines Satzes kommen gebuendelt als eine Meldung.
-        assertEquals(1, emitted.size)
+        // Alle Rekorde eines Satzes kommen gebuendelt als eine Meldung, Volumen nie live.
+        val event = emitted.single() as WorkoutEvent.NewRecords
+        assertEquals(testExercise.name, event.exerciseName)
+        assertEquals(listOf(RecordType.MAX_WEIGHT, RecordType.MAX_E1RM, RecordType.MAX_REPS), event.records.map { it.type })
+        val expected = listOf(100.0 to 80.0, 100.0 * (1 + 10 / 30.0) to 80.0 * (1 + 6 / 30.0), 10.0 to 6.0)
+        event.records.zip(expected).forEach { (record, values) ->
+            assertEquals(values.first, record.value, 1e-9)
+            assertEquals(values.second, record.previous, 1e-9)
+        }
         coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
+        coVerify(exactly = 0) { stats.getRecordsForExercisesList(any()) }
+
+        eventCollector.cancel()
+    }
+
+    @Test
+    fun `logSet emittiert kein NewRecords beim ersten Training einer Uebung`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val logged = exerciseSet(id = 51L, sessionId = sessionId, reps = 10, weightKg = 100.0)
+        coEvery { stats.getSetsForExerciseList(testExercise.id) } returnsMany listOf(emptyList(), listOf(logged))
+        val vm = createViewModel(stats)
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Ohne fruehere Bestmarke ist nichts gefallen; die Werte zeigt erst der Abschluss.
+        assertEquals(1, workoutRepo.getSetsForSessionList(sessionId).size)
+        assertTrue(emitted.isEmpty())
 
         eventCollector.cancel()
     }
@@ -332,27 +340,10 @@ class ActiveWorkoutViewModelTest {
     @Test
     fun `langsamer Event-Collector blockiert das Loggen des naechsten Satzes nicht`() = runTest {
         val stats = mockk<StatisticsRepository>(relaxed = true)
-        val now = LocalDateTime.now()
-        val before = listOf(
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 1L, exerciseId = testExercise.id, type = RecordType.MAX_WEIGHT, value = 80.0, achievedAt = now
-            ),
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 2L, exerciseId = testExercise.id, type = RecordType.MAX_REPS, value = 6.0, achievedAt = now
-            )
-        )
-        val after = listOf(before[0].copy(value = 100.0), before[1].copy(value = 8.0))
-        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } returnsMany listOf(before, after)
-
-        val vm = ActiveWorkoutViewModel(
-            SavedStateHandle(mapOf("sessionId" to sessionId)),
-            workoutRepo,
-            exerciseRepo,
-            stats,
-            progressionRepo,
-            prefsRepo,
-            strings = com.thrym.app.fakes.TestUiStrings
-        )
+        val earlier = exerciseSet(id = 50L, sessionId = 99L, reps = 6, weightKg = 80.0)
+        val logged = exerciseSet(id = 51L, sessionId = sessionId, reps = 10, weightKg = 100.0)
+        coEvery { stats.getSetsForExerciseList(testExercise.id) } returnsMany listOf(listOf(earlier), listOf(earlier, logged))
+        val vm = createViewModel(stats)
         // Wie die Snackbar im Screen: jedes Event haelt den Collector an.
         val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
             vm.events.collect { awaitCancellation() }
@@ -372,26 +363,10 @@ class ActiveWorkoutViewModelTest {
     @Test
     fun `logSet emittiert kein NewRecords wenn kein Record verbessert wurde`() = runTest {
         val stats = mockk<StatisticsRepository>(relaxed = true)
-        val existing = listOf(
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 1L,
-                exerciseId = testExercise.id,
-                type = RecordType.MAX_WEIGHT,
-                value = 120.0,
-                achievedAt = LocalDateTime.now()
-            )
-        )
-        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } returnsMany listOf(existing, existing)
-
-        val vm = ActiveWorkoutViewModel(
-            SavedStateHandle(mapOf("sessionId" to sessionId)),
-            workoutRepo,
-            exerciseRepo,
-            stats,
-            progressionRepo,
-            prefsRepo,
-            strings = com.thrym.app.fakes.TestUiStrings
-        )
+        val earlier = exerciseSet(id = 50L, sessionId = 99L, reps = 12, weightKg = 120.0)
+        val logged = exerciseSet(id = 51L, sessionId = sessionId, reps = 10, weightKg = 100.0)
+        coEvery { stats.getSetsForExerciseList(testExercise.id) } returnsMany listOf(listOf(earlier), listOf(earlier, logged))
+        val vm = createViewModel(stats)
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
 
@@ -407,7 +382,7 @@ class ActiveWorkoutViewModelTest {
     @Test
     fun `logSet fuehrt Mutation aus wenn PR-Snapshot fehlschlaegt`() = runTest {
         val stats = mockk<StatisticsRepository>(relaxed = true)
-        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } throws
+        coEvery { stats.getSetsForExerciseList(testExercise.id) } throws
             IllegalStateException("stats boom")
         val vm = ActiveWorkoutViewModel(
             SavedStateHandle(mapOf("sessionId" to sessionId)),
@@ -454,7 +429,7 @@ class ActiveWorkoutViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(emitted.isEmpty())
-        coVerify(exactly = 0) { stats.getRecordsForExercisesList(any()) }
+        coVerify(exactly = 0) { stats.getSetsForExerciseList(any()) }
         coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
 
         eventCollector.cancel()
@@ -465,7 +440,7 @@ class ActiveWorkoutViewModelTest {
         val stats = mockk<StatisticsRepository>(relaxed = true)
         val comparisonGate = CompletableDeferred<Unit>()
         var statsCallCount = 0
-        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } coAnswers {
+        coEvery { stats.getSetsForExerciseList(testExercise.id) } coAnswers {
             statsCallCount++
             if (statsCallCount == 1) {
                 emptyList()
@@ -685,44 +660,50 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `loadCompletionRecords liefert nur Rekorde aus dieser Einheit`() = runTest {
+    fun `loadCompletionRecords liefert die Saetze aller Einheiten mit ihrem Abschlussstand`() = runTest {
         val stats = mockk<StatisticsRepository>(relaxed = true)
-        val vm = ActiveWorkoutViewModel(
-            SavedStateHandle(mapOf("sessionId" to sessionId)),
-            workoutRepo,
-            exerciseRepo,
-            stats,
-            progressionRepo,
-            prefsRepo,
-            strings = com.thrym.app.fakes.TestUiStrings
-        )
+        val vm = createViewModel(stats)
+        assertNull(vm.completionRecordInputs.value)
         vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
         testDispatcher.scheduler.advanceUntilIdle()
         workoutRepo.finishWorkout(sessionId)
-        val session = workoutRepo.getSessionById(sessionId)!!
-        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } returns listOf(
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 1L, exerciseId = testExercise.id, type = RecordType.MAX_E1RM, value = 133.0,
-                achievedAt = session.startTime
-            ),
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 2L, exerciseId = testExercise.id, type = RecordType.MAX_WEIGHT, value = 100.0,
-                achievedAt = session.endTime!!
-            ),
-            // Aelterer Rekord aus einem frueheren Training
-            com.thrym.app.domain.model.PersonalRecord(
-                id = 3L, exerciseId = testExercise.id, type = RecordType.MAX_REPS, value = 12.0,
-                achievedAt = session.startTime.minusDays(3)
-            )
+        val finishedEarlier = 2L
+        val unfinishedEarlier = 3L
+        workoutRepo.addSession(
+            WorkoutSession(id = finishedEarlier, startTime = LocalDateTime.now().minusDays(3), endTime = LocalDateTime.now().minusDays(3).plusHours(1))
         )
+        val today = workoutRepo.getSetsForSessionList(sessionId).single()
+        val earlier = exerciseSet(id = 50L, sessionId = finishedEarlier, reps = 6, weightKg = 80.0)
+        val abandoned = exerciseSet(id = 60L, sessionId = unfinishedEarlier, reps = 6, weightKg = 90.0, setType = SetType.WARMUP)
+        coEvery { stats.getSetsForExerciseList(testExercise.id) } returns listOf(today, earlier, abandoned)
 
         vm.loadCompletionRecords()
         testDispatcher.scheduler.advanceUntilIdle()
 
+        val inputs = vm.completionRecordInputs.value!!.associateBy { it.id }
+        assertEquals(setOf(today.id, 50L, 60L), inputs.keys)
+        assertEquals(true, inputs.getValue(today.id).sessionFinished)
+        assertEquals(true, inputs.getValue(50L).sessionFinished)
+        assertEquals(false, inputs.getValue(60L).sessionFinished)
+        assertEquals("WARMUP", inputs.getValue(60L).setType)
         assertEquals(
-            listOf(SessionRecordUi(testExercise.name, listOf(RecordType.MAX_WEIGHT, RecordType.MAX_E1RM))),
-            vm.completionRecords.value
+            today.completedAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+            inputs.getValue(today.id).completedAtEpochMillis
         )
+        coVerify(exactly = 0) { stats.getRecordsForExercisesList(any()) }
+    }
+
+    @Test
+    fun `loadCompletionRecords laedt nichts fuer ein laufendes Training`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val vm = createViewModel(stats)
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.loadCompletionRecords()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(vm.completionRecordInputs.value)
     }
 
     @Test
@@ -2478,49 +2459,24 @@ class ActiveWorkoutViewModelTest {
     @Test
     fun `updateSet emittiert verbesserte Records ohne PR-Schreibzugriff`() = runTest {
         val stats = mockk<StatisticsRepository>(relaxed = true)
-        val beforeRecord = com.thrym.app.domain.model.PersonalRecord(
-            id = 1L,
-            exerciseId = testExercise.id,
-            type = RecordType.MAX_WEIGHT,
-            value = 100.0,
-            achievedAt = LocalDateTime.now()
-        )
-        val improvedRecord = beforeRecord.copy(value = 120.0)
+        val earlier = exerciseSet(id = 50L, sessionId = 99L, reps = 10, weightKg = 100.0)
+        val current = exerciseSet(id = 600L, sessionId = sessionId, reps = 10, weightKg = 100.0)
         coEvery {
-            stats.getRecordsForExercisesList(listOf(testExercise.id))
-        } returnsMany listOf(listOf(beforeRecord), listOf(improvedRecord))
+            stats.getSetsForExerciseList(testExercise.id)
+        } returnsMany listOf(listOf(earlier, current), listOf(earlier, current.copy(reps = 12, weightKg = 120.0)))
 
-        workoutRepo.addSetDirectly(
-            com.thrym.app.domain.model.WorkoutSet(
-                id = 600L,
-                sessionId = sessionId,
-                exerciseId = testExercise.id,
-                setNumber = 1,
-                reps = 10,
-                weightKg = 100.0,
-                setType = SetType.NORMAL
-            )
-        )
-        val vm = ActiveWorkoutViewModel(
-            SavedStateHandle(mapOf("sessionId" to sessionId)),
-            workoutRepo,
-            exerciseRepo,
-            stats,
-            progressionRepo,
-            prefsRepo,
-            strings = com.thrym.app.fakes.TestUiStrings
-        )
+        workoutRepo.addSetDirectly(current.copy(completedAt = LocalDateTime.now()))
+        val vm = createViewModel(stats)
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
 
         vm.updateSet(setId = 600L, reps = 12, weightKg = 120.0)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(
-            emitted.any { event ->
-                event is WorkoutEvent.NewRecords && RecordType.MAX_WEIGHT in event.types
-            }
-        )
+        val weight = (emitted.single() as WorkoutEvent.NewRecords).records.first { it.type == RecordType.MAX_WEIGHT }
+        assertEquals(120.0, weight.value, 0.0)
+        // Die Bestmarke vor diesem Training, nicht der Satz vor der Korrektur.
+        assertEquals(100.0, weight.previous, 0.0)
         coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
 
         eventCollector.cancel()
@@ -2540,7 +2496,7 @@ class ActiveWorkoutViewModelTest {
             )
         )
         val stats = mockk<StatisticsRepository>(relaxed = true)
-        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } throws
+        coEvery { stats.getSetsForExerciseList(testExercise.id) } throws
             IllegalStateException("stats boom")
         val vm = ActiveWorkoutViewModel(
             SavedStateHandle(mapOf("sessionId" to sessionId)),
@@ -2751,7 +2707,7 @@ class ActiveWorkoutViewModelTest {
         val comparisonGate = CompletableDeferred<Unit>()
         var statisticsReadCount = 0
         val blockingStats = mockk<StatisticsRepository>(relaxed = true)
-        coEvery { blockingStats.getRecordsForExercisesList(listOf(testExercise.id)) } coAnswers {
+        coEvery { blockingStats.getSetsForExerciseList(testExercise.id) } coAnswers {
             statisticsReadCount += 1
             if (statisticsReadCount > 1) comparisonGate.await()
             emptyList()

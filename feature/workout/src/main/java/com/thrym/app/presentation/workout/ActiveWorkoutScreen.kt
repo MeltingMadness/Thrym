@@ -18,15 +18,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -80,9 +83,9 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.spring
 import com.thrym.app.presentation.common.RestTimer
 import com.thrym.app.presentation.common.WorkoutTimer
-import com.thrym.app.presentation.common.labelRes
 import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.rememberHapticFeedback
+import com.thrym.app.presentation.common.rememberUiStrings
 import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.thrymMotion
 import com.thrym.shared.workout.SessionOrderMove
@@ -118,9 +121,10 @@ fun ActiveWorkoutScreen(
         initialValue = AppPreferences()
     )
     val snackbarHostState = remember { SnackbarHostState() }
-    // Rekordmeldungen erscheinen oben, damit sie den Log-Button unten nie verdecken.
-    val recordSnackbarHostState = remember { SnackbarHostState() }
+    // Record and undo messages appear at the top, so they never cover the log button below.
+    val topSnackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val uiStrings by rememberUpdatedState(rememberUiStrings())
     val dims = thrymDimens
     val haptic = rememberHapticFeedback()
     val activeSession = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
@@ -139,23 +143,25 @@ fun ActiveWorkoutScreen(
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            // Each message gets its own coroutine: a snackbar suspends until it is dismissed,
-            // and an undo offer must not wait behind a queued record message.
+            // Each message gets its own coroutine, because a snackbar suspends until it is
+            // dismissed and the collector must keep taking events meanwhile.
             launch {
                 when (event) {
                     is WorkoutEvent.NewRecords -> {
+                        val first = event.records.firstOrNull() ?: return@launch
                         haptic.confirm()
-                        val types = event.types.joinToString(", ") { context.getString(it.labelRes()) }
-                        recordSnackbarHostState.showSnackbar(
-                            message = if (event.types.size == 1) {
-                                context.getString(R.string.workout_new_record_message, event.exerciseName, types)
-                            } else {
-                                context.getString(R.string.workout_new_records_message, event.exerciseName, types)
-                            }
+                        topSnackbarHostState.showSnackbar(
+                            RecordSnackbarVisuals(
+                                title = liveRecordTitle(uiStrings, event),
+                                detail = liveRecordDetail(uiStrings, first, preferences.unitSystem)
+                            )
                         )
                     }
                     is WorkoutEvent.SetDeleted -> {
-                        val result = recordSnackbarHostState.showSnackbar(
+                        // The host shows one message at a time; undo must not wait behind a
+                        // record message, so that one makes room.
+                        topSnackbarHostState.currentSnackbarData?.dismiss()
+                        val result = topSnackbarHostState.showSnackbar(
                             message = context.getString(R.string.workout_set_deleted, event.setNumber),
                             actionLabel = context.getString(R.string.common_undo),
                             duration = SnackbarDuration.Long
@@ -189,7 +195,7 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    val completionRecords by viewModel.completionRecords.collectAsStateWithLifecycle()
+    val completionRecordInputs by viewModel.completionRecordInputs.collectAsStateWithLifecycle()
     LaunchedEffect(activeSession?.endTime) {
         if (activeSession?.endTime != null) viewModel.loadCompletionRecords()
     }
@@ -197,7 +203,7 @@ fun ActiveWorkoutScreen(
         WorkoutCompletionScreen(
             session = activeSession,
             rows = state.exercisesWithSets,
-            records = completionRecords,
+            recordInputs = completionRecordInputs,
             unitSystem = preferences.unitSystem,
             finishState = state.finishState,
             onClose = onWorkoutFinished,
@@ -680,9 +686,12 @@ fun ActiveWorkoutScreen(
                 }
             }
             SnackbarHost(
-                hostState = recordSnackbarHostState,
+                hostState = topSnackbarHostState,
                 modifier = Modifier.align(Alignment.TopCenter)
-            )
+            ) { data ->
+                val recordVisuals = data.visuals as? RecordSnackbarVisuals
+                if (recordVisuals != null) RecordSnackbar(recordVisuals) else Snackbar(data)
+            }
         }
 
         if (state.showExercisePicker) {
@@ -730,6 +739,41 @@ fun ActiveWorkoutScreen(
                     }
                 }
             )
+        }
+    }
+}
+
+/**
+ * A live record: "1 neuer Rekord · Bankdrücken" over "Gewicht 102,5 kg (+2,5 kg)". [message]
+ * holds both lines for accessibility services that read the visuals instead of the content.
+ */
+private class RecordSnackbarVisuals(val title: String, val detail: String) : SnackbarVisuals {
+    override val message: String = "$title. $detail"
+    override val actionLabel: String? = null
+    override val withDismissAction: Boolean = false
+    override val duration: SnackbarDuration = SnackbarDuration.Short
+}
+
+/** The record message: trophy, title and the record with its gain, in the host's live region. */
+@Composable
+private fun RecordSnackbar(visuals: RecordSnackbarVisuals) {
+    Snackbar(modifier = Modifier.padding(12.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.EmojiEvents,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.inversePrimary
+            )
+            Column {
+                Text(text = visuals.title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    text = visuals.detail,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum")
+                )
+            }
         }
     }
 }

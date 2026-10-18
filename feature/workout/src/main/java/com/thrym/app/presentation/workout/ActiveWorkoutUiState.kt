@@ -178,15 +178,19 @@ internal data class OperationUiState(
 )
 
 sealed class WorkoutEvent {
-    /** All record types one mutation improved, so the UI can show them as a single message. */
-    data class NewRecords(val exerciseName: String, val types: List<RecordType>) : WorkoutEvent()
+    /**
+     * The records one log or edit beat, in the shared type order, so the UI shows them as a
+     * single message. Only records that had an earlier best come in, see `SessionRecords`.
+     */
+    data class NewRecords(val exerciseName: String, val records: List<LiveRecordUi>) : WorkoutEvent()
 
     /** A set was deleted; the UI offers to undo it. */
     data class SetDeleted(val setNumber: Int) : WorkoutEvent()
 }
 
-/** Records one exercise set during the finished session, shown on the summary. */
-data class SessionRecordUi(
-    val exerciseName: String,
-    val types: List<RecordType>
+/** A record beaten during the workout: the new [value] and the best before this workout, in kg or reps. */
+data class LiveRecordUi(
+    val type: RecordType,
+    val value: Double,
+    val previous: Double
 )

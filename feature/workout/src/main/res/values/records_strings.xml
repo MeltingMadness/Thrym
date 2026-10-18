@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Record board on the completion screen. -->
+    <plurals name="workout_records_count">
+        <item quantity="one">%1$d new PR</item>
+        <item quantity="other">%1$d new PRs</item>
+    </plurals>
+    <plurals name="workout_records_exercise_count">
+        <item quantity="one">in %1$d exercise</item>
+        <item quantity="other">in %1$d exercises</item>
+    </plurals>
+    <string name="workout_records_label_weight">Weight</string>
+    <string name="workout_records_label_reps">Reps</string>
+    <string name="workout_records_label_volume">Volume</string>
+    <string name="workout_records_label_e1rm" translatable="false">e1RM</string>
+    <!-- Chip of a record type the exercise reaches for the first time. -->
+    <string name="workout_records_first_type">First time</string>
+    <!-- Load of a reps record, e.g. "at 60 kg". -->
+    <string name="workout_records_context_weight">at %1$s</string>
+    <!-- Reps of a weight record, e.g. "× 5". -->
+    <string name="workout_records_context_reps" translatable="false">× %1$d</string>
+    <plurals name="workout_records_delta_reps">
+        <item quantity="one">+%1$d rep</item>
+        <item quantity="other">+%1$d reps</item>
+    </plurals>
+    <string name="workout_records_first_title">First personal bests</string>
+    <string name="workout_records_first_subtitle">Your next workout is measured against these.</string>
+    <string name="workout_records_first_footer">First personal bests: %1$s</string>
+    <!-- Spoken record row: label, value with its set, gain, e.g. "Weight 100 kg × 5, 2.5 kg more than before". -->
+    <string name="workout_records_row_cd">%1$s %2$s, %3$s more than before</string>
+    <string name="workout_records_row_first_cd">%1$s %2$s, first time</string>
+    <!-- Live notice during the workout: count and exercise, then the first record with its gain. -->
+    <plurals name="workout_record_live_title">
+        <item quantity="one">%1$d new PR · %2$s</item>
+        <item quantity="other">%1$d new PRs · %2$s</item>
+    </plurals>
+    <string name="workout_record_live_detail" translatable="false">%1$s %2$s (%3$s)</string>
+</resources>

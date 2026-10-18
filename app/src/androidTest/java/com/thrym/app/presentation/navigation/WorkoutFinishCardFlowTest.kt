@@ -46,7 +46,8 @@ import org.koin.core.context.GlobalContext
 
 /**
  * Logging the last planned set puts "Training beenden" at the end of the list. The card's
- * button opens the finish sheet, and confirming there finishes the workout.
+ * button opens the finish sheet, and confirming there finishes the workout. The exercise is
+ * new, so the completion screen lists its first personal bests.
  */
 @RunWith(AndroidJUnit4::class)
 class WorkoutFinishCardFlowTest {
@@ -112,6 +113,7 @@ class WorkoutFinishCardFlowTest {
         ui.onAllNodes(sheetFinish and isEnabled()).onFirst().performClick()
 
         awaitText(text(R.string.workout_summary_headline_complete))
+        awaitText(text(WorkoutR.string.workout_records_first_title))
         runBlocking {
             assertNotNull(workouts.getSessionById(sessionId)?.endTime)
             assertEquals(1, workouts.getSetsForSessionList(sessionId).size)

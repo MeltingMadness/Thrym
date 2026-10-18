@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="workout_records_count">
+        <item quantity="one">%1$d neuer Rekord</item>
+        <item quantity="other">%1$d neue Rekorde</item>
+    </plurals>
+    <plurals name="workout_records_exercise_count">
+        <item quantity="one">in %1$d Übung</item>
+        <item quantity="other">in %1$d Übungen</item>
+    </plurals>
+    <string name="workout_records_label_weight">Gewicht</string>
+    <string name="workout_records_label_reps">Wdh</string>
+    <string name="workout_records_label_volume">Volumen</string>
+    <string name="workout_records_first_type">Erstmals</string>
+    <string name="workout_records_context_weight">bei %1$s</string>
+    <plurals name="workout_records_delta_reps">
+        <item quantity="one">+%1$d Wdh</item>
+        <item quantity="other">+%1$d Wdh</item>
+    </plurals>
+    <string name="workout_records_first_title">Erste Bestwerte</string>
+    <string name="workout_records_first_subtitle">Daran misst sich dein nächstes Training.</string>
+    <string name="workout_records_first_footer">Erste Bestwerte: %1$s</string>
+    <string name="workout_records_row_cd">%1$s %2$s, %3$s mehr als bisher</string>
+    <string name="workout_records_row_first_cd">%1$s %2$s, zum ersten Mal</string>
+    <plurals name="workout_record_live_title">
+        <item quantity="one">%1$d neuer Rekord · %2$s</item>
+        <item quantity="other">%1$d neue Rekorde · %2$s</item>
+    </plurals>
+</resources>
