@@ -1274,6 +1274,9 @@ class SharedStateStore(
     private fun encodeCanonical(payload: BackupPayloadV1): String =
         SharedBackupPayloadCodec.encodeCanonical(payload)
 
+    private fun decodeAndUpgradeRepairingDuplicatePersonalRecordIds(payload: String): BackupPayloadV1 =
+        SharedBackupPayloadCodec.decodeAndUpgradeRepairingDuplicatePersonalRecordIds(payload)
+
     private fun recoverySnapshot(payload: BackupPayloadV1): RecoverySnapshot {
         val canonical = canonicalize(payload)
         validateOrThrow(canonical)
