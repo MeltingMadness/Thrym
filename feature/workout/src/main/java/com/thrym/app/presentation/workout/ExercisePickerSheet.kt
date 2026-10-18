@@ -41,7 +41,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -76,7 +78,10 @@ private data class ExerciseCreateState(
     val primaryMuscleGroup: MuscleGroup = MuscleGroup.BRUST,
     val secondaryMuscleGroups: Set<MuscleGroup> = emptySet(),
     val category: ExerciseCategory = ExerciseCategory.LANGHANTEL,
-    val notes: String = ""
+    val notes: String = "",
+    // A failed creation is shown inside the dialog: the screen behind the modal sheet would hide it.
+    val errorMessage: String? = null,
+    val isSaving: Boolean = false
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -233,36 +238,45 @@ fun ExercisePickerSheet(
         CreateExerciseDialog(
             state = createState,
             onStateChange = { createState = it },
-            onDismiss = { showCreateDialog = false },
+            // While a save runs the dialog stays open: its result belongs to this dialog, and a
+            // reopened one must not get the late error or lose its own double-tap guard.
+            onDismiss = { if (!createState.isSaving) showCreateDialog = false },
             onConfirm = {
+                // The name check runs in the repository, so a second tap while the first insert is
+                // still running could create the same exercise twice.
+                if (createState.isSaving) return@CreateExerciseDialog
+                val request = createState
+                createState = request.copy(isSaving = true, errorMessage = null)
                 scope.launch {
                     runCatching {
                         val exerciseId = exerciseRepository.addCustomExercise(
                             Exercise(
-                                name = createState.name,
-                                primaryMuscleGroup = createState.primaryMuscleGroup,
-                                secondaryMuscleGroups = createState.secondaryMuscleGroups.toList(),
-                                category = createState.category,
+                                name = request.name,
+                                primaryMuscleGroup = request.primaryMuscleGroup,
+                                secondaryMuscleGroups = request.secondaryMuscleGroups.toList(),
+                                category = request.category,
                                 isCustom = true,
-                                notes = createState.notes
+                                notes = request.notes
                             )
                         )
                         exerciseRepository.getExerciseById(exerciseId) ?: Exercise(
                             id = exerciseId,
-                            name = createState.name.trim(),
-                            primaryMuscleGroup = createState.primaryMuscleGroup,
-                            secondaryMuscleGroups = createState.secondaryMuscleGroups.toList(),
-                            category = createState.category,
+                            name = request.name.trim(),
+                            primaryMuscleGroup = request.primaryMuscleGroup,
+                            secondaryMuscleGroups = request.secondaryMuscleGroups.toList(),
+                            category = request.category,
                             isCustom = true,
-                            notes = createState.notes.trim()
+                            notes = request.notes.trim()
                         )
                     }.onSuccess { exercise ->
                         showCreateDialog = false
                         selectedExercises = selectedExercises + exercise
                     }.onFailure { throwable ->
                         if (throwable is CancellationException) throw throwable
-                        onCreationError?.invoke(
-                            throwable.userMessageOrNull(strings) ?: strings.get(UxR.string.workout_picker_create_failed)
+                        createState = createState.copy(
+                            isSaving = false,
+                            errorMessage = throwable.userMessageOrNull(strings)
+                                ?: strings.get(UxR.string.workout_picker_create_failed)
                         )
                     }
                 }
@@ -291,11 +305,19 @@ private fun CreateExerciseDialog(
             Column(verticalArrangement = Arrangement.spacedBy(dims.spacingSm)) {
                 com.thrym.app.presentation.common.ThrymTextField(
                     value = state.name,
-                    onValueChange = { onStateChange(state.copy(name = it)) },
+                    onValueChange = { onStateChange(state.copy(name = it, errorMessage = null)) },
                     label = { Text(stringResource(id = R.string.exercises_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                state.errorMessage?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                    )
+                }
 
                 Box {
                     com.thrym.app.presentation.common.ThrymTextField(
@@ -413,14 +435,14 @@ private fun CreateExerciseDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                enabled = state.name.isNotBlank(),
+                enabled = state.name.isNotBlank() && !state.isSaving,
                 colors = ThrymInteractiveColors.textButton()
             ) {
                 Text(stringResource(id = R.string.common_create))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, colors = ThrymInteractiveColors.textButton()) {
+            TextButton(onClick = onDismiss, enabled = !state.isSaving, colors = ThrymInteractiveColors.textButton()) {
                 Text(stringResource(id = R.string.common_cancel))
             }
         }
