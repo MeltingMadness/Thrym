@@ -71,7 +71,7 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 - Der Eintrag ist durch Session-ID und Startzeit geschützt, wie die Pausentimer. Ein Eintrag einer anderen Session oder Startzeit wird ignoriert und beim Laden einer laufenden Session entfernt. Ein verworfenes leeres Training löscht ihn; nach normalem Beenden bleibt er für den Abschlussbildschirm stehen.
 - Gespeichert werden Zeilenschlüssel (`planned-<snapshotId>`, `adhoc-<exerciseId>`). Zusatzübungen stehen auch ohne Sätze darin und kommen so nach einem Kaltstart zurück.
 - Ein Supersatz bewegt sich als Block; innerhalb wird nicht umsortiert. Die Blöcke entstehen immer aus der Standardreihenfolge (`orderIndex`, dann Zusatzübungen in Einfügereihenfolge).
-- `workout_plan_targets.orderIndex` und `supersetGroupId` bleiben unberührt. Sie gehören zur Identität der Planposition, die Coach, „Sätze in den Plan übernehmen“ und Readiness nutzen.
+- `workout_plan_targets.orderIndex` und `supersetGroupId` bleiben unberührt. Sie gehören zur Identität der Planposition, die Coach, „Satzwerte übernehmen“ (unter „Planänderungen prüfen“) und Readiness nutzen.
 - Die Reihenfolge ist nicht im Backup. Soll sie dort einmal hinein, dann als additives, nullable Feld mit `@EncodeDefault(NEVER)` und Backup-Schema 16.
 
 ## Backup
