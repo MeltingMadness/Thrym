@@ -64,6 +64,24 @@ final class LocalizationTests: XCTestCase {
         )
     }
 
+    func testRecordKeysCountRecordsAndSets() throws {
+        XCTAssertEqual(try text("\(1) neue Rekorde", "en"), "1 new PR")
+        XCTAssertEqual(try text("\(4) neue Rekorde", "en"), "4 new PRs")
+        XCTAssertEqual(try text("\(1) neue Rekorde", "de"), "1 neuer Rekord")
+        XCTAssertEqual(try text("in \(1) Übungen", "de"), "in 1 Übung")
+        XCTAssertEqual(try text("in \(3) Übungen", "en"), "in 3 exercises")
+        XCTAssertEqual(try text("+\(1) Wdh.", "en"), "+1 rep")
+        XCTAssertEqual(try text("+\(2) Wdh.", "de"), "+2 Wdh.")
+
+        // The live title pluralizes the count and keeps the exercise name.
+        XCTAssertEqual(try text("\(1) neue Rekorde · \("Bench press")", "en"), "1 new PR · Bench press")
+        XCTAssertEqual(try text("\(2) neue Rekorde · \("Bankdrücken")", "de"), "2 neue Rekorde · Bankdrücken")
+
+        XCTAssertEqual(try text("Alle \(9) geplanten Sätze geschafft", "de"), "Alle 9 geplanten Sätze geschafft")
+        XCTAssertEqual(try text("Alle \(1) geplanten Sätze geschafft", "de"), "1 geplanter Satz geschafft")
+        XCTAssertEqual(try text("Alle \(9) geplanten Sätze geschafft", "en"), "All 9 planned sets done")
+    }
+
     func testPercentChangesFollowTheLocale() {
         XCTAssertEqual(ilPercentChangeText(5, locale: Locale(identifier: "en_US")), "+5.0%")
         XCTAssertEqual(ilPercentChangeText(-12.34, locale: Locale(identifier: "en_US")), "-12.3%")

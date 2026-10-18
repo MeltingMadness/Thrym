@@ -12,6 +12,38 @@
       },
       "shouldTranslate": false
     },
+    "%@ %@, %@ mehr als bisher": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@, %@ mehr als bisher"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@, %@ more than before"
+          }
+        }
+      }
+    },
+    "%@ %@, zum ersten Mal": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@, zum ersten Mal"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@, first time"
+          }
+        }
+      }
+    },
     "%@ Sätze": {
       "localizations": {
         "de": {
@@ -1277,6 +1309,106 @@
       },
       "shouldTranslate": false
     },
+    "%lld neue Rekorde": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld neuer Rekord"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld neue Rekorde"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld new PR"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld new PRs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld neue Rekorde · %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@records@ · %2$@"
+          },
+          "substitutions": {
+            "records": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg neuer Rekord"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg neue Rekorde"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@records@ · %2$@"
+          },
+          "substitutions": {
+            "records": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg new PR"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg new PRs"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld offen": {
       "localizations": {
         "de": {
@@ -1905,6 +2037,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "+ Warm-up set"
+          }
+        }
+      }
+    },
+    "+%lld Wdh.": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "+%lld Wdh."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "+%lld Wdh."
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "+%lld rep"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "+%lld reps"
+                }
+              }
+            }
           }
         }
       }
@@ -4184,6 +4356,22 @@
         }
       }
     },
+    "Daran misst sich dein nächstes Training.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daran misst sich dein nächstes Training."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your next workout is measured against these."
+          }
+        }
+      }
+    },
     "Darstellung": {
       "localizations": {
         "de": {
@@ -6081,6 +6269,38 @@
         }
       }
     },
+    "Erste Bestwerte": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erste Bestwerte"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First personal bests"
+          }
+        }
+      }
+    },
+    "Erste Bestwerte: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erste Bestwerte: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First personal bests: %@"
+          }
+        }
+      }
+    },
     "Erstelle eine eigene Übung oder importiere Trainingsdaten.": {
       "localizations": {
         "de": {
@@ -6125,6 +6345,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "First 1RM"
+          }
+        }
+      }
+    },
+    "Erstmals": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstmals"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First time"
           }
         }
       }
@@ -9492,38 +9728,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Muscle volume"
-          }
-        }
-      }
-    },
-    "NEUE REKORDE": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NEUE REKORDE"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NEW PRs"
-          }
-        }
-      }
-    },
-    "NEUER REKORD": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NEUER REKORD"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NEW PR"
           }
         }
       }
@@ -16306,6 +16510,22 @@
         }
       }
     },
+    "bei %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bei %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "at %@"
+          }
+        }
+      }
+    },
     "e1RM": {
       "localizations": {
         "de": {
@@ -16441,6 +16661,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "high soreness"
+          }
+        }
+      }
+    },
+    "in %lld Übungen": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %lld Übung"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %lld Übungen"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %lld exercise"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %lld exercises"
+                }
+              }
+            }
           }
         }
       }

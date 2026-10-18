@@ -120,6 +120,47 @@ final class ThemeContrastTests: XCTestCase {
         print("Knappster Kontrast der semantischen Tinte: \(String(format: "%.3f", weakest.ratio)):1 (\(weakest.description))")
     }
 
+    /// The record board's chips and medallion on its warning-tinted card: the gain in green on
+    /// a success fill, "Erstmals" in gold on a warning fill (text, 4.5:1), and the trophy on the
+    /// medallion (a graphic, 3:1).
+    func testRecordBoardChipsMeetWCAGContrast() {
+        var weakest = (ratio: Double.infinity, description: "")
+
+        for scheme in ThrymTheme.Scheme.allCases {
+            let theme = ThrymTheme(scheme: scheme)
+
+            for colorScheme in [ColorScheme.light, .dark] {
+                let dark = colorScheme == .dark
+                let palette = theme.palette(for: colorScheme)
+                let ink = ThrymSemanticInk.forDark(dark)
+                let warningFill = rgb(ink.warningFill)
+                let cards = [
+                    ("Ember", [composite(warningFill, alpha: 0.08, over: rgb(palette.surface))]),
+                    ("Glas", tintedGlassSamples(over: backdropSamples(primary: rgb(palette.primary), dark: dark), tint: warningFill, dark: dark))
+                ]
+                let marks = [
+                    ("Zuwachs", rgb(ink.success), rgb(ink.successFill), 0.14, 4.5),
+                    ("Erstmals", rgb(ink.warning), warningFill, 0.16, 4.5),
+                    ("Medaille", rgb(ink.warning), warningFill, 0.22, 3.0)
+                ]
+
+                for (look, card) in cards {
+                    for (mark, foreground, fill, alpha, minimum) in marks {
+                        let luminances = card.map { luminance(composite(fill, alpha: alpha, over: $0)) }
+                        let ratio = worstContrast(foreground, on: luminances)
+                        let description = "\(scheme.rawValue) \(dark ? "dunkel" : "hell") \(look) \(mark)"
+                        if ratio / minimum < weakest.ratio {
+                            weakest = (ratio / minimum, description)
+                        }
+                        XCTAssertGreaterThanOrEqual(ratio, minimum, "\(description): \(String(format: "%.3f", ratio)):1")
+                    }
+                }
+            }
+        }
+
+        print("Knappste Rekordmarke, relativ zur Grenze: \(String(format: "%.3f", weakest.ratio)) (\(weakest.description))")
+    }
+
     /// `.tint` glass with an explicit tint over every backdrop sample and sheen, both with the
     /// translucent fill and with the stronger fill of Reduce Transparency.
     private func tintedGlassSamples(
