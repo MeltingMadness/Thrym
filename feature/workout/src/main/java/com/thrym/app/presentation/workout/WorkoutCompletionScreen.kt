@@ -99,8 +99,10 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
     val remaining = rows.sumOf { it.openSlotCount() }
     // Records follow the workout's display order; the rows keep it also after a cold restore.
     val recordOrder = rows.filter { row -> row.sets.any { it.reps > 0 } }.map { it.exercise.id }.distinct()
-    val recordSummary = remember(recordInputs, recordOrder) {
-        recordInputs?.let { SessionRecords.summarize(session.id, recordOrder, it) }
+    // Bodyweight exercises count their weight as an added load: only weight and reps records.
+    val addedLoadIds = rows.filter { it.exercise.tracksAddedLoad }.map { it.exercise.id }.distinct()
+    val recordSummary = remember(recordInputs, recordOrder, addedLoadIds) {
+        recordInputs?.let { SessionRecords.summarize(session.id, recordOrder, it, addedLoadIds) }
     }
     // One haptic the first time the board shows records, not again after rotation or a restore.
     val haptic = rememberHapticFeedback()

@@ -37,18 +37,17 @@ import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.RecordType
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.model.WorkoutSet
-import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
 import com.thrym.app.presentation.common.UiStrings
 import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.rememberUiStrings
+import com.thrym.app.presentation.common.tracksAddedLoad
 import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.theme.AthleticNumber
 import com.thrym.app.presentation.theme.semantic
 import com.thrym.app.presentation.theme.semanticText
-import com.thrym.core.designsystem.R
 import com.thrym.feature.workout.R as WorkoutR
 import com.thrym.shared.workout.SessionExerciseRecords
 import com.thrym.shared.workout.SessionRecordLine
@@ -86,7 +85,7 @@ internal fun CompletionRecordsCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (summary.recordCount == 0) {
-                FirstBests(summary, exercisesById, setsById, unitSystem)
+                FirstBests(summary, exercisesById, setsById, strings, unitSystem)
             } else {
                 RecordsBoard(summary, exercisesById, setsById, strings, unitSystem)
             }
@@ -102,6 +101,7 @@ private fun FirstBests(
     summary: SessionRecordSummary,
     exercisesById: Map<Long, Exercise>,
     setsById: Map<Long, WorkoutSet>,
+    strings: UiStrings,
     unitSystem: UnitSystem
 ) {
     RecordsHeader(
@@ -112,10 +112,12 @@ private fun FirstBests(
     SectionDivider()
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         summary.exercises.forEach { records ->
+            val exercise = exercisesById[records.exerciseId]
             FirstBestRow(
-                name = exercisesById[records.exerciseId]?.localizedName().orEmpty(),
-                bestSet = records.bestSetId?.let(setsById::get),
-                unitSystem = unitSystem
+                name = exercise?.localizedName().orEmpty(),
+                bestSet = records.bestSetId?.let(setsById::get)?.let { set ->
+                    formatFirstBestSet(strings, set, unitSystem, addedLoad = exercise?.tracksAddedLoad == true)
+                }
             )
         }
     }
@@ -220,9 +222,10 @@ private fun ExerciseRecordsSection(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
+        val addedLoad = exercise?.tracksAddedLoad == true
         records.lines.forEach { line ->
             val type = recordTypeOf(line.type) ?: return@forEach
-            RecordLineRow(line, type, line.setId?.let(setsById::get), strings, unitSystem)
+            RecordLineRow(line, type, line.setId?.let(setsById::get), addedLoad, strings, unitSystem)
         }
     }
 }
@@ -232,20 +235,22 @@ private fun ExerciseRecordsSection(
  * ("Erstmals" in gold when the exercise had no value of this type). TalkBack reads the row as
  * one sentence, so the colour never carries the meaning alone. Large text (font scale from
  * [STACKED_RECORD_FONT_SCALE]) stacks label, value and chip, so neither squeezes the value.
+ * With [addedLoad] (a bodyweight exercise) loads read as the set does, "Körpergewicht + 12,5 kg".
  */
 @Composable
 private fun RecordLineRow(
     line: SessionRecordLine,
     type: RecordType,
     recordSet: WorkoutSet?,
+    addedLoad: Boolean,
     strings: UiStrings,
     unitSystem: UnitSystem
 ) {
     val label = stringResource(recordLabelRes(type))
-    val value = formatRecordValue(strings, type, line.value, unitSystem)
-    val context = formatRecordContext(strings, type, recordSet, unitSystem)
+    val value = formatRecordValue(strings, type, line.value, unitSystem, addedLoad)
+    val context = formatRecordContext(strings, type, recordSet, unitSystem, addedLoad)
     val delta = line.previous?.let { line.value - it }
-    val description = recordRowDescription(strings, type, line.value, context, delta, unitSystem)
+    val description = recordRowDescription(strings, type, line.value, context, delta, unitSystem, addedLoad)
     val valueStyle = MaterialTheme.typography.titleMedium.toSpanStyle()
         .copy(fontWeight = FontWeight.ExtraBold, fontFeatureSettings = "tnum", color = MaterialTheme.colorScheme.onSurface)
     val contextStyle = MaterialTheme.typography.bodyMedium.toSpanStyle()
@@ -326,10 +331,10 @@ private fun RecordChip(text: String, ink: Color, fill: Color) {
 
 /**
  * An exercise trained for the first time with its heaviest set: "Bankdrücken" over
- * "80 kg × 8 Wdh". Stacked, so a long value never squeezes the name.
+ * "80 kg × 8 Wdh" (see [formatFirstBestSet]). Stacked, so a long value never squeezes the name.
  */
 @Composable
-private fun FirstBestRow(name: String, bestSet: WorkoutSet?, unitSystem: UnitSystem) {
+private fun FirstBestRow(name: String, bestSet: String?) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -343,20 +348,9 @@ private fun FirstBestRow(name: String, bestSet: WorkoutSet?, unitSystem: UnitSys
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
-        bestSet?.let { set ->
-            val repsUnit = pluralStringResource(R.plurals.common_reps_unit, set.reps)
+        bestSet?.let {
             Text(
-                text = if (set.weightKg == 0.0) {
-                    stringResource(WorkoutR.string.workout_bodyweight_set_value, stringResource(R.string.weight_bodyweight), set.reps, repsUnit)
-                } else {
-                    stringResource(
-                        WorkoutR.string.workout_weighted_set_value,
-                        WeightFormatting.formatWeightNumber(set.weightKg, unitSystem, currentLocale()),
-                        WeightFormatting.unitLabel(unitSystem),
-                        set.reps,
-                        repsUnit
-                    )
-                },
+                text = it,
                 style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
                 fontWeight = FontWeight.ExtraBold
             )

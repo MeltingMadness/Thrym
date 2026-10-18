@@ -5,6 +5,7 @@ import com.thrym.app.presentation.common.UserMessageException
 import com.thrym.app.presentation.common.exerciseName
 import com.thrym.app.presentation.common.labelRes
 import com.thrym.app.presentation.common.toUserDetail
+import com.thrym.app.presentation.common.tracksAddedLoad
 import com.thrym.feature.workout.R as UxR
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -682,21 +683,23 @@ class ActiveWorkoutViewModel(
     /**
      * Emits one NewRecords event for the records a successful repository mutation beat, by the
      * shared rule [SessionRecords.liveImprovements]: an earlier best of another workout must
-     * fall, so the first workout of an exercise, a tie and a lowered edit stay quiet. The
+     * fall, so the first workout of an exercise, a tie and a lowered edit stay quiet. A
+     * bodyweight exercise counts its weight as an added load, so it has no e1RM record. The
      * repository owns record recalculation, so this never writes a record itself.
      */
     private suspend fun emitImprovedRecords(exerciseId: Long, setsBefore: List<RecordSetInput>) {
         try {
+            val exercise = exerciseRepository.getExerciseById(exerciseId) ?: return
+            val addedLoad = exercise.tracksAddedLoad
             val setsAfter = statisticsRepository.getSetsForExerciseList(exerciseId)
                 .map { it.toRecordInput(sessionFinished = false) }
-            val records = SessionRecords.liveImprovements(sessionId, setsBefore, setsAfter).mapNotNull { line ->
+            val records = SessionRecords.liveImprovements(sessionId, setsBefore, setsAfter, addedLoad).mapNotNull { line ->
                 val type = recordTypeOf(line.type) ?: return@mapNotNull null
                 // Live lines always have an earlier best; the rule drops them otherwise.
                 val previous = line.previous ?: return@mapNotNull null
-                LiveRecordUi(type = type, value = line.value, previous = previous)
+                LiveRecordUi(type = type, value = line.value, previous = previous, addedLoad = addedLoad)
             }
             if (records.isEmpty()) return
-            val exercise = exerciseRepository.getExerciseById(exerciseId) ?: return
             _events.emit(WorkoutEvent.NewRecords(strings.exerciseName(exercise), records))
         } catch (e: CancellationException) {
             throw e

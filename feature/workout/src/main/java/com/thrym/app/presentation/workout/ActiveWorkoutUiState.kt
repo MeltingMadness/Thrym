@@ -188,9 +188,13 @@ sealed class WorkoutEvent {
     data class SetDeleted(val setNumber: Int) : WorkoutEvent()
 }
 
-/** A record beaten during the workout: the new [value] and the best before this workout, in kg or reps. */
+/**
+ * A record beaten during the workout: the new [value] and the best before this workout, in kg or
+ * reps. [addedLoad] tells that the weight is the load on top of the body (a bodyweight exercise).
+ */
 data class LiveRecordUi(
     val type: RecordType,
     val value: Double,
-    val previous: Double
+    val previous: Double,
+    val addedLoad: Boolean = false
 )

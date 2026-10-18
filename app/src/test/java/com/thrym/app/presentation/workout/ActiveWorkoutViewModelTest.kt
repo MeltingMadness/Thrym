@@ -135,12 +135,19 @@ class ActiveWorkoutViewModelTest {
         return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statistics, progressionRepo, prefsRepo, strings = com.thrym.app.fakes.TestUiStrings)
     }
 
-    /** A set of [testExercise] as the statistics repository returns it for the record rules. */
-    private fun exerciseSet(id: Long, sessionId: Long, reps: Int, weightKg: Double, setType: SetType = SetType.NORMAL) =
+    /** A set of [testExercise] (or [exerciseId]) as the statistics repository returns it for the record rules. */
+    private fun exerciseSet(
+        id: Long,
+        sessionId: Long,
+        reps: Int,
+        weightKg: Double,
+        setType: SetType = SetType.NORMAL,
+        exerciseId: Long = testExercise.id
+    ) =
         WorkoutSet(
             id = id,
             sessionId = sessionId,
-            exerciseId = testExercise.id,
+            exerciseId = exerciseId,
             setNumber = 1,
             reps = reps,
             weightKg = weightKg,
@@ -312,8 +319,34 @@ class ActiveWorkoutViewModelTest {
             assertEquals(values.first, record.value, 1e-9)
             assertEquals(values.second, record.previous, 1e-9)
         }
+        assertTrue(event.records.none { it.addedLoad })
         coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
         coVerify(exactly = 0) { stats.getRecordsForExercisesList(any()) }
+
+        eventCollector.cancel()
+    }
+
+    @Test
+    fun `logSet bei Eigengewicht zaehlt das Gewicht als Zusatzlast und meldet kein e1RM`() = runTest {
+        val pullUp = Exercise(id = 2L, name = "Klimmzuege", primaryMuscleGroup = MuscleGroup.RUECKEN, category = ExerciseCategory.EIGENGEWICHT)
+        exerciseRepo.addExercise(pullUp)
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val earlier = exerciseSet(id = 50L, sessionId = 99L, reps = 8, weightKg = 10.0, exerciseId = pullUp.id)
+        val logged = exerciseSet(id = 51L, sessionId = sessionId, reps = 10, weightKg = 12.5, exerciseId = pullUp.id)
+        coEvery { stats.getSetsForExerciseList(pullUp.id) } returnsMany listOf(listOf(earlier), listOf(earlier, logged))
+        val vm = createViewModel(stats)
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
+
+        vm.logSet(exerciseId = pullUp.id, reps = 10, weightKg = 12.5)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Ein e1RM der Zusatzlast allein sagt nichts ueber die Uebung; die Meldung zeigt die Last.
+        val event = emitted.single() as WorkoutEvent.NewRecords
+        assertEquals(pullUp.name, event.exerciseName)
+        assertEquals(listOf(RecordType.MAX_WEIGHT, RecordType.MAX_REPS), event.records.map { it.type })
+        assertEquals(listOf(12.5 to 10.0, 10.0 to 8.0), event.records.map { it.value to it.previous })
+        assertTrue(event.records.all { it.addedLoad })
 
         eventCollector.cancel()
     }
