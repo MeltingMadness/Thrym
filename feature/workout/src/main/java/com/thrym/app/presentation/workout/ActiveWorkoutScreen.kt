@@ -80,6 +80,14 @@ import com.thrym.app.presentation.theme.thrymDimens
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
+/** One row of the Liquid Glass rest dock: a running timer and the exercise it belongs to. */
+private data class GlassRestDockRow(
+    val exerciseKey: WorkoutExerciseKey,
+    val stableKey: String,
+    val info: GlassPauseInfo,
+    val remainingSeconds: Long,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
@@ -341,7 +349,9 @@ fun ActiveWorkoutScreen(
                         end = dims.spacingMd,
                         top = dims.spacingMd,
                         bottom = if (liquidGlass && state.restTimers.isNotEmpty()) {
-                            dims.spacingMd + GlassDockReservedHeight
+                            // One dock row per running timer, capped so a superset series cannot
+                            // push the list off screen.
+                            dims.spacingMd + GlassDockReservedHeight * minOf(state.restTimers.size, 3).toFloat()
                         } else {
                             dims.spacingMd
                         }
@@ -423,31 +433,61 @@ fun ActiveWorkoutScreen(
                     }
                 }
             }
-            // Liquid Glass: the most recent rest timer shows as a dock and, when it starts,
-            // as the full-screen pause. Closing the pause keeps the timer running in the dock.
-            val latestRest = state.restTimers.entries.maxByOrNull { it.value.startTime }
-            if (liquidGlass && latestRest != null) {
-                val (restKey, restTimer) = latestRest
-                val restRow = state.exercisesWithSets.find { it.key == restKey }
-                val pauseInfo = GlassPauseInfo(
-                    timer = restTimer,
-                    exerciseName = restRow?.exercise?.localizedName().orEmpty(),
-                    nextSetNumber = (restRow?.sets?.count { it.reps > 0 } ?: 0) + 1
-                )
-                var pauseShownFor by rememberSaveable(restKey.stableListKey()) { mutableStateOf<Long?>(null) }
-                LaunchedEffect(restTimer.startTime) {
-                    if (restTimer.durationSeconds > 0 && pauseShownFor != restTimer.startTime.toEpochMilli()) {
-                        pauseShownFor = restTimer.startTime.toEpochMilli()
+            // Liquid Glass: every running rest timer stacks in the dock, shortest remaining time
+            // first. The full-screen pause opens for the first timer of a series and for the row
+            // the user taps; closing it keeps the timers running in the dock.
+            val restEntries = state.restTimers.entries.toList()
+            if (liquidGlass && restEntries.isNotEmpty()) {
+                val nowMillis = System.currentTimeMillis()
+                val dockRows = restEntries
+                    .map { (restKey, restTimer) ->
+                        val restRow = state.exercisesWithSets.find { it.key == restKey }
+                        GlassRestDockRow(
+                            exerciseKey = restKey,
+                            stableKey = restKey.stableListKey(),
+                            info = GlassPauseInfo(
+                                timer = restTimer,
+                                exerciseName = restRow?.exercise?.localizedName().orEmpty(),
+                                nextSetNumber = (restRow?.sets?.count { it.reps > 0 } ?: 0) + 1
+                            ),
+                            remainingSeconds = if (restTimer.durationSeconds > 0) {
+                                (restTimer.durationSeconds - (nowMillis - restTimer.startTime.toEpochMilli()) / 1000)
+                                    .coerceAtLeast(0)
+                            } else {
+                                Long.MAX_VALUE
+                            }
+                        )
+                    }
+                    .sortedBy { it.remainingSeconds }
+                val newestKey = restEntries.maxByOrNull { it.value.startTime }?.key?.stableListKey()
+                var pauseRowKey by rememberSaveable { mutableStateOf<String?>(null) }
+                val activeRow = dockRows.firstOrNull { it.stableKey == pauseRowKey }
+                    ?: dockRows.firstOrNull { it.stableKey == newestKey }
+                    ?: dockRows.first()
+                // A series begins with a single running timer, and only that one opens the pause by
+                // itself. Later timers of the same series wait in the dock instead of replacing the
+                // pause of the timer that is already running.
+                var pauseShownStarts by remember { mutableStateOf(emptySet<Long>()) }
+                LaunchedEffect(restEntries.size, activeRow.stableKey) {
+                    val startMillis = activeRow.info.timer.startTime.toEpochMilli()
+                    if (restEntries.size == 1 && activeRow.info.timer.durationSeconds > 0 && startMillis !in pauseShownStarts) {
+                        pauseShownStarts = pauseShownStarts + startMillis
                         pauseOpen = true
                     }
                 }
-                GlassRestDock(
-                    info = pauseInfo,
+                GlassRestDockStack(
+                    rows = dockRows.map { it.stableKey to it.info },
                     pauseLabel = stringResource(WorkoutR.string.workout_glass_pause),
                     skipLabel = stringResource(WorkoutR.string.workout_glass_pause_skip_short),
                     openLabel = stringResource(WorkoutR.string.workout_glass_pause_open),
-                    onOpen = { pauseOpen = true },
-                    onSkip = { viewModel.dismissRestTimer(restKey) },
+                    onOpen = { stableKey ->
+                        pauseRowKey = stableKey
+                        pauseOpen = true
+                    },
+                    onSkip = { stableKey ->
+                        dockRows.firstOrNull { it.stableKey == stableKey }
+                            ?.let { row -> viewModel.dismissRestTimer(row.exerciseKey) }
+                    },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(horizontal = dims.spacingMd, vertical = dims.spacingMd)
@@ -459,7 +499,7 @@ fun ActiveWorkoutScreen(
                     val context = LocalContext.current
                     val resources = LocalResources.current
                     GlassPauseScreen(
-                        info = pauseInfo,
+                        info = activeRow.info,
                         progressText = if (plannedSetCount > 0) {
                             pluralStringResource(
                                 R.plurals.workout_header_progress_planned,
@@ -491,11 +531,11 @@ fun ActiveWorkoutScreen(
                                 )
                             }
                         ),
-                        onMinus = { viewModel.adjustRestTimer(restKey, -15) },
-                        onPlus = { viewModel.adjustRestTimer(restKey, 30) },
+                        onMinus = { viewModel.adjustRestTimer(activeRow.exerciseKey, -15) },
+                        onPlus = { viewModel.adjustRestTimer(activeRow.exerciseKey, 30) },
                         onSkip = {
                             pauseOpen = false
-                            viewModel.dismissRestTimer(restKey)
+                            viewModel.dismissRestTimer(activeRow.exerciseKey)
                         },
                         onClose = { pauseOpen = false }
                     )

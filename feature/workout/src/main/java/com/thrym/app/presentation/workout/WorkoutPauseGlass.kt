@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -190,6 +191,41 @@ internal fun GlassRestDock(
             contentAlignment = Alignment.Center
         ) {
             Text(skipLabel, color = if (dark) PauseInk else Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+        }
+    }
+}
+
+/**
+ * Stacks one dock row per running rest timer, shortest remaining time first.
+ *
+ * The dock used to show only the newest timer, so logging a second exercise replaced the row of
+ * the first one and its pause disappeared from view while the timer kept running.
+ */
+@Composable
+internal fun GlassRestDockStack(
+    rows: List<Pair<String, GlassPauseInfo>>,
+    pauseLabel: String,
+    skipLabel: String,
+    openLabel: String,
+    onOpen: (String) -> Unit,
+    onSkip: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        rows.forEach { (rowKey, info) ->
+            key(rowKey) {
+                GlassRestDock(
+                    info = info,
+                    pauseLabel = pauseLabel,
+                    skipLabel = skipLabel,
+                    openLabel = openLabel,
+                    onOpen = { onOpen(rowKey) },
+                    onSkip = { onSkip(rowKey) }
+                )
+            }
         }
     }
 }
