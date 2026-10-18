@@ -36,6 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -141,15 +142,24 @@ fun ActiveWorkoutScreen(
     val exerciseGroups = state.exerciseGroups
     val reducedMotion = thrymMotion.reduced
 
+    // The list scrolls to the finish card once, when the athlete's own log or edit completes
+    // the plan. A tap arms the scroll together with the list it saw; the next list either
+    // completes the plan or disarms it, so a later undo or deload switch never scrolls.
+    // Plain arrays, because arming must not restart the effects below.
+    val finishScrollArmed = remember { booleanArrayOf(false) }
+    val finishScrollArmedFor = remember { arrayOfNulls<List<ExerciseWithSets>>(1) }
+
+    // Record messages still showing or waiting for the host. Undo must not wait behind them.
+    val recordNotices = remember { mutableListOf<Job>() }
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             // Each message gets its own coroutine, because a snackbar suspends until it is
             // dismissed and the collector must keep taking events meanwhile.
-            launch {
-                when (event) {
-                    is WorkoutEvent.NewRecords -> {
-                        val first = event.records.firstOrNull() ?: return@launch
-                        haptic.confirm()
+            when (event) {
+                is WorkoutEvent.NewRecords -> {
+                    val first = event.records.firstOrNull() ?: return@collect
+                    haptic.confirm()
+                    val notice = launch {
                         topSnackbarHostState.showSnackbar(
                             RecordSnackbarVisuals(
                                 title = liveRecordTitle(uiStrings, event),
@@ -157,16 +167,24 @@ fun ActiveWorkoutScreen(
                             )
                         )
                     }
-                    is WorkoutEvent.SetDeleted -> {
-                        // The host shows one message at a time; undo must not wait behind a
-                        // record message, so that one makes room.
-                        topSnackbarHostState.currentSnackbarData?.dismiss()
+                    recordNotices += notice
+                    notice.invokeOnCompletion { recordNotices -= notice }
+                }
+                is WorkoutEvent.SetDeleted -> {
+                    // The host shows one message at a time and queues the rest. Cancelling
+                    // dismisses the record message on screen and drops the queued ones, which
+                    // may also name the set that was just deleted.
+                    recordNotices.toList().forEach { it.cancel() }
+                    launch {
                         val result = topSnackbarHostState.showSnackbar(
                             message = context.getString(R.string.workout_set_deleted, event.setNumber),
                             actionLabel = context.getString(R.string.common_undo),
                             duration = SnackbarDuration.Long
                         )
-                        if (result == SnackbarResult.ActionPerformed) viewModel.undoDeleteSet()
+                        if (result == SnackbarResult.ActionPerformed) {
+                            finishScrollArmed[0] = false
+                            viewModel.undoDeleteSet()
+                        }
                     }
                 }
             }
@@ -305,12 +323,22 @@ fun ActiveWorkoutScreen(
                 val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
                 val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
                 val allPlannedDone = state.exercisesWithSets.allPlannedSetsDone()
-                // The list scrolls to the finish card once, when the athlete's own log or edit
-                // completes the plan; reopening a finished plan, undo or a deload switch leave it
-                // where it is. A plain array, because arming must not restart the effect.
-                val finishScrollArmed = remember { booleanArrayOf(false) }
+                // Reopening a finished plan, undo or a deload switch leave the list where it is.
                 val allPlannedDoneNow by rememberUpdatedState(allPlannedDone)
-                val armFinishScroll = { if (!allPlannedDoneNow) finishScrollArmed[0] = true }
+                val currentExercisesWithSets by rememberUpdatedState(state.exercisesWithSets)
+                val armFinishScroll = {
+                    if (!allPlannedDoneNow) {
+                        finishScrollArmed[0] = true
+                        finishScrollArmedFor[0] = currentExercisesWithSets
+                    }
+                }
+                // A new list that leaves a slot open ends the arming: that log or edit did not
+                // complete the plan.
+                LaunchedEffect(state.exercisesWithSets) {
+                    if (!allPlannedDone && finishScrollArmedFor[0] != state.exercisesWithSets) {
+                        finishScrollArmed[0] = false
+                    }
+                }
                 // Keyed on the result alone, so the scroll waits for the new set from the
                 // database rather than for the tap.
                 LaunchedEffect(allPlannedDone) {
