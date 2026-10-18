@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Card at the end of the workout list once every planned set is logged. -->
+    <plurals name="workout_finish_card_title">
+        <item quantity="one">%1$d planned set done</item>
+        <item quantity="other">All %1$d planned sets done</item>
+    </plurals>
+</resources>

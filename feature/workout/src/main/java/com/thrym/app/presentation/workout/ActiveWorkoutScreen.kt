@@ -33,7 +33,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.runtime.rememberCoroutineScope
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
 import com.thrym.app.presentation.theme.accentText
@@ -48,8 +50,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
@@ -292,6 +296,27 @@ fun ActiveWorkoutScreen(
                     val index = exerciseGroups.indexOfFirst { it.key == focusGroupKey }
                     if (index > 0) listState.animateScrollToItem(index)
                 }
+                val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
+                val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
+                val allPlannedDone = state.exercisesWithSets.allPlannedSetsDone()
+                // The list scrolls to the finish card once, when the athlete's own log or edit
+                // completes the plan; reopening a finished plan, undo or a deload switch leave it
+                // where it is. A plain array, because arming must not restart the effect.
+                val finishScrollArmed = remember { booleanArrayOf(false) }
+                val allPlannedDoneNow by rememberUpdatedState(allPlannedDone)
+                val armFinishScroll = { if (!allPlannedDoneNow) finishScrollArmed[0] = true }
+                // Keyed on the result alone, so the scroll waits for the new set from the
+                // database rather than for the tap.
+                LaunchedEffect(allPlannedDone) {
+                    if (!allPlannedDone || !finishScrollArmed[0]) return@LaunchedEffect
+                    finishScrollArmed[0] = false
+                    // The blocks, "Übung hinzufügen", then the card.
+                    val index = exerciseGroups.size + 1
+                    withTimeoutOrNull(1_000) {
+                        snapshotFlow { listState.layoutInfo.totalItemsCount }.first { it > index }
+                    } ?: return@LaunchedEffect
+                    if (reducedMotion) listState.scrollToItem(index) else listState.animateScrollToItem(index)
+                }
                 val moveControls: (Int) -> ExerciseMoveControls = { groupIndex ->
                     val group = exerciseGroups[groupIndex]
                     val move: (SessionOrderMove) -> Unit = { direction ->
@@ -321,8 +346,6 @@ fun ActiveWorkoutScreen(
                 }
                 val railScope = rememberCoroutineScope()
                 activeSession?.let { session ->
-                    val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
-                    val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
                     val loggedSetCount = state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }
                     val loggedVolumeKg = state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }
                     if (liquidGlass) {
@@ -476,6 +499,7 @@ fun ActiveWorkoutScreen(
                                         setIntentionsLoaded = state.setIntentionsLoaded,
                                         setIntentionsFailed = state.setIntentionsFailed,
                                         onLogSet = { reps, weight, setType, intensity, submissionId, intention ->
+                                            armFinishScroll()
                                             viewModel.logSet(
                                                 key = exerciseWithSets.key,
                                                 exerciseId = exerciseWithSets.exercise.id,
@@ -490,7 +514,10 @@ fun ActiveWorkoutScreen(
                                                 intention = intention ?: SetIntention.UNKNOWN
                                             )
                                         },
-                                        onUpdateSet = viewModel::updateSet,
+                                        onUpdateSet = { setId, reps, weight, intensity, intention ->
+                                            armFinishScroll()
+                                            viewModel.updateSet(setId, reps, weight, intensity, intention)
+                                        },
                                         onDeleteSet = viewModel::deleteSet,
                                         haptic = haptic,
                                         // Superset members move with their block from the header.
@@ -519,6 +546,18 @@ fun ActiveWorkoutScreen(
                     )
                 }
 
+                    }
+                    // Last, so it never sits between the exercises; the bottom padding keeps it
+                    // above the rest dock.
+                    if (allPlannedDone) {
+                        item(key = "finish-workout", contentType = "finish") {
+                            WorkoutFinishCard(
+                                plannedSetCount = plannedSetCount,
+                                onFinish = viewModel::showFinishDialog,
+                                modifier = (if (reducedMotion) Modifier else Modifier.animateItem())
+                                    .testTag("workout_finish_card")
+                            )
+                        }
                     }
                 }
             }

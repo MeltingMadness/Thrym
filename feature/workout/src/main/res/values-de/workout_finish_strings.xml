@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="workout_finish_card_title">
+        <item quantity="one">%1$d geplanter Satz geschafft</item>
+        <item quantity="other">Alle %1$d geplanten Sätze geschafft</item>
+    </plurals>
+</resources>

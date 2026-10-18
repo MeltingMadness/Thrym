@@ -38,6 +38,13 @@ internal fun ExerciseWithSets.openSlotCount(): Int {
     return PlannedSets.matchedIndices(slots, sets.filter { it.reps > 0 }.map { it.setType.name }).count { it == null }
 }
 
+/**
+ * True when the workout has planned sets and none of them is open. A free workout has no last
+ * set and never is. Ad-hoc rows and sets beyond the plan change nothing.
+ */
+internal fun List<ExerciseWithSets>.allPlannedSetsDone(): Boolean =
+    sumOf { it.planTarget?.loggingSlots()?.size ?: 0 } > 0 && sumOf { it.openSlotCount() } == 0
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, error: String?, onContinue: () -> Unit, onFinish: () -> Unit) {
