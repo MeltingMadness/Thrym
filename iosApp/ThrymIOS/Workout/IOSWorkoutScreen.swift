@@ -85,6 +85,19 @@ struct IOSWorkoutExerciseRow: Identifiable, Equatable {
     }
 }
 
+extension Array where Element == IOSWorkoutExerciseRow {
+    /// Planned sets of the workout, after the deload mode is applied.
+    var plannedSetCount: Int { reduce(0) { $0 + $1.loggingSlots.count } }
+
+    /// True once a workout with planned sets has none open; same rule as Android's
+    /// `allPlannedSetsDone()`. A free workout never is. Ad-hoc rows, extra, drop and
+    /// unplanned warm-up sets change nothing, a planned warm-up slot must be filled, and a
+    /// target without slots does not count as done on its own.
+    var allPlannedSetsDone: Bool {
+        plannedSetCount > 0 && reduce(0) { $0 + ($1.remainingPlannedSets ?? 0) } == 0
+    }
+}
+
 /// A render-only block of the workout list, built by `IOSWorkoutExerciseLayout`: a
 /// superset is rendered only when at least two target snapshots that are adjacent in
 /// the default order carry the same group id. Rows that carry an isolated or
@@ -130,6 +143,8 @@ struct IOSWorkoutScreen: View {
     @State private var deletedIntention: ILSetIntention = .unknown
     @State private var undoToken: UUID?
     @State private var isRestoringSet = false
+    /// Counts the saves that completed the plan; each change scrolls to the finish card once.
+    @State private var finishScrollRequest = 0
 
     private var data: ILTrainingData? { store.data }
 
@@ -319,6 +334,7 @@ struct IOSWorkoutScreen: View {
         let layout = exerciseLayout(session: session, data: data)
         let rows = layout.rows
         let liquidGlass = appearance == .liquidGlass
+        let allPlannedSetsDone = rows.allPlannedSetsDone
         ScrollViewReader { proxy in
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
@@ -365,8 +381,17 @@ struct IOSWorkoutScreen: View {
                 }
                 .buttonStyle(.bordered)
                 .padding(.horizontal)
-                .padding(.bottom, 24)
+                .padding(.bottom, allPlannedSetsDone ? 8 : 24)
                 .accessibilityHint("Öffnet die Suche nach einer weiteren Übung")
+
+                if allPlannedSetsDone {
+                    IOSWorkoutFinishCard(plannedSetCount: rows.plannedSetCount) {
+                        showingFinishConfirmation = true
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 24)
+                    .id("workout-finish")
+                }
             }
             .padding(.top, 8)
         }
@@ -387,17 +412,32 @@ struct IOSWorkoutScreen: View {
                 .buttonStyle(.bordered)
                 .tint(.red)
 
-                Button {
+                let finishButton = Button {
                     showingFinishConfirmation = true
                 } label: {
                     Label("Beenden", systemImage: "checkmark.circle.fill")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent).thrymButtonText()
+                // While the finish card shows, it is the one prominent finish action.
+                if allPlannedSetsDone {
+                    finishButton.buttonStyle(.bordered)
+                } else {
+                    finishButton.buttonStyle(.borderedProminent).thrymButtonText()
+                }
             }
             .padding(.horizontal)
             .padding(.vertical, 10)
             .background(.thinMaterial)
+            }
+        }
+        .onChange(of: finishScrollRequest) { _, _ in
+            // The card is the last item of the lazy stack: let it appear for one turn, then
+            // scroll it above the dock or bar.
+            Task { @MainActor in
+                await Task.yield()
+                withAnimation(reduceMotion || theme.reducedMotion ? nil : .snappy) {
+                    proxy.scrollTo("workout-finish", anchor: .bottom)
+                }
             }
         }
         }
@@ -822,12 +862,22 @@ struct IOSWorkoutScreen: View {
     }
 
     private func saveSet(_ set: ILWorkoutSet, intention: ILSetIntention) async -> Bool {
+        // Only the athlete's own log or edit that completes the plan scrolls to the finish
+        // card. Reopening a complete workout, an undo or a deload switch never does.
+        let session = activeSession
+        let wasDone = session.flatMap { session in
+            data.map { exerciseRows(session: session, data: $0).allPlannedSetsDone }
+        } ?? true
         let success = await store.saveSet(set, intention: intention)
         guard success else {
             localErrorMessage = store.errorMessage ?? String(localized: "Der Satz konnte nicht gespeichert werden.")
             return false
         }
         store.errorMessage = nil
+        if !wasDone, let session, let data = store.data,
+           exerciseRows(session: session, data: data).allPlannedSetsDone {
+            finishScrollRequest &+= 1
+        }
 
         // Android keeps one timer per exercise key. A warmup or the final planned
         // work set removes only that row's timer; another superset member keeps

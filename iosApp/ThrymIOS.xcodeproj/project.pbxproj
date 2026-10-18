@@ -65,6 +65,7 @@
 		A34F1E6FCF6645B47823A4BD /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B637839ED260DCCEDE13908 /* RootView.swift */; };
 		A359F9A2E3DD08D667DECB2F /* IOSWorkoutPlateVisualizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBEFC0D1E525226E333CCE8 /* IOSWorkoutPlateVisualizer.swift */; };
 		A68322B3D55169D67795DC0A /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */; };
+		A97093544530815132F7E8B7 /* IOSWorkoutFinishCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80AEE8232159C992682399E7 /* IOSWorkoutFinishCard.swift */; };
 		B25A42A3B60E8077DAB716E0 /* Readiness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD65B83BB36D7689497F892 /* Readiness.swift */; };
 		B64146B4A52DDB3852663236 /* BinaryFileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C550CDDEA21B550C78312E /* BinaryFileDocument.swift */; };
 		BA3968065D314047D901169A /* IOSSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA98C683E5E4AF013C34F55 /* IOSSettingsViewModel.swift */; };
@@ -139,6 +140,7 @@
 		7838DB869BCC15E07679638E /* BackupBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupBridgeTests.swift; sourceTree = "<group>"; };
 		7CF45EE706088987B53B2E57 /* Geist-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Black.ttf; sourceTree = "<group>"; };
 		7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Exercises.xcstrings; sourceTree = "<group>"; };
+		80AEE8232159C992682399E7 /* IOSWorkoutFinishCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutFinishCard.swift; sourceTree = "<group>"; };
 		89590DC86A5380D96E31FBB3 /* ThrymLiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymLiquidGlass.swift; sourceTree = "<group>"; };
 		8B637839ED260DCCEDE13908 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		8D66E0D6C780D99643A8D982 /* Geist-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-ExtraBold.ttf; sourceTree = "<group>"; };
@@ -307,6 +309,7 @@
 			EB00E307D3548D90E540F3DF /* IOSWorkoutExerciseCard.swift */,
 			C9A94F09FE9DDE2A4B0E63C7 /* IOSWorkoutExerciseOrder.swift */,
 			33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */,
+			80AEE8232159C992682399E7 /* IOSWorkoutFinishCard.swift */,
 			08B61A56EC5B76B344A0B6AB /* IOSWorkoutFormatting.swift */,
 			BDB3991D700CD049F4D8846D /* IOSWorkoutGlass.swift */,
 			304F02263B0983D46806548F /* IOSWorkoutNextSetCoach.swift */,
@@ -551,6 +554,7 @@
 				C93BCDFF2B67C400BF140E7D /* IOSWorkoutExerciseCard.swift in Sources */, 
 				9155D65323CBCC2FDBDA47B2 /* IOSWorkoutExerciseOrder.swift in Sources */, 
 				4EDC10180EC500E2E49FA0B7 /* IOSWorkoutExercisePicker.swift in Sources */, 
+				A97093544530815132F7E8B7 /* IOSWorkoutFinishCard.swift in Sources */, 
 				5B3A946D7318148052FC8A9E /* IOSWorkoutFormatting.swift in Sources */, 
 				DC4B7B772C7F3455EECB3D76 /* IOSWorkoutGlass.swift in Sources */, 
 				3A17CDA0D882CA60C7918F94 /* IOSWorkoutNextSetCoach.swift in Sources */, 

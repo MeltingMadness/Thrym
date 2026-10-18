@@ -401,6 +401,37 @@ struct ThrymTheme {
     }
 }
 
+/// Text-safe success and warning colors, the iOS counterpart of Android's `semanticText`.
+///
+/// The palette's `success` and `warning` are scheme accents: blue in Raster, neon mint in
+/// Tide and pink in Pulse, and some fail 4.5:1 as text on a light surface. These values do
+/// not depend on the scheme, only on light or dark, so gold and green read the same in
+/// every scheme and on both platforms. `ThemeContrastTests` checks them.
+struct ThrymSemanticInk {
+    /// Text and icons.
+    let success: Color
+    let warning: Color
+    /// Tints of the surfaces behind that text: glass tint, faint fills and edges.
+    let successFill: Color
+    let warningFill: Color
+
+    static func forDark(_ dark: Bool) -> ThrymSemanticInk {
+        dark
+            ? ThrymSemanticInk(
+                success: .thrymHex(0x86F0C7),
+                warning: .thrymHex(0xFFD166),
+                successFill: .thrymHex(0x34D399),
+                warningFill: .thrymHex(0xFBBF24)
+            )
+            : ThrymSemanticInk(
+                success: .thrymHex(0x14532D),
+                warning: .thrymHex(0x78350F),
+                successFill: .thrymHex(0x166534),
+                warningFill: .thrymHex(0x92400E)
+            )
+    }
+}
+
 private struct ThrymThemeEnvironmentKey: EnvironmentKey {
     static let defaultValue = ThrymTheme.ember
 }

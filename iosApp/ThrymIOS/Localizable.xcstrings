@@ -2487,6 +2487,46 @@
         }
       }
     },
+    "Alle %lld geplanten Sätze geschafft": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld geplanter Satz geschafft"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Alle %lld geplanten Sätze geschafft"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld planned set done"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "All %lld planned sets done"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Alle Angaben sind freiwillig. Eine nicht beantwortete Zeile bleibt offen und wird nicht als Wert gespeichert.": {
       "localizations": {
         "de": {
