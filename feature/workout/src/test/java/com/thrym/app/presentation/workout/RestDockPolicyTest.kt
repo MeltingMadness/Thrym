@@ -108,4 +108,16 @@ class RestDockPolicyTest {
         assertNull(decision.openKey)
         assertEquals(listOf(2_000L, 3_000L), decision.seenStarts)
     }
+
+    @Test
+    fun `dock covers at most half of the list and shows at least one row`() {
+        // Portrait phone: three rows (244 dp) fit into half of a 700 dp list minus 2 x 16 dp padding.
+        assertEquals(3, visibleRestDockRows(listHeightDp = 700f, outerPaddingDp = 16f))
+        // Two rows need 160 dp, i.e. a list of at least 384 dp.
+        assertEquals(2, visibleRestDockRows(listHeightDp = 400f, outerPaddingDp = 16f))
+        // Landscape phone: the list is about 230 dp high, so only one row stays visible.
+        assertEquals(1, visibleRestDockRows(listHeightDp = 230f, outerPaddingDp = 16f))
+        // Before the list is measured the dock still shows its first row.
+        assertEquals(1, visibleRestDockRows(listHeightDp = 0f, outerPaddingDp = 16f))
+    }
 }

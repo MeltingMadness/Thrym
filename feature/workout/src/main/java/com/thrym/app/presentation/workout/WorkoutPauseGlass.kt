@@ -209,14 +209,15 @@ internal fun GlassRestDockStack(
     openLabel: String,
     onOpen: (String) -> Unit,
     onSkip: (String) -> Unit,
+    visibleRows: Int,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = GlassDockMaxHeight)
+            .heightIn(max = REST_DOCK_ROW_HEIGHT_DP.dp * visibleRows + REST_DOCK_ROW_SPACING_DP.dp * (visibleRows - 1))
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(REST_DOCK_ROW_SPACING_DP.dp)
     ) {
         rows.forEach { (rowKey, info) ->
             key(rowKey) {
@@ -425,5 +426,3 @@ private fun PauseGlassButton(text: String, description: String, onClick: () -> U
     }
 }
 
-// Each row is at least 60 dp + 8 dp padding on both sides, with 8 dp between rows.
-private val GlassDockMaxHeight = 76.dp * 3 + 8.dp * 2

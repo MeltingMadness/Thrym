@@ -121,6 +121,7 @@ fun ActiveWorkoutScreen(
     var seenRestStarts by rememberSaveable { mutableStateOf(listOf<Long>()) }
     var restStartsInitialized by remember { mutableStateOf(false) }
     var dockHeight by remember { mutableStateOf(0.dp) }
+    var listHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
     val currentRestTimers by rememberUpdatedState(state.restTimers)
 
@@ -353,7 +354,9 @@ fun ActiveWorkoutScreen(
 
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .onSizeChanged { size -> listHeight = with(density) { size.height.toDp() } },
                     verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
                     contentPadding = PaddingValues(
                         start = dims.spacingMd,
@@ -457,6 +460,8 @@ fun ActiveWorkoutScreen(
                     return@LaunchedEffect
                 }
                 restStartsInitialized = true
+                // Two timer changes within one frame arrive as one snapshot. If B starts just before
+                // A ends, B can open as if it had started alone; the window is a single frame.
                 val decision = decideRestDockStart(seenRestStarts, state.restTimers)
                 seenRestStarts = decision.seenStarts
                 if (resolvePinnedRestRow(pauseRowKey, state.restTimers, System.currentTimeMillis()) == null) {
@@ -490,6 +495,7 @@ fun ActiveWorkoutScreen(
                             viewModel.dismissRestTimer(row.exerciseKey)
                         }
                     },
+                    visibleRows = visibleRestDockRows(listHeight.value, dims.spacingMd.value),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .onSizeChanged { size -> dockHeight = with(density) { size.height.toDp() } }

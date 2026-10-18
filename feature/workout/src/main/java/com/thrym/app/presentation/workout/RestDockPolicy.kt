@@ -8,6 +8,11 @@ internal data class RestDockRow(
     val remainingSeconds: Long
 )
 
+// One dock row is at least 60 dp plus 8 dp padding on both sides, with 8 dp between rows.
+internal const val REST_DOCK_ROW_HEIGHT_DP = 76f
+internal const val REST_DOCK_ROW_SPACING_DP = 8f
+private const val MAX_VISIBLE_REST_DOCK_ROWS = 3
+
 internal data class RestDockStartDecision(
     val seenStarts: List<Long>,
     val openKey: WorkoutExerciseKey?
@@ -69,3 +74,13 @@ private fun restDockRow(key: WorkoutExerciseKey, timer: RestTimerUi, nowMillis: 
             Long.MAX_VALUE
         }
     )
+
+/**
+ * How many dock rows fit at once. The dock covers at most half of the workout list, so a short
+ * window (a phone in landscape) still leaves room to log a set; further rows scroll in the dock.
+ */
+internal fun visibleRestDockRows(listHeightDp: Float, outerPaddingDp: Float): Int {
+    val available = listHeightDp / 2f - outerPaddingDp * 2f
+    val rows = ((available + REST_DOCK_ROW_SPACING_DP) / (REST_DOCK_ROW_HEIGHT_DP + REST_DOCK_ROW_SPACING_DP)).toInt()
+    return rows.coerceIn(1, MAX_VISIBLE_REST_DOCK_ROWS)
+}
