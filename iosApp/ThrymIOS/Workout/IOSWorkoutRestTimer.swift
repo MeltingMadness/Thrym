@@ -24,9 +24,11 @@ struct IOSWorkoutRestTimer: Codable, Equatable, Identifiable {
         return max(0, Int((now - startedAtEpochMillis) / 1_000))
     }
 
-    var hasElapsed: Bool {
+    var hasElapsed: Bool { hasElapsed(at: Date()) }
+
+    func hasElapsed(at date: Date) -> Bool {
         guard let deadlineEpochMillis else { return false }
-        return Int64(Date().timeIntervalSince1970 * 1_000) >= deadlineEpochMillis
+        return Int64(date.timeIntervalSince1970 * 1_000) >= deadlineEpochMillis
     }
 
     /// Countdown shifted by `deltaSeconds` ("−15 s" / "+30 s"). A shortened timer never
@@ -63,6 +65,49 @@ struct IOSWorkoutRestTimer: Codable, Equatable, Identifiable {
             deadlineEpochMillis: deadline,
             durationSeconds: max(0, durationSeconds)
         )
+    }
+}
+
+/// Rules of the Liquid Glass rest dock, which shows one row per running timer.
+enum IOSWorkoutRestDock {
+    /// Countdowns first, shortest remaining time on top; count-up timers follow
+    /// in start order. Remaining time orders like the deadline, so the order
+    /// only changes when a timer starts, moves or ends, not every second.
+    static func ordered<Timers: Collection>(_ timers: Timers) -> [IOSWorkoutRestTimer]
+    where Timers.Element == IOSWorkoutRestTimer {
+        timers.sorted { lhs, rhs in
+            switch (lhs.deadlineEpochMillis, rhs.deadlineEpochMillis) {
+            case let (left?, right?) where left != right:
+                return left < right
+            case (.some, nil):
+                return true
+            case (nil, .some):
+                return false
+            default:
+                return lhs.startedAtEpochMillis == rhs.startedAtEpochMillis
+                    ? lhs.rowKey < rhs.rowKey
+                    : lhs.startedAtEpochMillis < rhs.startedAtEpochMillis
+            }
+        }
+    }
+
+    /// Whether `started` opens the full-screen pause by itself. Only a countdown
+    /// does, and only when it begins a series (no other exercise has a countdown
+    /// still running) or when it is the next set of an exercise that already has
+    /// a timer. A second superset exercise therefore stays in the dock. Timers
+    /// that end or are removed never call this, so they never open the pause.
+    ///
+    /// - Parameter running: the timers before `started` replaces its row's timer.
+    static func opensPause(
+        starting started: IOSWorkoutRestTimer,
+        running: [String: IOSWorkoutRestTimer],
+        now: Date = Date()
+    ) -> Bool {
+        guard started.isCountdown else { return false }
+        if running[started.rowKey] != nil { return true }
+        return !running.values.contains { timer in
+            timer.rowKey != started.rowKey && timer.isCountdown && !timer.hasElapsed(at: now)
+        }
     }
 }
 

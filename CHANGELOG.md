@@ -2,7 +2,7 @@
 
 ## Unveröffentlicht
 
-- Android-Workout (Liquid Glass): Laufen mehrere Pausen gleichzeitig (z. B. im Supersatz), zeigt das Dock jeden Countdown als eigene Zeile, kürzeste Restzeit zuerst. Die Vollbild-Pause öffnet sich nur noch zu Beginn einer Pause ohne weitere laufende Timer und schließt sich, wenn ihr Timer endet.
+- Liquid Glass (Android und iOS): Laufen mehrere Pausen-Countdowns (etwa im Supersatz), zeigt das Dock jeden als eigene Zeile, die kürzeste Restzeit oben; hochzählende Timer teilen sich eine Zeile. Bei mehr Zeilen, als Platz ist, scrollt der Stapel, statt das Training zu verdecken. Bisher war nur der zuletzt gestartete Timer zu sehen, die übrigen liefen unsichtbar weiter. Die Vollbild-Pause öffnet sich von selbst nur noch, wenn nach dem Start nur dieser eine Countdown läuft. Sie bleibt bei ihrer Übung, springt also nicht zu einer anderen, schließt sich, wenn ihr Timer endet, und öffnet sich nicht, wenn ein Timer abläuft oder übersprungen wird. Ein Tipp auf eine Dock-Zeile öffnet die Pause dieser Übung.
 - Open Source: Apache-2.0-Lizenz und NOTICE. Der Code steht unter Apache-2.0; Name „Thrym“, Logo und App-Icon sind nicht für Forks lizenziert.
 - Neuer App-Name: **Thrym** (vorher IronLog). Der sichtbare Name steht nur noch in `branding.properties` und gilt für Android und iOS (Startbildschirm, Willkommenstext, Incident-Betreff, iOS-Erinnerungen).
 - Neues App-Icon und Logo „Gestufter Dorn“: die Rune ᚦ, gebaut aus Hantelscheiben, auf Amber. Android mit adaptivem Icon und Themed Icon ab Android 13, iOS mit den Varianten Dunkel und Getönt ab iOS 18. Der Android-Startbildschirm zeigt das Zeichen auf einem Amber-Kreis; der Kreis fehlte bisher, weil das Splash-Theme die Hintergrundfarbe des Icons ignorierte. Quellen und Markenregeln in `docs/brand/`.
@@ -15,6 +15,7 @@
 - Persönliche Skripte, Notizen, Mockups und Screenshots aus dem Repository entfernt.
 - Technische Basis aktualisiert (Kotlin 2.4, Compose 1.12, compileSdk 37, Vico 3). Android-Einstellungen: Abschnittstitel werden nach der App-Sprache großgeschrieben statt nach der Gerätesprache.
 - iOS-Rekorde: Das Beenden eines Trainings mit mehreren Übungen konnte mit „Invalid workout state: Backup contains duplicate personal record id“ scheitern, weil ein neuer Rekord die ID eines bestehenden bekam. Neue Rekorde bekommen jetzt immer eine freie ID, bestehende behalten ihre. Gespeicherte Daten waren nicht betroffen.
+- iOS, Liquid Glass: Laufen mehrere Pausen-Timer (etwa im Supersatz), zeigt das Dock jeden als eigene Zeile, die kürzeste Restzeit oben; ab vier Timern scrollt der Stapel, statt das Training zu verdecken. Bisher war nur der zuletzt gestartete Timer zu sehen, die übrigen liefen unsichtbar weiter. Die Vollbild-Pause öffnet sich von selbst nur noch beim ersten Countdown einer Serie oder beim nächsten Satz derselben Übung. Sie springt nicht mehr zu einer anderen Übung und öffnet sich nicht, wenn ein Timer abläuft oder übersprungen wird. Ein Tipp auf eine Dock-Zeile öffnet die Pause dieser Übung.
 
 ## 1.4.0 (Android versionCode 9 / iOS Build 4) – Polish und Parität · 26.09.2026
 

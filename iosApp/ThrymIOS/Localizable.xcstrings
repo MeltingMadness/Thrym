@@ -10530,6 +10530,22 @@
         }
       }
     },
+    "Pause für %@ überspringen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause für %@ überspringen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip rest for %@"
+          }
+        }
+      }
+    },
     "Pause läuft": {
       "localizations": {
         "de": {

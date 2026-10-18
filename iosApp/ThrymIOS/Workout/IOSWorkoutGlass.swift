@@ -273,9 +273,10 @@ struct IOSWorkoutGlassPrimaryButtonStyle: ButtonStyle {
     }
 }
 
-/// Ends a countdown like the Ember timer card: one success haptic, then
-/// `onComplete` (which dismisses the timer). Liquid Glass shows timers in the dock
-/// and pause screen, so this carries the end-of-rest behavior without visible UI.
+/// Reports the end of a countdown once via `onComplete`, which plays the haptic
+/// and dismisses the timer. Liquid Glass shows timers in the dock and pause
+/// screen, so this carries the end-of-rest behavior without visible UI. More
+/// than one watcher may report the same timer; the handler ignores repeats.
 struct IOSWorkoutRestCompletionWatcher: View {
     let timer: IOSWorkoutRestTimer
     let onComplete: () -> Void
@@ -304,9 +305,6 @@ struct IOSWorkoutRestCompletionWatcher: View {
     private func completeIfElapsed() {
         guard timer.isCountdown, timer.hasElapsed, !didComplete else { return }
         didComplete = true
-        let feedback = UINotificationFeedbackGenerator()
-        feedback.prepare()
-        feedback.notificationOccurred(.success)
         onComplete()
     }
 }
@@ -315,8 +313,8 @@ private func pauseClock(_ seconds: Int) -> String {
     String(format: "%d:%02d", max(0, seconds) / 60, max(0, seconds) % 60)
 }
 
-/// Floating glass dock with a mini ring for the running rest: tap opens the
-/// pause screen, "Überspringen" ends the rest right away.
+/// Floating glass dock row with a mini ring for one running rest: tap opens
+/// that rest's pause screen, "Überspringen" ends it right away.
 struct IOSWorkoutGlassRestDock: View {
     let timer: IOSWorkoutRestTimer
     let exerciseName: String
@@ -352,9 +350,10 @@ struct IOSWorkoutGlassRestDock: View {
                                 .font(.geist(.caption, weight: .bold))
                                 .tracking(0.8)
                                 .thrymSecondaryText()
+                            // Two lines: with several rows the name tells them apart.
                             Text(exerciseName)
                                 .font(.geist(.subheadline, weight: .heavy))
-                                .lineLimit(1)
+                                .lineLimit(2)
                         }
                         Spacer(minLength: 0)
                     }
@@ -372,12 +371,71 @@ struct IOSWorkoutGlassRestDock: View {
                         .background(dark ? Color.white : glassInk, in: Capsule())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Pause für \(exerciseName) überspringen")
             }
             .padding(8)
             .liquidGlass(.strong, in: RoundedRectangle(cornerRadius: 36, style: .continuous))
         }
-        .padding(.horizontal, 16)
+    }
+}
+
+/// All running rests as dock rows, in the order the caller passes (see
+/// `IOSWorkoutRestDock.ordered`). Each row keeps its identity per exercise row.
+/// Above `maxHeight` the stack scrolls, so many timers never cover the workout.
+/// The screen puts the stack in its bottom safe-area inset, so the list can
+/// always scroll its last action above the stack.
+struct IOSWorkoutGlassRestDockStack: View {
+    struct Entry: Identifiable {
+        let timer: IOSWorkoutRestTimer
+        let exerciseName: String
+        var id: String { timer.rowKey }
+    }
+
+    let entries: [Entry]
+    let maxHeight: CGFloat
+    let onOpen: (IOSWorkoutRestTimer) -> Void
+    let onSkip: (IOSWorkoutRestTimer) -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.thrymTheme) private var theme
+
+    /// A dock row is the 56 pt ring plus 8 pt padding above and below.
+    static let rowHeight: CGFloat = 72
+    static let rowSpacing: CGFloat = 8
+
+    /// Three rows and half of a fourth: from four timers on, the cut row shows
+    /// that the stack scrolls. On short screens at most 40 % of the height.
+    static func maxHeight(viewportHeight: CGFloat) -> CGFloat {
+        let preferred = 3.5 * rowHeight + 3 * rowSpacing
+        guard viewportHeight > 0 else { return preferred }
+        return min(preferred, (viewportHeight * 0.4).rounded(.down))
+    }
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            rows
+            ScrollView {
+                rows
+            }
+            .scrollIndicatorsFlash(onAppear: true)
+        }
+        .frame(maxHeight: maxHeight)
         .padding(.bottom, 8)
+        .animation(reduceMotion || theme.reducedMotion ? nil : .snappy, value: entries.map(\.id))
+    }
+
+    private var rows: some View {
+        VStack(spacing: Self.rowSpacing) {
+            ForEach(entries) { entry in
+                IOSWorkoutGlassRestDock(
+                    timer: entry.timer,
+                    exerciseName: entry.exerciseName,
+                    onOpen: { onOpen(entry.timer) },
+                    onSkip: { onSkip(entry.timer) }
+                )
+            }
+        }
+        .padding(.horizontal, 16)
     }
 }
 
