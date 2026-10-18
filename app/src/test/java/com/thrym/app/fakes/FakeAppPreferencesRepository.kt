@@ -25,6 +25,16 @@ class FakeAppPreferencesRepository(
     var restTimerReadGate: CompletableDeferred<Unit>? = null
     var restTimerClearGate: CompletableDeferred<Unit>? = null
 
+    /** Stored workout exercise order, as [AppPreferencesRepositoryImpl] keeps it in DataStore. */
+    var workoutExerciseOrder: String? = null
+
+    /** Optional hooks used by workout exercise order tests. */
+    var workoutExerciseOrderReadGate: CompletableDeferred<Unit>? = null
+    var workoutExerciseOrderWriteGate: CompletableDeferred<Unit>? = null
+    var workoutExerciseOrderWriteError: Throwable? = null
+    var workoutExerciseOrderWriteCount = 0
+        private set
+
     val current: AppPreferences
         get() = state.value
 
@@ -137,5 +147,17 @@ class FakeAppPreferencesRepository(
         } else {
             restTimerStates[sessionId] = encodedState
         }
+    }
+
+    override suspend fun readWorkoutExerciseOrder(): String? {
+        workoutExerciseOrderReadGate?.await()
+        return workoutExerciseOrder
+    }
+
+    override suspend fun writeWorkoutExerciseOrder(encoded: String?) {
+        workoutExerciseOrderWriteCount += 1
+        workoutExerciseOrderWriteGate?.await()
+        workoutExerciseOrderWriteError?.let { throw it }
+        workoutExerciseOrder = encoded?.takeIf { it.isNotBlank() }
     }
 }

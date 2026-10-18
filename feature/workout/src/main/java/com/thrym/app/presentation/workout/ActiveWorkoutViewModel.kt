@@ -28,6 +28,8 @@ import com.thrym.app.domain.util.AppLogger
 import com.thrym.app.domain.util.RpeAutoregulation
 import com.thrym.app.domain.util.WorkoutNumericValidation
 import com.thrym.shared.readinessdata.SetIntention
+import com.thrym.shared.workout.SessionExerciseOrder
+import com.thrym.shared.workout.SessionOrderMove
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,6 +39,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -71,6 +74,7 @@ class ActiveWorkoutViewModel(
     private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
     private val _error = MutableStateFlow<WorkoutErrorUi?>(null)
     private val restTimers = WorkoutRestTimerStore(sessionId, workoutRepository, appPreferencesRepository)
+    private val exerciseOrder = WorkoutExerciseOrderStore(sessionId, workoutRepository, appPreferencesRepository)
     private val operationState = MutableStateFlow(OperationUiState())
     private var errorSequence = 0L
     private val mutationMutex = Mutex()
@@ -184,6 +188,17 @@ class ActiveWorkoutViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /**
+     * [exercisesWithSets] in the display order of this session. Waits for the stored order, so
+     * the first list the screen gets is already arranged and never jumps after a restart.
+     */
+    private val exerciseGroups = combine(
+        exercisesWithSets,
+        exerciseOrder.keys.filterNotNull()
+    ) { rows, storedKeys ->
+        arrangeExerciseGroups(rows, storedKeys)
+    }
+
+    /**
      * Real-time next-set load hints: built from the last work set of each
      * exercise and its RPE_RIR target (when present). Updates whenever a set
      * is logged, edited or deleted through [exercisesWithSets], so the chip
@@ -289,15 +304,16 @@ class ActiveWorkoutViewModel(
 
     val uiState: StateFlow<ActiveWorkoutUiState> = combine(
         sessionPhase,
-        combine(exercisesWithSets, intentions) { exercises, snapshot -> exercises to snapshot },
+        combine(exerciseGroups, intentions) { groups, snapshot -> groups to snapshot },
         nextSetRecommendations,
         chromeState,
         operationState
-    ) { phase, exercisesAndIntentions, recommendations, chrome, operation ->
-        val (exercises, intentionSnapshot) = exercisesAndIntentions
+    ) { phase, groupsAndIntentions, recommendations, chrome, operation ->
+        val (groups, intentionSnapshot) = groupsAndIntentions
         ActiveWorkoutUiState(
             sessionPhase = phase,
-            exercisesWithSets = exercises,
+            exercisesWithSets = groups.flatMap { it.exercises },
+            exerciseGroups = groups,
             nextSetRecommendations = recommendations,
             showExercisePicker = chrome.showExercisePicker,
             showFinishDialog = chrome.showFinishDialog,
@@ -318,6 +334,7 @@ class ActiveWorkoutViewModel(
         restoreAddedExercises()
         persistAddedExerciseIds()
         viewModelScope.launch { restTimers.restore() }
+        viewModelScope.launch { exerciseOrder.restore(::restoreOrderedAdHocExercises) }
         observeExerciseReconciliation()
         recoverCompletedSession()
     }
@@ -380,10 +397,67 @@ class ActiveWorkoutViewModel(
         }
     }
 
+    /**
+     * Brings back the ad-hoc exercises listed in the stored order. The SavedStateHandle only
+     * survives process death; after a cold start an added exercise without sets would otherwise
+     * be gone.
+     */
+    private suspend fun restoreOrderedAdHocExercises(exerciseIds: List<Long>) {
+        val knownIds = addedExercises.value.map { it.id }.toSet()
+        val missingIds = exerciseIds.filterNot { it in knownIds }
+        if (missingIds.isEmpty()) return
+        val restoredById = exerciseRepository.getExercisesByIds(missingIds).associateBy { it.id }
+        val restored = missingIds.mapNotNull { restoredById[it] }
+        if (restored.isEmpty()) return
+        addedExercises.update { current ->
+            val currentIds = current.map { it.id }.toSet()
+            current + restored.filterNot { it.id in currentIds }
+        }
+    }
+
     fun addExercise(exercise: Exercise) {
         addedExercises.update { current ->
             if (current.any { it.id == exercise.id }) current else current + exercise
         }
+        val key = WorkoutExerciseKey.AdHoc(exercise.id).stableListKey()
+        viewModelScope.launch {
+            // Stored with the order, so the exercise survives a cold start even without sets.
+            exerciseOrder.update { storedKeys ->
+                if (key in storedKeys) return@update null
+                val arranged = SessionExerciseOrder.arrange(currentOrderRows(), storedKeys)
+                    .flatMap { it.memberKeys }
+                if (key in arranged) arranged else arranged + key
+            }
+        }
+    }
+
+    /**
+     * Moves the exercise or superset block containing [key] one place up or down. Only the
+     * display order of this session changes; plan targets, their `orderIndex` and superset
+     * groups stay as they are. The step is computed on the order in memory under the store
+     * mutex, so two quick taps move two places.
+     */
+    fun moveExercise(key: WorkoutExerciseKey, direction: SessionOrderMove) {
+        viewModelScope.launch {
+            exerciseOrder.update(precondition = ::sessionAllowsReorder) { storedKeys ->
+                SessionExerciseOrder.move(
+                    arranged = SessionExerciseOrder.arrange(currentOrderRows(), storedKeys),
+                    key = key.stableListKey(),
+                    direction = direction
+                )
+            }
+        }
+    }
+
+    private fun currentOrderRows() = sessionOrderRows(planTargets.value, addedExercises.value)
+
+    private suspend fun sessionAllowsReorder(): Boolean = try {
+        sessionIsMutable()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        AppLogger.w("ActiveWorkoutVM", "Session fuer das Verschieben nicht lesbar: ${e.message}", e)
+        false
     }
 
     fun showExercisePicker() {
@@ -821,6 +895,8 @@ class ActiveWorkoutViewModel(
                                     )
                                 }
                                 restTimers.clear()
+                                // A discarded session has no summary that could show the order.
+                                exerciseOrder.clear()
                             } else {
                                 workoutRepository.finishWorkout(sessionId)
                                 showFinishDialog.value = false

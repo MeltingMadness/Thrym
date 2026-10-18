@@ -2,6 +2,7 @@
 
 ## Unveröffentlicht
 
+- Android-Workout: Übungen lassen sich im laufenden Training mit Pfeilen nach oben und unten verschieben, auch Zusatzübungen. Ein Supersatz bewegt sich als Block. Die Reihenfolge übersteht einen Neustart der App, ist aber nicht im Backup. Plan, Coach und „In den Plan übernehmen“ bleiben unberührt. Zusatzübungen ohne Sätze gehen nach einem Kaltstart nicht mehr verloren.
 - Android-Workout (Liquid Glass): Laufen mehrere Pausen gleichzeitig (z. B. im Supersatz), zeigt das Dock jeden Countdown als eigene Zeile, kürzeste Restzeit zuerst. Die Vollbild-Pause öffnet sich nur noch zu Beginn einer Pause ohne weitere laufende Timer und schließt sich, wenn ihr Timer endet.
 - Open Source: Apache-2.0-Lizenz und NOTICE. Der Code steht unter Apache-2.0; Name „Thrym“, Logo und App-Icon sind nicht für Forks lizenziert.
 - Neuer App-Name: **Thrym** (vorher IronLog). Der sichtbare Name steht nur noch in `branding.properties` und gilt für Android und iOS (Startbildschirm, Willkommenstext, Incident-Betreff, iOS-Erinnerungen).

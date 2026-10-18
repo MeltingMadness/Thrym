@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_exercise_move_up_cd">%1$s nach oben verschieben</string>
+    <string name="workout_exercise_move_down_cd">%1$s nach unten verschieben</string>
+    <string name="workout_superset_move_up_cd">Supersatz S%1$d nach oben verschieben</string>
+    <string name="workout_superset_move_down_cd">Supersatz S%1$d nach unten verschieben</string>
+</resources>

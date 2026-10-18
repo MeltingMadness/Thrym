@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_exercise_move_up_cd">Move %1$s up</string>
+    <string name="workout_exercise_move_down_cd">Move %1$s down</string>
+    <string name="workout_superset_move_up_cd">Move superset S%1$d up</string>
+    <string name="workout_superset_move_down_cd">Move superset S%1$d down</string>
+</resources>
