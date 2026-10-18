@@ -318,7 +318,7 @@ private struct IOSWorkoutInlineSetEntry: View {
     }
     private var source: String {
         if row.target?.setTargets.isEmpty == false { return String(localized: "Satzvorgabe aus dem Plan · editierbar") }
-        if row.sets.contains(where: { resolvedIOSWorkoutSetType($0) == .normal }) { return String(localized: "Werte aus dem letzten Satz übernommen · editierbar") }
+        if row.sets.contains(where: { [IOSWorkoutSetType.normal, .failure].contains(resolvedIOSWorkoutSetType($0)) }) { return String(localized: "Werte aus dem letzten Satz übernommen · editierbar") }
         if (row.displayTarget?.weightKg ?? 0) <= 0, row.previousWorkWeightKg != nil { return String(localized: "Gewicht aus dem letzten Training · editierbar") }
         return row.target == nil ? String(localized: "Werte für diesen Satz") : String(localized: "Werte aus dem Plan · editierbar")
     }

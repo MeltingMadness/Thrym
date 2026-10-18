@@ -56,6 +56,17 @@ internal fun planSlotWeightPrefill(
 }
 
 /**
+ * Weight of the last work set (normal or failure) of the previous matching workout, newest by
+ * completion time, then id. Drop and backoff sets do not count. Same rule as iOS
+ * `previousWorkWeight`.
+ */
+internal fun previousWorkoutWorkSetWeightKg(previousSets: List<WorkoutSet>): Double? =
+    previousSets
+        .filter { it.setType == SetType.NORMAL || it.setType == SetType.FAILURE }
+        .maxWithOrNull(compareBy<WorkoutSet>({ it.completedAt }, { it.id }))
+        ?.weightKg
+
+/**
  * Passt ein Planziel an den aktiven Deload-Modus an (nur Anzeigeebene — die
  * gespeicherten Planziele und die Progressions-Auswertung bleiben unverändert).
  * Ohne aktiven Modus wird das Ziel unverändert zurückgegeben.

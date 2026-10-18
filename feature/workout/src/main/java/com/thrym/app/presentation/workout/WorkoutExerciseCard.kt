@@ -301,7 +301,7 @@ internal fun ExerciseCard(
                                     slot = slot,
                                     hasSetTargets = planTarget.setTargets.isNotEmpty(),
                                     lastWorkSetWeightKg = loggedSets.lastOrNull { (it.setType == SetType.NORMAL || it.setType == SetType.FAILURE) }?.weightKg,
-                                    previousWorkoutWeightKg = previousSession?.lastWorkSetWeightKg
+                                    previousWorkoutWeightKg = previousSession?.sets?.let(::previousWorkoutWorkSetWeightKg)
                                 )
                                 val coachHint = nextSetRecommendation?.recommendedWeightKg?.let {
                                     stringResource(

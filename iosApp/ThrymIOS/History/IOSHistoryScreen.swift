@@ -748,9 +748,11 @@ private struct IOSHistorySetEditor: View {
                                  ? String(localized: "Zusatz (\(IOSWeightFormatter.unitLabel(for: unitSystem)))")
                                  : String(localized: "Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))"))
                                 .font(.geist(.caption)).thrymSecondaryText()
-                            TextField("Gewicht", text: $weightText)
+                            TextField(addedLoad ? String(localized: "Zusatzgewicht") : String(localized: "Gewicht"), text: $weightText)
                                 .keyboardType(.decimalPad)
-                                .accessibilityLabel("Gewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))")
+                                .accessibilityLabel(addedLoad
+                                    ? String(localized: "Zusatzgewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))")
+                                    : String(localized: "Gewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))"))
                         }
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Wiederholungen").font(.geist(.caption)).thrymSecondaryText()
