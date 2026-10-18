@@ -187,6 +187,53 @@ class SessionRecordsTest {
     }
 
     @Test
+    fun equalRecordSetsGoToTheEarlierSetThenTheLowerId() {
+        val sets = listOf(
+            set(1, session = 1, exercise = bench, weight = 50.0, reps = 3),
+            set(7, session = today, exercise = bench, weight = 60.0, reps = 5, at = 50),
+            set(8, session = today, exercise = bench, weight = 60.0, reps = 5, at = 40),
+        )
+
+        val lines = SessionRecords.summarize(today, listOf(bench), sets).exercises.single().lines.associateBy { it.type }
+
+        // Listed later, done earlier: the earlier set holds every per-set record.
+        assertEquals(8L, lines.getValue("MAX_WEIGHT").setId)
+        assertEquals(8L, lines.getValue("MAX_REPS").setId)
+        assertEquals(8L, lines.getValue("MAX_E1RM").setId)
+
+        val sameTime = listOf(
+            set(1, session = 1, exercise = bench, weight = 50.0, reps = 3),
+            set(10, session = today, exercise = bench, weight = 60.0, reps = 5, at = 40),
+            set(9, session = today, exercise = bench, weight = 60.0, reps = 5, at = 40),
+        )
+        val tied = SessionRecords.summarize(today, listOf(bench), sameTime).exercises.single().lines
+        assertTrue(tied.filter { it.setId != null }.all { it.setId == 9L })
+    }
+
+    @Test
+    fun nonFiniteValuesNeitherCountNorCrash() {
+        val history = listOf(set(1, session = 1, exercise = bench, weight = 100.0, reps = 5))
+
+        val onlyBroken = history + listOf(
+            set(2, session = today, exercise = bench, weight = Double.NaN, reps = 5),
+            set(3, session = today, exercise = bench, weight = Double.POSITIVE_INFINITY, reps = 5),
+        )
+        assertTrue(SessionRecords.summarize(today, listOf(bench), onlyBroken).exercises.isEmpty())
+        assertTrue(SessionRecords.liveImprovements(today, history, onlyBroken).isEmpty())
+
+        // A finite but huge weight is a weight record; its e1RM and volume overflow to infinity
+        // and are skipped, so the normal set decides those (a tie here, so no line).
+        val huge = history + listOf(
+            set(4, session = today, exercise = bench, weight = 1.5e308, reps = 10),
+            set(5, session = today, exercise = bench, weight = 100.0, reps = 5),
+        )
+        val lines = SessionRecords.summarize(today, listOf(bench), huge).exercises.single().lines
+        assertEquals(listOf("MAX_WEIGHT", "MAX_REPS"), lines.map { it.type })
+        assertEquals(1.5e308, lines[0].value)
+        assertTrue(lines.all { it.value.isFinite() })
+    }
+
+    @Test
     fun outputFollowsTheGivenOrderOnceAndDropsExercisesWithoutRecords() {
         val sets = listOf(
             set(1, session = 1, exercise = bench, weight = 100.0, reps = 5),
