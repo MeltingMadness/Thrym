@@ -55,6 +55,38 @@
         }
       }
     },
+    "%@ nach oben": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ nach oben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move %@ up"
+          }
+        }
+      }
+    },
+    "%@ nach unten": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ nach unten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move %@ down"
+          }
+        }
+      }
+    },
     "%@ starten": {
       "localizations": {
         "de": {
@@ -12945,6 +12977,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Superset #%lld"
+          }
+        }
+      }
+    },
+    "Superset #%lld nach oben": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superset #%lld nach oben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move superset #%lld up"
+          }
+        }
+      }
+    },
+    "Superset #%lld nach unten": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superset #%lld nach unten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move superset #%lld down"
           }
         }
       }
