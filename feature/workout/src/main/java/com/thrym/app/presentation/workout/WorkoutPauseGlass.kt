@@ -9,6 +9,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -196,10 +198,8 @@ internal fun GlassRestDock(
 }
 
 /**
- * Stacks one dock row per running rest timer, shortest remaining time first.
- *
- * The dock used to show only the newest timer, so logging a second exercise replaced the row of
- * the first one and its pause disappeared from view while the timer kept running.
+ * Displays the selected dock rows in a viewport three rows high. Additional countdowns scroll
+ * inside the dock instead of covering the last workout card.
  */
 @Composable
 internal fun GlassRestDockStack(
@@ -212,7 +212,10 @@ internal fun GlassRestDockStack(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = GlassDockMaxHeight)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         rows.forEach { (rowKey, info) ->
@@ -422,5 +425,5 @@ private fun PauseGlassButton(text: String, description: String, onClick: () -> U
     }
 }
 
-/** Space the list leaves at the bottom so the dock never covers the last card. */
-internal val GlassDockReservedHeight = 96.dp
+// Each row is at least 60 dp + 8 dp padding on both sides, with 8 dp between rows.
+private val GlassDockMaxHeight = 76.dp * 3 + 8.dp * 2
