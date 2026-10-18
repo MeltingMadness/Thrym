@@ -33,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -45,6 +46,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -237,7 +240,9 @@ internal fun GlassRestDockStack(
 /**
  * Pause as a full-screen lens: the glass "empties" with the remaining time, −15 s / +30 s,
  * what comes next and "Pause überspringen". Back or "Zum Training" returns to the workout
- * while the timer keeps running in the dock.
+ * while the timer keeps running in the dock. [topNotice] (record and undo messages) sits right
+ * below the top row, over the free space above the lens, so it covers neither "Zum Training"
+ * nor the actions below.
  */
 @Composable
 internal fun GlassPauseScreen(
@@ -247,7 +252,41 @@ internal fun GlassPauseScreen(
     onMinus: () -> Unit,
     onPlus: () -> Unit,
     onSkip: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    topNotice: @Composable () -> Unit = {}
+) {
+    val density = LocalDensity.current
+    // Starts at the usual height of the top row, so the first frame is already in place.
+    var topRowBottom by remember { mutableStateOf(PAUSE_PADDING_TOP + 44.dp) }
+    Box(Modifier.fillMaxSize()) {
+        GlassPauseContent(info, progressText, texts, onMinus, onPlus, onSkip, onClose) { rowHeight ->
+            topRowBottom = PAUSE_PADDING_TOP + with(density) { rowHeight.toDp() }
+        }
+        // Outside the cover, which merges its content for TalkBack: a snackbar is a pane and
+        // cannot be merged into another node.
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(start = PAUSE_PADDING_HORIZONTAL, end = PAUSE_PADDING_HORIZONTAL, top = topRowBottom)
+        ) {
+            topNotice()
+        }
+    }
+}
+
+private val PAUSE_PADDING_TOP = 16.dp
+private val PAUSE_PADDING_HORIZONTAL = 24.dp
+
+@Composable
+private fun GlassPauseContent(
+    info: GlassPauseInfo,
+    progressText: String,
+    texts: GlassPauseTexts,
+    onMinus: () -> Unit,
+    onPlus: () -> Unit,
+    onSkip: () -> Unit,
+    onClose: () -> Unit,
+    onTopRowHeight: (Int) -> Unit
 ) {
     BackHandler(onBack = onClose)
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -268,11 +307,16 @@ internal fun GlassPauseScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = PAUSE_PADDING_HORIZONTAL, vertical = PAUSE_PADDING_TOP),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { onTopRowHeight(it.height) },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = progressText.uppercase(currentLocale()),
                     style = AthleticLabel,
