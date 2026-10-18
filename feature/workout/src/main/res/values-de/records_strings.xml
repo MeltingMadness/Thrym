@@ -13,15 +13,20 @@
     <string name="workout_records_label_volume">Volumen</string>
     <string name="workout_records_first_type">Erstmals</string>
     <string name="workout_records_context_weight">bei %1$s</string>
-    <plurals name="workout_records_delta_reps">
-        <item quantity="one">+%1$d Wdh</item>
-        <item quantity="other">+%1$d Wdh</item>
-    </plurals>
     <string name="workout_records_first_title">Erste Bestwerte</string>
     <string name="workout_records_first_subtitle">Daran misst sich dein nächstes Training.</string>
     <string name="workout_records_first_footer">Erste Bestwerte: %1$s</string>
     <string name="workout_records_row_cd">%1$s %2$s, %3$s mehr als bisher</string>
     <string name="workout_records_row_first_cd">%1$s %2$s, zum ersten Mal</string>
+    <plurals name="workout_records_reps_cd">
+        <item quantity="one">%1$d Wiederholung</item>
+        <item quantity="other">%1$d Wiederholungen</item>
+    </plurals>
+    <plurals name="workout_records_reps_row_cd">
+        <item quantity="one">%1$s, %2$d mehr als bisher</item>
+        <item quantity="other">%1$s, %2$d mehr als bisher</item>
+    </plurals>
+    <string name="workout_records_reps_row_first_cd">%1$s, zum ersten Mal</string>
     <plurals name="workout_record_live_title">
         <item quantity="one">%1$d neuer Rekord · %2$s</item>
         <item quantity="other">%1$d neue Rekorde · %2$s</item>

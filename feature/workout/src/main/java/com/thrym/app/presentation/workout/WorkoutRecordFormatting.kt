@@ -45,23 +45,27 @@ internal fun recordLabelRes(type: RecordType): Int = when (type) {
 
 /**
  * A record value in the user's unit: "100 kg", "116,7 kg" (an estimate keeps one decimal),
- * "4.320 kg" for volume, "12 Wdh". For a gain it gives the unsigned form the spoken row uses
- * ("2,5 kg mehr als bisher").
+ * "4.320 kg" for volume. A reps record is the bare count ("12"): the label column already says
+ * "Wdh". For a weight gain it gives the unsigned form the spoken row uses ("2,5 kg mehr als
+ * bisher").
  */
 internal fun formatRecordValue(strings: UiStrings, type: RecordType, value: Double, unitSystem: UnitSystem): String =
     when (type) {
         RecordType.MAX_WEIGHT, RecordType.MAX_E1RM -> WeightFormatting.formatWeight(value, unitSystem, strings.locale)
         RecordType.MAX_VOLUME -> WeightFormatting.formatVolume(value, unitSystem, strings.locale)
-        RecordType.MAX_REPS -> value.roundToInt().let { strings.getQuantity(R.plurals.common_record_reps, it, it) }
+        RecordType.MAX_REPS -> formatRepCount(strings, value)
     }
 
-/** The gain over the earlier best, signed: "+2,5 kg", "+1,25 kg", "+5,5 lb", "+310 kg", "+2 Wdh". */
+/** The gain over the earlier best, signed: "+2,5 kg", "+1,25 kg", "+5,5 lb", "+310 kg", "+2". */
 internal fun formatRecordDelta(strings: UiStrings, type: RecordType, delta: Double, unitSystem: UnitSystem): String =
     when (type) {
         RecordType.MAX_WEIGHT, RecordType.MAX_E1RM -> WeightFormatting.formatWeightDelta(delta, unitSystem, strings.locale)
         RecordType.MAX_VOLUME -> "+" + WeightFormatting.formatVolume(delta, unitSystem, strings.locale)
-        RecordType.MAX_REPS -> delta.roundToInt().let { strings.getQuantity(WorkoutR.plurals.workout_records_delta_reps, it, it) }
+        RecordType.MAX_REPS -> "+" + formatRepCount(strings, delta)
     }
+
+private fun formatRepCount(strings: UiStrings, reps: Double): String =
+    WeightFormatting.formatNumber(reps.roundToInt().toDouble(), maxFractionDigits = 0, locale = strings.locale)
 
 /**
  * What the record value leaves out about its set: the reps of a weight record ("× 5") and the
@@ -82,11 +86,56 @@ internal fun formatRecordContext(strings: UiStrings, type: RecordType, set: Work
 internal fun liveRecordTitle(strings: UiStrings, event: WorkoutEvent.NewRecords): String =
     strings.getQuantity(WorkoutR.plurals.workout_record_live_title, event.records.size, event.records.size, event.exerciseName)
 
-/** Detail of the live notice, the first record only: "Gewicht 102,5 kg (+2,5 kg)". */
-internal fun liveRecordDetail(strings: UiStrings, record: LiveRecordUi, unitSystem: UnitSystem): String =
-    strings.get(
+/**
+ * What TalkBack reads for a record row, as one sentence: "Gewicht 100 kg × 5, 2,5 kg mehr als
+ * bisher". A reps row speaks the count in full words instead of the label, "12 Wiederholungen
+ * bei 60 kg, 2 mehr als bisher". [delta] is null when the exercise had no value of this type
+ * ("…, zum ersten Mal").
+ */
+internal fun recordRowDescription(
+    strings: UiStrings,
+    type: RecordType,
+    value: Double,
+    context: String?,
+    delta: Double?,
+    unitSystem: UnitSystem
+): String {
+    if (type == RecordType.MAX_REPS) {
+        val reps = value.roundToInt()
+        val spoken = listOfNotNull(strings.getQuantity(WorkoutR.plurals.workout_records_reps_cd, reps, reps), context)
+            .joinToString(" ")
+        val gain = delta?.roundToInt() ?: return strings.get(WorkoutR.string.workout_records_reps_row_first_cd, spoken)
+        return strings.getQuantity(WorkoutR.plurals.workout_records_reps_row_cd, gain, spoken, gain)
+    }
+    val label = strings.get(recordLabelRes(type))
+    val valueWithContext = listOfNotNull(formatRecordValue(strings, type, value, unitSystem), context).joinToString(" ")
+    delta ?: return strings.get(WorkoutR.string.workout_records_row_first_cd, label, valueWithContext)
+    return strings.get(
+        WorkoutR.string.workout_records_row_cd,
+        label,
+        valueWithContext,
+        formatRecordValue(strings, type, delta, unitSystem)
+    )
+}
+
+/**
+ * Detail of the live notice, the first record only: "Gewicht 102,5 kg (+2,5 kg)". A reps record
+ * names its unit in place of the label, "12 Wdh (+2)".
+ */
+internal fun liveRecordDetail(strings: UiStrings, record: LiveRecordUi, unitSystem: UnitSystem): String {
+    val delta = formatRecordDelta(strings, record.type, record.value - record.previous, unitSystem)
+    if (record.type == RecordType.MAX_REPS) {
+        val reps = record.value.roundToInt()
+        return strings.get(
+            WorkoutR.string.workout_record_live_detail_reps,
+            strings.getQuantity(R.plurals.common_record_reps, reps, reps),
+            delta
+        )
+    }
+    return strings.get(
         WorkoutR.string.workout_record_live_detail,
         strings.get(recordLabelRes(record.type)),
         formatRecordValue(strings, record.type, record.value, unitSystem),
-        formatRecordDelta(strings, record.type, record.value - record.previous, unitSystem)
+        delta
     )
+}

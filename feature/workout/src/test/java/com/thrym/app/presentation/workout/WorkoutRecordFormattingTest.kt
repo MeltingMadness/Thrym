@@ -47,14 +47,45 @@ class WorkoutRecordFormattingTest {
     }
 
     @Test
-    fun `reps use the plural resources`() {
+    fun `a reps record is the bare count and its gain has no unit`() {
+        // The label column says "Wdh", so the value and the chip leave the unit out.
+        assertEquals("12", formatRecordValue(german, RecordType.MAX_REPS, 12.0, UnitSystem.METRIC))
+        assertEquals("1.000", formatRecordValue(german, RecordType.MAX_REPS, 1000.0, UnitSystem.METRIC))
+        assertEquals("+2", formatRecordDelta(german, RecordType.MAX_REPS, 2.0, UnitSystem.METRIC))
+        assertEquals("+2", formatRecordDelta(english, RecordType.MAX_REPS, 2.0, UnitSystem.IMPERIAL))
+    }
+
+    @Test
+    fun `a spoken reps row names the count in words instead of the label`() {
+        val context = "bei 60 kg"
         assertEquals(
-            "plurals:${R.plurals.common_record_reps}:12:[12]",
-            formatRecordValue(german, RecordType.MAX_REPS, 12.0, UnitSystem.METRIC)
+            "plurals:${WorkoutR.plurals.workout_records_reps_row_cd}:2:" +
+                "[plurals:${WorkoutR.plurals.workout_records_reps_cd}:12:[12] bei 60 kg, 2]",
+            recordRowDescription(german, RecordType.MAX_REPS, 12.0, context, 2.0, UnitSystem.METRIC)
+        )
+        // One more than before picks the singular; bodyweight has no load to name.
+        assertEquals(
+            "plurals:${WorkoutR.plurals.workout_records_reps_row_cd}:1:" +
+                "[plurals:${WorkoutR.plurals.workout_records_reps_cd}:1:[1], 1]",
+            recordRowDescription(german, RecordType.MAX_REPS, 1.0, null, 1.0, UnitSystem.METRIC)
         )
         assertEquals(
-            "plurals:${WorkoutR.plurals.workout_records_delta_reps}:2:[2]",
-            formatRecordDelta(german, RecordType.MAX_REPS, 2.0, UnitSystem.METRIC)
+            "string:${WorkoutR.string.workout_records_reps_row_first_cd}:" +
+                "[plurals:${WorkoutR.plurals.workout_records_reps_cd}:12:[12] bei 60 kg]",
+            recordRowDescription(german, RecordType.MAX_REPS, 12.0, context, null, UnitSystem.METRIC)
+        )
+    }
+
+    @Test
+    fun `a spoken weight row keeps its label and the unsigned gain`() {
+        val label = "string:${WorkoutR.string.workout_records_label_weight}:[]"
+        assertEquals(
+            "string:${WorkoutR.string.workout_records_row_cd}:[$label, 100 kg × 5, 2,5 kg]",
+            recordRowDescription(german, RecordType.MAX_WEIGHT, 100.0, "× 5", 2.5, UnitSystem.METRIC)
+        )
+        assertEquals(
+            "string:${WorkoutR.string.workout_records_row_first_cd}:[string:${WorkoutR.string.workout_records_label_volume}:[], 4.320 kg]",
+            recordRowDescription(german, RecordType.MAX_VOLUME, 4320.0, null, null, UnitSystem.METRIC)
         )
     }
 
@@ -93,6 +124,15 @@ class WorkoutRecordFormattingTest {
             "string:${WorkoutR.string.workout_record_live_detail}:" +
                 "[string:${WorkoutR.string.workout_records_label_weight}:[], 102,5 kg, +2,5 kg]",
             liveRecordDetail(german, event.records.first(), UnitSystem.METRIC)
+        )
+    }
+
+    @Test
+    fun `the live notice names the reps with their unit in place of the label`() {
+        assertEquals(
+            "string:${WorkoutR.string.workout_record_live_detail_reps}:" +
+                "[plurals:${R.plurals.common_record_reps}:12:[12], +2]",
+            liveRecordDetail(german, LiveRecordUi(RecordType.MAX_REPS, value = 12.0, previous = 10.0), UnitSystem.METRIC)
         )
     }
 

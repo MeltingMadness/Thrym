@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -229,7 +230,8 @@ private fun ExerciseRecordsSection(
 /**
  * One record: the label in a fixed column, value and set context, the gain as a green chip
  * ("Erstmals" in gold when the exercise had no value of this type). TalkBack reads the row as
- * one sentence, so the colour never carries the meaning alone.
+ * one sentence, so the colour never carries the meaning alone. Large text (font scale from
+ * [STACKED_RECORD_FONT_SCALE]) stacks label, value and chip, so neither squeezes the value.
  */
 @Composable
 private fun RecordLineRow(
@@ -242,50 +244,21 @@ private fun RecordLineRow(
     val label = stringResource(recordLabelRes(type))
     val value = formatRecordValue(strings, type, line.value, unitSystem)
     val context = formatRecordContext(strings, type, recordSet, unitSystem)
-    val valueWithContext = listOfNotNull(value, context).joinToString(" ")
     val delta = line.previous?.let { line.value - it }
-    val description = if (delta != null) {
-        stringResource(
-            WorkoutR.string.workout_records_row_cd,
-            label,
-            valueWithContext,
-            formatRecordValue(strings, type, delta, unitSystem)
-        )
-    } else {
-        stringResource(WorkoutR.string.workout_records_row_first_cd, label, valueWithContext)
-    }
+    val description = recordRowDescription(strings, type, line.value, context, delta, unitSystem)
     val valueStyle = MaterialTheme.typography.titleMedium.toSpanStyle()
         .copy(fontWeight = FontWeight.ExtraBold, fontFeatureSettings = "tnum", color = MaterialTheme.colorScheme.onSurface)
     val contextStyle = MaterialTheme.typography.bodyMedium.toSpanStyle()
         .copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clearAndSetSemantics { contentDescription = description },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = label.uppercase(currentLocale()),
-            modifier = Modifier.fillMaxWidth(0.3f),
-            style = AthleticLabel,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-        Text(
-            text = buildAnnotatedString {
-                withStyle(valueStyle) { append(value) }
-                context?.let {
-                    append(" ")
-                    withStyle(contextStyle) { append(it) }
-                }
-            },
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
+    val valueText = buildAnnotatedString {
+        withStyle(valueStyle) { append(value) }
+        context?.let {
+            append(" ")
+            withStyle(contextStyle) { append(it) }
+        }
+    }
+    val labelText = label.uppercase(currentLocale())
+    val chip: @Composable () -> Unit = {
         if (delta != null) {
             RecordChip(
                 text = formatRecordDelta(strings, type, delta, unitSystem),
@@ -300,7 +273,43 @@ private fun RecordLineRow(
             )
         }
     }
+    val rowModifier = Modifier
+        .fillMaxWidth()
+        .clearAndSetSemantics { contentDescription = description }
+    if (LocalDensity.current.fontScale >= STACKED_RECORD_FONT_SCALE) {
+        Column(modifier = rowModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(text = labelText, style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = valueText, style = MaterialTheme.typography.titleMedium)
+            chip()
+        }
+        return
+    }
+    Row(
+        modifier = rowModifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = labelText,
+            modifier = Modifier.fillMaxWidth(0.3f),
+            style = AthleticLabel,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = valueText,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        chip()
+    }
 }
+
+/** From this font scale on, a record row stacks its parts instead of lining them up. */
+private const val STACKED_RECORD_FONT_SCALE = 1.3f
 
 @Composable
 private fun RecordChip(text: String, ink: Color, fill: Color) {
@@ -311,27 +320,27 @@ private fun RecordChip(text: String, ink: Color, fill: Color) {
             .padding(horizontal = 8.dp, vertical = 2.dp),
         style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
         fontWeight = FontWeight.Bold,
-        color = ink,
-        maxLines = 1
+        color = ink
     )
 }
 
-/** An exercise trained for the first time with its heaviest set: "Bankdrücken … 80 kg × 8 Wdh". */
+/**
+ * An exercise trained for the first time with its heaviest set: "Bankdrücken" over
+ * "80 kg × 8 Wdh". Stacked, so a long value never squeezes the name.
+ */
 @Composable
 private fun FirstBestRow(name: String, bestSet: WorkoutSet?, unitSystem: UnitSystem) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {},
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
             text = name,
-            modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
         bestSet?.let { set ->
