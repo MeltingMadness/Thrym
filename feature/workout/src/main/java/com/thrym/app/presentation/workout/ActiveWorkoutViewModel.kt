@@ -42,10 +42,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -98,7 +100,14 @@ class ActiveWorkoutViewModel(
     private val sessionSets = workoutRepository.getSetsForSession(sessionId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /**
+     * Completes with the first target list of this session. Until then [planTargets] holds its
+     * empty start value, and an order computed from it would drop the stored planned rows.
+     */
+    private val planTargetsLoaded = CompletableDeferred<Unit>()
+
     private val planTargets = progressionRepository.observeTargetsForSession(sessionId)
+        .onEach { planTargetsLoaded.complete(Unit) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val shareWeightHistoryAcrossContexts =
@@ -421,6 +430,7 @@ class ActiveWorkoutViewModel(
         }
         val key = WorkoutExerciseKey.AdHoc(exercise.id).stableListKey()
         viewModelScope.launch {
+            planTargetsLoaded.await()
             // Stored with the order, so the exercise survives a cold start even without sets.
             exerciseOrder.update { storedKeys ->
                 if (key in storedKeys) return@update null
@@ -435,10 +445,12 @@ class ActiveWorkoutViewModel(
      * Moves the exercise or superset block containing [key] one place up or down. Only the
      * display order of this session changes; plan targets, their `orderIndex` and superset
      * groups stay as they are. The step is computed on the order in memory under the store
-     * mutex, so two quick taps move two places.
+     * mutex, so two quick taps move two places. It waits for the plan targets, like
+     * [addExercise].
      */
     fun moveExercise(key: WorkoutExerciseKey, direction: SessionOrderMove) {
         viewModelScope.launch {
+            planTargetsLoaded.await()
             exerciseOrder.update(precondition = ::sessionAllowsReorder) { storedKeys ->
                 SessionExerciseOrder.move(
                     arranged = SessionExerciseOrder.arrange(currentOrderRows(), storedKeys),

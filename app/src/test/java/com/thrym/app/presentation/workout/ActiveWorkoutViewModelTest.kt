@@ -34,6 +34,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -3474,6 +3476,43 @@ class ActiveWorkoutViewModelTest {
         assertEquals(listOf("adhoc-5", "planned-41"), restoredVm.displayedKeys())
         assertTrue(restoredVm.uiState.value.exercisesWithSets.first().sets.isEmpty())
         restoredCollector.cancel()
+    }
+
+    @Test
+    fun `eine Zusatzuebung vor dem Laden der Planziele behaelt die gespeicherte Reihenfolge`() = runTest {
+        progressionTargets.value = plannedTargets(null, null)
+        val vm = createSnapshotViewModel(progressionRepo)
+        val firstCollector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.moveExercise(WorkoutExerciseKey.Planned(42L), SessionOrderMove.UP)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("planned-42", "planned-41"), vm.displayedKeys())
+        firstCollector.cancel()
+
+        // Cold start: the stored order is read, but the plan targets arrive late.
+        val targetsGate = CompletableDeferred<Unit>()
+        every { progressionRepo.observeTargetsForSession(any()) } returns flow {
+            targetsGate.await()
+            emitAll(progressionTargets)
+        }
+        val restoredVm = createSnapshotViewModel(progressionRepo)
+        val collector = backgroundScope.launch { restoredVm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        restoredVm.addExercise(orderExercise(5L))
+        testDispatcher.scheduler.advanceUntilIdle()
+        targetsGate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf("planned-42", "planned-41", "adhoc-5"), restoredVm.displayedKeys())
+        collector.cancel()
+
+        // The durable copy kept the moved plan order as well.
+        every { progressionRepo.observeTargetsForSession(any()) } returns progressionTargets
+        val nextVm = createSnapshotViewModel(progressionRepo)
+        val nextCollector = backgroundScope.launch { nextVm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("planned-42", "planned-41", "adhoc-5"), nextVm.displayedKeys())
+        nextCollector.cancel()
     }
 
     @Test
