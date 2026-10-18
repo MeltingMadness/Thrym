@@ -2,6 +2,7 @@
 
 ## Unveröffentlicht
 
+- Android-Workout (Liquid Glass): Laufen mehrere Pausen gleichzeitig (z. B. im Supersatz), zeigt das Dock jeden Countdown als eigene Zeile, kürzeste Restzeit zuerst. Die Vollbild-Pause öffnet sich nur noch zu Beginn einer Pause ohne weitere laufende Timer und schließt sich, wenn ihr Timer endet.
 - Open Source: Apache-2.0-Lizenz und NOTICE. Der Code steht unter Apache-2.0; Name „Thrym“, Logo und App-Icon sind nicht für Forks lizenziert.
 - Neuer App-Name: **Thrym** (vorher IronLog). Der sichtbare Name steht nur noch in `branding.properties` und gilt für Android und iOS (Startbildschirm, Willkommenstext, Incident-Betreff, iOS-Erinnerungen).
 - Neues App-Icon und Logo „Gestufter Dorn“: die Rune ᚦ, gebaut aus Hantelscheiben, auf Amber. Android mit adaptivem Icon und Themed Icon ab Android 13, iOS mit den Varianten Dunkel und Getönt ab iOS 18. Der Android-Startbildschirm zeigt das Zeichen auf einem Amber-Kreis; der Kreis fehlte bisher, weil das Splash-Theme die Hintergrundfarbe des Icons ignorierte. Quellen und Markenregeln in `docs/brand/`.

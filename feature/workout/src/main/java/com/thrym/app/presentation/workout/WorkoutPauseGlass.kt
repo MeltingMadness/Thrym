@@ -9,6 +9,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -190,6 +193,43 @@ internal fun GlassRestDock(
             contentAlignment = Alignment.Center
         ) {
             Text(skipLabel, color = if (dark) PauseInk else Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+        }
+    }
+}
+
+/**
+ * Displays the selected dock rows in a viewport three rows high. Additional countdowns scroll
+ * inside the dock instead of covering the last workout card.
+ */
+@Composable
+internal fun GlassRestDockStack(
+    rows: List<Pair<String, GlassPauseInfo>>,
+    pauseLabel: String,
+    skipLabel: String,
+    openLabel: String,
+    onOpen: (String) -> Unit,
+    onSkip: (String) -> Unit,
+    visibleRows: Int,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = REST_DOCK_ROW_HEIGHT_DP.dp * visibleRows + REST_DOCK_ROW_SPACING_DP.dp * (visibleRows - 1))
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(REST_DOCK_ROW_SPACING_DP.dp)
+    ) {
+        rows.forEach { (rowKey, info) ->
+            key(rowKey) {
+                GlassRestDock(
+                    info = info,
+                    pauseLabel = pauseLabel,
+                    skipLabel = skipLabel,
+                    openLabel = openLabel,
+                    onOpen = { onOpen(rowKey) },
+                    onSkip = { onSkip(rowKey) }
+                )
+            }
         }
     }
 }
@@ -386,5 +426,3 @@ private fun PauseGlassButton(text: String, description: String, onClick: () -> U
     }
 }
 
-/** Space the list leaves at the bottom so the dock never covers the last card. */
-internal val GlassDockReservedHeight = 96.dp
