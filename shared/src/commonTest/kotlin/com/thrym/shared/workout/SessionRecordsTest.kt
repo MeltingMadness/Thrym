@@ -21,7 +21,7 @@ class SessionRecordsTest {
             set(2, session = today, exercise = bench, weight = 100.0, reps = 5),
         )
 
-        val summary = SessionRecords.summarize(today, listOf(bench), sets)
+        val summary = SessionRecords.summarize(today, listOf(bench), sets, emptyList())
 
         val lines = summary.exercises.single().lines
         assertEquals(listOf("MAX_WEIGHT", "MAX_E1RM"), lines.map { it.type })
@@ -41,19 +41,19 @@ class SessionRecordsTest {
             set(1, session = 1, exercise = bench, weight = 100.0, reps = 5),
             set(2, session = today, exercise = bench, weight = 100.0, reps = 5),
         )
-        assertTrue(SessionRecords.summarize(today, listOf(bench), tie).exercises.isEmpty())
+        assertTrue(SessionRecords.summarize(today, listOf(bench), tie, emptyList()).exercises.isEmpty())
 
         val noise = listOf(
             set(1, session = 1, exercise = bench, weight = 100.0, reps = 5),
             set(2, session = today, exercise = bench, weight = 100.05, reps = 5),
         )
-        assertTrue(SessionRecords.summarize(today, listOf(bench), noise).exercises.isEmpty())
+        assertTrue(SessionRecords.summarize(today, listOf(bench), noise, emptyList()).exercises.isEmpty())
 
         val oneStep = listOf(
             set(1, session = 1, exercise = bench, weight = 100.0, reps = 1),
             set(2, session = today, exercise = bench, weight = 100.1, reps = 1),
         )
-        val line = SessionRecords.summarize(today, listOf(bench), oneStep).exercises.single().lines.first()
+        val line = SessionRecords.summarize(today, listOf(bench), oneStep, emptyList()).exercises.single().lines.first()
         assertEquals("MAX_WEIGHT", line.type)
     }
 
@@ -65,7 +65,7 @@ class SessionRecordsTest {
             set(2, session = today, exercise = bench, weight = 87.5, reps = 10),
         )
 
-        val lines = SessionRecords.summarize(today, listOf(bench), sets).exercises.single().lines
+        val lines = SessionRecords.summarize(today, listOf(bench), sets, emptyList()).exercises.single().lines
 
         assertEquals(listOf("MAX_REPS", "MAX_VOLUME"), lines.map { it.type })
     }
@@ -78,7 +78,7 @@ class SessionRecordsTest {
             set(3, session = today, exercise = bench, weight = 102.5, reps = 3, at = 20),
         )
 
-        val weight = SessionRecords.summarize(today, listOf(bench), sets).exercises.single().lines.first()
+        val weight = SessionRecords.summarize(today, listOf(bench), sets, emptyList()).exercises.single().lines.first()
 
         assertEquals("MAX_WEIGHT", weight.type)
         assertEquals(102.5, weight.value)
@@ -96,7 +96,7 @@ class SessionRecordsTest {
             set(5, session = today, exercise = bench, weight = 95.0, reps = 5),
         )
 
-        val weight = SessionRecords.summarize(today, listOf(bench), sets).exercises.single().lines.first()
+        val weight = SessionRecords.summarize(today, listOf(bench), sets, emptyList()).exercises.single().lines.first()
 
         assertEquals(95.0, weight.value)
         assertEquals(90.0, weight.previous)
@@ -114,7 +114,7 @@ class SessionRecordsTest {
             set(6, session = today, exercise = pullUp, weight = 0.0, reps = 10, at = 30),
         )
 
-        val summary = SessionRecords.summarize(today, listOf(hipThrust, pullUp), sets)
+        val summary = SessionRecords.summarize(today, listOf(hipThrust, pullUp), sets, emptyList())
 
         assertEquals(listOf(hipThrust, pullUp), summary.firstTimeExerciseIds)
         assertTrue(summary.exercises.all { it.firstTime && it.lines.isEmpty() })
@@ -130,7 +130,7 @@ class SessionRecordsTest {
             set(1, session = 1, exercise = pullUp, weight = 0.0, reps = 10),
             set(2, session = today, exercise = pullUp, weight = 0.0, reps = 12),
         )
-        val repsLine = SessionRecords.summarize(today, listOf(pullUp), reps).exercises.single().lines.single()
+        val repsLine = SessionRecords.summarize(today, listOf(pullUp), reps, emptyList()).exercises.single().lines.single()
         assertEquals("MAX_REPS", repsLine.type)
         assertEquals(12.0, repsLine.value)
         assertEquals(10.0, repsLine.previous)
@@ -139,7 +139,7 @@ class SessionRecordsTest {
             set(1, session = 1, exercise = pullUp, weight = 0.0, reps = 12),
             set(2, session = today, exercise = pullUp, weight = 10.0, reps = 8),
         )
-        val lines = SessionRecords.summarize(today, listOf(pullUp), firstWeight).exercises.single().lines
+        val lines = SessionRecords.summarize(today, listOf(pullUp), firstWeight, emptyList()).exercises.single().lines
         assertEquals(listOf("MAX_WEIGHT", "MAX_E1RM", "MAX_VOLUME"), lines.map { it.type })
         assertTrue(lines.all { it.previous == null })
     }
@@ -155,7 +155,7 @@ class SessionRecordsTest {
             set(6, session = today, exercise = deadlift, weight = 100.0, reps = 4),
         )
 
-        val lines = SessionRecords.summarize(today, listOf(deadlift), sets).exercises.single().lines
+        val lines = SessionRecords.summarize(today, listOf(deadlift), sets, emptyList()).exercises.single().lines
 
         val volume = lines.single { it.type == "MAX_VOLUME" }
         assertEquals(1200.0, volume.value)
@@ -180,7 +180,7 @@ class SessionRecordsTest {
             set(5, session = today, exercise = bench, weight = 57.5, reps = 8, at = 40),
         )
 
-        val lines = SessionRecords.summarize(today, listOf(bench), sets).exercises.single().lines.associateBy { it.type }
+        val lines = SessionRecords.summarize(today, listOf(bench), sets, emptyList()).exercises.single().lines.associateBy { it.type }
 
         assertEquals(3L, lines.getValue("MAX_WEIGHT").setId)
         assertEquals(5L, lines.getValue("MAX_REPS").setId)
@@ -194,7 +194,7 @@ class SessionRecordsTest {
             set(8, session = today, exercise = bench, weight = 60.0, reps = 5, at = 40),
         )
 
-        val lines = SessionRecords.summarize(today, listOf(bench), sets).exercises.single().lines.associateBy { it.type }
+        val lines = SessionRecords.summarize(today, listOf(bench), sets, emptyList()).exercises.single().lines.associateBy { it.type }
 
         // Listed later, done earlier: the earlier set holds every per-set record.
         assertEquals(8L, lines.getValue("MAX_WEIGHT").setId)
@@ -206,7 +206,7 @@ class SessionRecordsTest {
             set(10, session = today, exercise = bench, weight = 60.0, reps = 5, at = 40),
             set(9, session = today, exercise = bench, weight = 60.0, reps = 5, at = 40),
         )
-        val tied = SessionRecords.summarize(today, listOf(bench), sameTime).exercises.single().lines
+        val tied = SessionRecords.summarize(today, listOf(bench), sameTime, emptyList()).exercises.single().lines
         assertTrue(tied.filter { it.setId != null }.all { it.setId == 9L })
     }
 
@@ -218,8 +218,8 @@ class SessionRecordsTest {
             set(2, session = today, exercise = bench, weight = Double.NaN, reps = 5),
             set(3, session = today, exercise = bench, weight = Double.POSITIVE_INFINITY, reps = 5),
         )
-        assertTrue(SessionRecords.summarize(today, listOf(bench), onlyBroken).exercises.isEmpty())
-        assertTrue(SessionRecords.liveImprovements(today, history, onlyBroken).isEmpty())
+        assertTrue(SessionRecords.summarize(today, listOf(bench), onlyBroken, emptyList()).exercises.isEmpty())
+        assertTrue(SessionRecords.liveImprovements(today, history, onlyBroken, false).isEmpty())
 
         // A finite but huge weight is a weight record; its e1RM and volume overflow to infinity
         // and are skipped, so the normal set decides those (a tie here, so no line).
@@ -227,7 +227,7 @@ class SessionRecordsTest {
             set(4, session = today, exercise = bench, weight = 1.5e308, reps = 10),
             set(5, session = today, exercise = bench, weight = 100.0, reps = 5),
         )
-        val lines = SessionRecords.summarize(today, listOf(bench), huge).exercises.single().lines
+        val lines = SessionRecords.summarize(today, listOf(bench), huge, emptyList()).exercises.single().lines
         assertEquals(listOf("MAX_WEIGHT", "MAX_REPS"), lines.map { it.type })
         assertEquals(1.5e308, lines[0].value)
         assertTrue(lines.all { it.value.isFinite() })
@@ -244,7 +244,7 @@ class SessionRecordsTest {
             set(6, session = 1, exercise = pullUp, weight = 0.0, reps = 10),
         )
 
-        val summary = SessionRecords.summarize(today, listOf(hipThrust, bench, deadlift, hipThrust, pullUp), sets)
+        val summary = SessionRecords.summarize(today, listOf(hipThrust, bench, deadlift, hipThrust, pullUp), sets, emptyList())
 
         assertEquals(listOf(hipThrust, deadlift), summary.exercises.map { it.exerciseId })
         assertEquals(1, summary.exercisesWithRecords)
@@ -254,11 +254,11 @@ class SessionRecordsTest {
     fun liveStaysQuietForAFirstWorkoutAndForTypesWithoutHistory() {
         val before = listOf(set(1, session = today, exercise = bench, weight = 60.0, reps = 5))
         val after = before + set(2, session = today, exercise = bench, weight = 70.0, reps = 5)
-        assertTrue(SessionRecords.liveImprovements(today, before, after).isEmpty())
+        assertTrue(SessionRecords.liveImprovements(today, before, after, false).isEmpty())
 
         val history = listOf(set(9, session = 1, exercise = pullUp, weight = 0.0, reps = 12))
         val weighted = history + set(2, session = today, exercise = pullUp, weight = 10.0, reps = 8)
-        assertTrue(SessionRecords.liveImprovements(today, history, weighted).isEmpty())
+        assertTrue(SessionRecords.liveImprovements(today, history, weighted, false).isEmpty())
     }
 
     @Test
@@ -266,7 +266,7 @@ class SessionRecordsTest {
         val history = listOf(set(1, session = 1, exercise = bench, weight = 100.0, reps = 5))
         val first = history + set(2, session = today, exercise = bench, weight = 102.5, reps = 5, at = 10)
 
-        val lines = SessionRecords.liveImprovements(today, history, first)
+        val lines = SessionRecords.liveImprovements(today, history, first, false)
 
         assertEquals(listOf("MAX_WEIGHT", "MAX_E1RM"), lines.map { it.type })
         assertEquals(102.5, lines[0].value)
@@ -275,14 +275,14 @@ class SessionRecordsTest {
 
         // A second gain in the same workout keeps the pre-workout best as previous.
         val second = first + set(3, session = today, exercise = bench, weight = 105.0, reps = 5, at = 20)
-        val again = SessionRecords.liveImprovements(today, first, second)
+        val again = SessionRecords.liveImprovements(today, first, second, false)
         assertEquals(105.0, again[0].value)
         assertEquals(100.0, again[0].previous)
         assertEquals(3L, again[0].setId)
 
         // Matching the workout best again is no new record.
         val equal = second + set(4, session = today, exercise = bench, weight = 105.0, reps = 5, at = 30)
-        assertTrue(SessionRecords.liveImprovements(today, second, equal).isEmpty())
+        assertTrue(SessionRecords.liveImprovements(today, second, equal, false).isEmpty())
     }
 
     @Test
@@ -293,15 +293,38 @@ class SessionRecordsTest {
         )
         val record = history + set(3, session = today, exercise = bench, weight = 105.0, reps = 5)
         val lowered = history + set(3, session = today, exercise = bench, weight = 95.0, reps = 5)
-        assertTrue(SessionRecords.liveImprovements(today, record, lowered).isEmpty())
-        assertTrue(SessionRecords.liveImprovements(today, record, history).isEmpty())
+        assertTrue(SessionRecords.liveImprovements(today, record, lowered, false).isEmpty())
+        assertTrue(SessionRecords.liveImprovements(today, record, history, false).isEmpty())
 
         val warmUp = history + set(4, session = today, exercise = bench, weight = 120.0, reps = 5, type = "WARMUP")
-        assertTrue(SessionRecords.liveImprovements(today, history, warmUp).isEmpty())
+        assertTrue(SessionRecords.liveImprovements(today, history, warmUp, false).isEmpty())
 
         // Many light sets beat the volume of the earlier workout, but volume is never live.
         val light = history + (10L..30L).map { set(it, session = today, exercise = bench, weight = 40.0, reps = 10) }
-        assertTrue(SessionRecords.liveImprovements(today, history, light).none { it.type == "MAX_VOLUME" })
+        assertTrue(SessionRecords.liveImprovements(today, history, light, false).none { it.type == "MAX_VOLUME" })
+    }
+
+    @Test
+    fun anAddedLoadExerciseOnlyCountsWeightAndReps() {
+        // Weighted pull-ups: the weight is the load on top of the body.
+        val sets = listOf(
+            set(1, session = 1, exercise = pullUp, weight = 10.0, reps = 8),
+            set(2, session = 1, exercise = pullUp, weight = 10.0, reps = 8),
+            set(3, session = today, exercise = pullUp, weight = 12.5, reps = 9),
+            set(4, session = today, exercise = pullUp, weight = 12.5, reps = 9),
+            set(5, session = today, exercise = pullUp, weight = 12.5, reps = 9),
+        )
+
+        val lines = SessionRecords.summarize(today, listOf(pullUp), sets, listOf(pullUp)).exercises.single().lines
+        assertEquals(listOf("MAX_WEIGHT", "MAX_REPS"), lines.map { it.type })
+        // Without the flag the same sets also give e1RM and volume.
+        val plain = SessionRecords.summarize(today, listOf(pullUp), sets, emptyList()).exercises.single().lines
+        assertEquals(listOf("MAX_WEIGHT", "MAX_E1RM", "MAX_REPS", "MAX_VOLUME"), plain.map { it.type })
+
+        val history = sets.take(2)
+        val after = history + sets[2]
+        assertEquals(listOf("MAX_WEIGHT", "MAX_REPS"), SessionRecords.liveImprovements(today, history, after, true).map { it.type })
+        assertEquals(listOf("MAX_WEIGHT", "MAX_E1RM", "MAX_REPS"), SessionRecords.liveImprovements(today, history, after, false).map { it.type })
     }
 
     private fun set(

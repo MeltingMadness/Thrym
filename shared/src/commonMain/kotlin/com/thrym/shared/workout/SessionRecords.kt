@@ -66,6 +66,9 @@ data class SessionRecordSummary(
  * - `MAX_WEIGHT`, `MAX_REPS` and `MAX_E1RM` are per set, `MAX_VOLUME` is the sum of weight ×
  *   reps over the workout; its earlier best only counts finished sessions.
  * - A value <= 0 is no record, so a bodyweight exercise at 0 kg only has `MAX_REPS`.
+ * - For an added-load exercise (a bodyweight exercise whose weight is the load on top of the
+ *   body) only `MAX_WEIGHT` and `MAX_REPS` count: an e1RM or a volume of the added load alone
+ *   says nothing about the lift.
  * - A record needs a gain of at least one step ([minStep]); a tie is no record.
  * - An exercise trained for the first time has no records. It is reported as [SessionExerciseRecords.firstTime].
  */
@@ -80,6 +83,7 @@ object SessionRecords {
     val TYPE_ORDER: List<String> = listOf(MAX_WEIGHT, MAX_E1RM, MAX_REPS, MAX_VOLUME)
 
     private val LIVE_TYPES = listOf(MAX_WEIGHT, MAX_E1RM, MAX_REPS)
+    private val ADDED_LOAD_TYPES = setOf(MAX_WEIGHT, MAX_REPS)
     private const val VALUE_EPSILON = 1e-9
 
     /** Epley, with a single rep counting as the weight itself, like `WorkoutCalculations.calculateE1RM`. */
@@ -100,12 +104,15 @@ object SessionRecords {
      * Records of the workout [sessionId] for the exercises in [exerciseIdsInOrder] (duplicates
      * count once). [sets] holds every set of these exercises in all sessions. Exercises without a
      * work set in the workout, and exercises with history but no beaten record, are left out.
+     * [addedLoadExerciseIds] are the exercises whose weight is an added load.
      */
     fun summarize(
         sessionId: Long,
         exerciseIdsInOrder: List<Long>,
         sets: List<RecordSetInput>,
+        addedLoadExerciseIds: List<Long>,
     ): SessionRecordSummary {
+        val addedLoad = addedLoadExerciseIds.toSet()
         val workSetsByExercise = sets.filter(::isWorkSet).groupBy { it.exerciseId }
         val exercises = exerciseIdsInOrder.distinct().mapNotNull { exerciseId ->
             val workSets = workSetsByExercise[exerciseId].orEmpty()
@@ -116,7 +123,8 @@ object SessionRecords {
             if (other.isEmpty()) {
                 return@mapNotNull SessionExerciseRecords(exerciseId, firstTime = true, lines = emptyList(), bestSetId = bestSetId)
             }
-            val lines = TYPE_ORDER.mapNotNull { type ->
+            val types = if (exerciseId in addedLoad) TYPE_ORDER.filter { it in ADDED_LOAD_TYPES } else TYPE_ORDER
+            val lines = types.mapNotNull { type ->
                 val value = sessionBest(type, current) ?: return@mapNotNull null
                 val previous = historyBest(type, other)
                 if (previous != null && value - previous < minStep(type) - VALUE_EPSILON) return@mapNotNull null
@@ -135,19 +143,22 @@ object SessionRecords {
      * that and the session best before the change by one step. So the first workout of an
      * exercise, a tie, a lowered edit and a deletion stay quiet. [SessionRecordLine.previous] is
      * the best before the workout, so the gain matches the completion screen. Volume is never
-     * live, because the running workout does not count for the stored volume best.
+     * live, because the running workout does not count for the stored volume best. With
+     * [addedLoad] (the weight is an added load) e1RM is left out, as in [summarize].
      */
     fun liveImprovements(
         sessionId: Long,
         setsBefore: List<RecordSetInput>,
         setsAfter: List<RecordSetInput>,
+        addedLoad: Boolean,
     ): List<SessionRecordLine> {
         val after = setsAfter.filter(::isWorkSet)
         val other = after.filter { it.sessionId != sessionId }
         if (other.isEmpty()) return emptyList()
         val currentAfter = after.filter { it.sessionId == sessionId }
         val currentBefore = setsBefore.filter { isWorkSet(it) && it.sessionId == sessionId }
-        return LIVE_TYPES.mapNotNull { type ->
+        val types = if (addedLoad) LIVE_TYPES.filter { it in ADDED_LOAD_TYPES } else LIVE_TYPES
+        return types.mapNotNull { type ->
             val previous = historyBest(type, other) ?: return@mapNotNull null
             val value = sessionBest(type, currentAfter) ?: return@mapNotNull null
             val bar = maxOf(previous, sessionBest(type, currentBefore) ?: previous)
