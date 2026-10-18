@@ -516,7 +516,8 @@ fun ActiveWorkoutScreen(
                     viewModel.addExercise(exercise)
                     viewModel.dismissExercisePicker()
                 },
-                onCreationError = viewModel::reportPickerError
+                onCreationError = viewModel::reportPickerError,
+                allowCreateCustomExercise = true
             )
         }
 
