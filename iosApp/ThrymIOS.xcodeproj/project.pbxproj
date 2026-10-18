@@ -82,6 +82,7 @@
 		E300F0BA46649AAA60F2A89E /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9231513E81873F9615996177 /* Localizable.xcstrings */; };
 		E5A32B9C378F9CC98AC91681 /* IOSDashboardDeloadCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ABA7C6DB97959D825730545 /* IOSDashboardDeloadCard.swift */; };
 		EFEFDF4CFC853E1764F495EE /* ThrymIOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C91D5C61121DECAF869D90FF /* ThrymIOSTests.swift */; };
+		F5EFDCBB5F7B686E21C71463 /* RestDockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F1FC166F267E80756524FF8 /* RestDockTests.swift */; };
 		FF1583353E5BDF9F05CB3ECC /* IOSPlansSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9702350B52121CFE4C708940 /* IOSPlansSupport.swift */; };
 /* End PBXBuildFile section */
 
@@ -116,6 +117,7 @@
 		33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExercisePicker.swift; sourceTree = "<group>"; };
 		37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberInputFormatTests.swift; sourceTree = "<group>"; };
 		3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAnalytics.swift; sourceTree = "<group>"; };
+		3F1FC166F267E80756524FF8 /* RestDockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestDockTests.swift; sourceTree = "<group>"; };
 		404F7BB55717CDA68382429B /* IOSProgressionReviewScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSProgressionReviewScreen.swift; sourceTree = "<group>"; };
 		4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndividualSetTargetsTests.swift; sourceTree = "<group>"; };
 		4E5787FDE5840DAA96D9C88B /* IOSTrainingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSTrainingStore.swift; sourceTree = "<group>"; };
@@ -364,6 +366,7 @@
 			37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */,
 			18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */,
 			128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */,
+			3F1FC166F267E80756524FF8 /* RestDockTests.swift */,
 			DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */,
 			10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */,
 			C12C06093440E3DE5A6428C7 /* ThemeContrastTests.swift */,
@@ -576,6 +579,7 @@
 				5ACBCD167629AA8DF5847CF5 /* NumberInputFormatTests.swift in Sources */, 
 				D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */, 
 				3E4CE13DCF91E45C46CC3F1D /* RecoveryBridgeTests.swift in Sources */, 
+				F5EFDCBB5F7B686E21C71463 /* RestDockTests.swift in Sources */, 
 				468CE6AAFD00F889AD84B773 /* RestTimerAdjustTests.swift in Sources */, 
 				11197F7C9E7A09037100A62C /* StringCatalogTests.swift in Sources */, 
 				12A15834909B4B19E6C2B81C /* ThemeContrastTests.swift in Sources */, 
