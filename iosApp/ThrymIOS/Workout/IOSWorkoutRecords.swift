@@ -4,24 +4,28 @@ import Shared
 /// One beaten record of a workout, ready for display. `value` and `previous` are kg, reps or kg
 /// of volume; `previous` is the best before this workout and nil when the exercise reaches this
 /// type for the first time. `set` holds the record; it is nil for `MAX_VOLUME`, which sums the
-/// workout.
+/// workout. `addedLoad` marks an exercise whose weight is an added load (`tracksAddedLoad`): its
+/// weights read "Körpergewicht + 12,5 kg".
 struct IOSWorkoutRecordLine: Equatable, Identifiable {
     let type: String
     let value: Double
     let previous: Double?
     let set: ILWorkoutSet?
+    var addedLoad = false
 
     var id: String { type }
 }
 
 /// The records of one exercise. A `firstTime` exercise has no earlier work set: it has no
-/// lines, and `bestSet`, the heaviest set of the workout, is its first benchmark.
+/// lines, and `bestSet`, the heaviest set of the workout, is its first benchmark. `addedLoad`
+/// marks a bodyweight exercise whose weight is an added load (`tracksAddedLoad`).
 struct IOSWorkoutExerciseRecords: Equatable, Identifiable {
     let exerciseID: Int64
     let name: String
     let firstTime: Bool
     let lines: [IOSWorkoutRecordLine]
     let bestSet: ILWorkoutSet?
+    let addedLoad: Bool
 
     var id: Int64 { exerciseID }
 }
@@ -88,7 +92,8 @@ enum IOSWorkoutRecords {
     }
 
     /// Records of `session` for the trained exercises of `rows`, in the order and with the names
-    /// the screen shows, so the board follows the workout and not the alphabet.
+    /// the screen shows, so the board follows the workout and not the alphabet. Exercises that
+    /// track an added load only count weight and reps.
     static func summary(
         session: ILWorkoutSession,
         rows: [IOSWorkoutExerciseRow],
@@ -100,20 +105,24 @@ enum IOSWorkoutRecords {
             .map(\.exercise.id)
             .filter { seen.insert($0).inserted }
         guard !exerciseIDs.isEmpty else { return IOSWorkoutRecordSummary(exercises: []) }
-        let names = Dictionary(rows.map { ($0.exercise.id, $0.exercise.displayName) }, uniquingKeysWith: { first, _ in first })
+        let exercises = Dictionary(rows.map { ($0.exercise.id, $0.exercise) }, uniquingKeysWith: { first, _ in first })
+        let addedLoadIDs = exerciseIDs.filter { exercises[$0]?.tracksAddedLoad == true }
         let sessionSets = setsByID(data.sets(for: session))
         let result = SessionRecords.shared.summarize(
             sessionId: session.id,
             exerciseIdsInOrder: exerciseIDs.map { KotlinLong(longLong: $0) },
-            sets: recordInputs(exerciseIDs: seen, data: data)
+            sets: recordInputs(exerciseIDs: seen, data: data),
+            addedLoadExerciseIds: addedLoadIDs.map { KotlinLong(longLong: $0) }
         )
         return IOSWorkoutRecordSummary(exercises: result.exercises.map { exercise in
-            IOSWorkoutExerciseRecords(
+            let addedLoad = addedLoadIDs.contains(exercise.exerciseId)
+            return IOSWorkoutExerciseRecords(
                 exerciseID: exercise.exerciseId,
-                name: names[exercise.exerciseId] ?? String(localized: "Übung"),
+                name: exercises[exercise.exerciseId]?.displayName ?? String(localized: "Übung"),
                 firstTime: exercise.firstTime,
-                lines: exercise.lines.map { line($0, sets: sessionSets) },
-                bestSet: exercise.bestSetId.flatMap { sessionSets[$0.int64Value] }
+                lines: exercise.lines.map { line($0, sets: sessionSets, addedLoad: addedLoad) },
+                bestSet: exercise.bestSetId.flatMap { sessionSets[$0.int64Value] },
+                addedLoad: addedLoad
             )
         })
     }
@@ -121,20 +130,23 @@ enum IOSWorkoutRecords {
     /// Records that saving one set beat. `before` and `after` are the `recordInputs` of its
     /// exercise around the save. The first workout of an exercise, a tie, a lowered edit and a
     /// deletion stay quiet; `previous` is the best before the workout, as on the completion screen.
+    /// With `addedLoad` (the exercise's `tracksAddedLoad`) only weight and reps count.
     static func liveImprovements(
         sessionID: Int64,
         before: [RecordSetInput],
         after: [RecordSetInput],
+        addedLoad: Bool,
         data: ILTrainingData
     ) -> [IOSWorkoutRecordLine] {
         let sessionSets = setsByID(data.sets(for: sessionID))
-        return SessionRecords.shared.liveImprovements(sessionId: sessionID, setsBefore: before, setsAfter: after)
-            .map { line($0, sets: sessionSets) }
+        return SessionRecords.shared.liveImprovements(sessionId: sessionID, setsBefore: before, setsAfter: after, addedLoad: addedLoad)
+            .map { line($0, sets: sessionSets, addedLoad: addedLoad) }
     }
 
     /// The notice for live records: their number and the exercise, then the first record in type
     /// order with its gain, "Gewicht 102,5 kg (+2,5 kg)". Reps carry their unit instead of a
-    /// label, "12 Wdh. (+2)". Nil without records.
+    /// label, "12 Wdh. (+2)", and the weight of an added load is the set load without a label,
+    /// "Körpergewicht + 12,5 kg (+2,5 kg)". Nil without records.
     static func notice(
         sessionID: Int64,
         exerciseName: String,
@@ -146,9 +158,15 @@ enum IOSWorkoutRecords {
         let gain = first.previous.map {
             "(\(iosRecordDeltaText(type: first.type, delta: first.value - $0, unitSystem: unitSystem)))"
         }
-        let value = first.type == "MAX_REPS"
-            ? [iosRecordRepsText(first.value)]
-            : [iosRecordLabel(first.type), iosRecordValueText(type: first.type, value: first.value, unitSystem: unitSystem)]
+        let value: [String]
+        switch first.type {
+        case "MAX_REPS":
+            value = [iosRecordRepsText(first.value)]
+        case "MAX_WEIGHT" where first.addedLoad:
+            value = [iosRecordValueText(type: first.type, value: first.value, unitSystem: unitSystem, addedLoad: true)]
+        default:
+            value = [iosRecordLabel(first.type), iosRecordValueText(type: first.type, value: first.value, unitSystem: unitSystem)]
+        }
         let detail = (value + [gain])
             .compactMap { $0 }
             .joined(separator: " ")
@@ -165,12 +183,13 @@ enum IOSWorkoutRecords {
         Dictionary(sets.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
-    private static func line(_ line: SessionRecordLine, sets: [Int64: ILWorkoutSet]) -> IOSWorkoutRecordLine {
+    private static func line(_ line: SessionRecordLine, sets: [Int64: ILWorkoutSet], addedLoad: Bool) -> IOSWorkoutRecordLine {
         IOSWorkoutRecordLine(
             type: line.type,
             value: line.value,
             previous: line.previous?.doubleValue,
-            set: line.setId.flatMap { sets[$0.int64Value] }
+            set: line.setId.flatMap { sets[$0.int64Value] },
+            addedLoad: addedLoad
         )
     }
 }
@@ -189,11 +208,13 @@ func iosRecordLabel(_ type: String) -> String {
 }
 
 /// Record value on the board: "100 kg", "116,7 kg", "4.320 kg"; reps as the bare number "12",
-/// since the label names them.
-func iosRecordValueText(type: String, value: Double, unitSystem: String, locale: Locale = .current) -> String {
+/// since the label names them. With `addedLoad` a weight record is the set load,
+/// "Körpergewicht + 12,5 kg".
+func iosRecordValueText(type: String, value: Double, unitSystem: String, addedLoad: Bool = false, locale: Locale = .current) -> String {
     switch type {
     case "MAX_REPS": return iosRecordNumber(Double(iosRecordReps(value)), fractionDigits: 0, locale: locale)
     case "MAX_VOLUME": return iosRecordVolumeText(value, unitSystem: unitSystem, locale: locale)
+    case "MAX_WEIGHT" where addedLoad: return iosRecordLoadText(value, unitSystem: unitSystem, addedLoad: true, locale: locale)
     default: return iosRecordWeightText(value, unitSystem: unitSystem, locale: locale)
     }
 }
@@ -216,8 +237,8 @@ func iosRecordDeltaText(type: String, delta: Double, unitSystem: String, signed:
     }
 }
 
-/// The set behind a record: "× 5" for weight, "bei 60 kg" for reps (nothing at bodyweight).
-/// e1RM and volume have none.
+/// The set behind a record: "× 5" for weight, "bei 60 kg" for reps (nothing at bodyweight);
+/// an added load reads "bei Körpergewicht + 10 kg". e1RM and volume have none.
 func iosRecordContext(_ line: IOSWorkoutRecordLine, unitSystem: String, locale: Locale = .current) -> String? {
     guard let set = line.set else { return nil }
     switch line.type {
@@ -225,7 +246,7 @@ func iosRecordContext(_ line: IOSWorkoutRecordLine, unitSystem: String, locale: 
         return "× \(set.reps)"
     case "MAX_REPS":
         guard set.weightKg > 0 else { return nil }
-        return String(localized: "bei \(iosRecordWeightText(set.weightKg, unitSystem: unitSystem, locale: locale))")
+        return String(localized: "bei \(iosRecordLoadText(set.weightKg, unitSystem: unitSystem, addedLoad: line.addedLoad, locale: locale))")
     default:
         return nil
     }
@@ -233,7 +254,8 @@ func iosRecordContext(_ line: IOSWorkoutRecordLine, unitSystem: String, locale: 
 
 /// One record row as VoiceOver reads it: "Gewicht 100 kg × 5, 2,5 kg mehr als bisher" or
 /// "…, zum ersten Mal". Reps read in full words without a label: "12 Wiederholungen bei
-/// 60 kg, 2 mehr als bisher". The gain is spelled out, so color is never the only signal.
+/// 60 kg, 2 mehr als bisher". An added load reads as on the board, "Gewicht Körpergewicht +
+/// 12,5 kg × 9". The gain is spelled out, so color is never the only signal.
 func iosRecordAccessibilityText(_ line: IOSWorkoutRecordLine, unitSystem: String) -> String {
     if line.type == "MAX_REPS" {
         let reps = [ilRepCountText(iosRecordReps(line.value)), iosRecordContext(line, unitSystem: unitSystem)]
@@ -243,7 +265,10 @@ func iosRecordAccessibilityText(_ line: IOSWorkoutRecordLine, unitSystem: String
         return String(localized: "\(reps), \(iosRecordReps(line.value - previous)) mehr als bisher")
     }
     let label = iosRecordLabel(line.type)
-    let value = [iosRecordValueText(type: line.type, value: line.value, unitSystem: unitSystem), iosRecordContext(line, unitSystem: unitSystem)]
+    let value = [
+        iosRecordValueText(type: line.type, value: line.value, unitSystem: unitSystem, addedLoad: line.addedLoad),
+        iosRecordContext(line, unitSystem: unitSystem)
+    ]
         .compactMap { $0 }
         .joined(separator: " ")
     guard let previous = line.previous else { return String(localized: "\(label) \(value), zum ersten Mal") }
@@ -260,6 +285,23 @@ func iosRecordWeightText(_ kilograms: Double, unitSystem: String, signed: Bool =
     let fractionDigits = unitSystem.uppercased() == "IMPERIAL" || abs(quarters - quarters.rounded()) >= 1e-6 ? 1 : 2
     let sign = signed && value > 0 ? "+" : ""
     return sign + iosRecordNumber(value, fractionDigits: fractionDigits, locale: locale) + " " + ilWeightUnit(unitSystem)
+}
+
+/// Load of a record set like `iosSetLoadText`, but in the record weight format, so it matches
+/// the gain beside it and Android's `setLoadText`: "60 kg"; with `addedLoad` (a bodyweight
+/// exercise) "Körpergewicht + 10 kg". 0 kg reads as bodyweight.
+func iosRecordLoadText(_ kilograms: Double, unitSystem: String, addedLoad: Bool, locale: Locale = .current) -> String {
+    if kilograms == 0 { return String(localized: "Körpergewicht") }
+    let weight = iosRecordWeightText(kilograms, unitSystem: unitSystem, locale: locale)
+    return addedLoad ? String(localized: "Körpergewicht + \(weight)") : weight
+}
+
+/// The first benchmark of an exercise trained for the first time, its best set: "80 kg × 8 Wdh",
+/// "Körpergewicht + 10 kg × 8 Wdh", "Körpergewicht × 12 Wdh". Nil without a set.
+func iosRecordBestSetText(_ exercise: IOSWorkoutExerciseRecords, unitSystem: String) -> String? {
+    exercise.bestSet.map {
+        iosSetValueText(weightKg: $0.weightKg, reps: $0.reps, unitSystem: unitSystem, addedLoad: exercise.addedLoad)
+    }
 }
 
 /// Record volume without decimals and grouped, like Android's `formatVolume`: "4.320 kg".

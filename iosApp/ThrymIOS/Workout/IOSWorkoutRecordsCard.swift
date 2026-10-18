@@ -147,10 +147,11 @@ struct IOSWorkoutRecordsCard: View {
             .foregroundStyle(theme.palette(for: colorScheme).textSecondary)
     }
 
-    /// "100 kg × 5", "12 bei 60 kg": the value in bold, its set in secondary text.
+    /// "100 kg × 5", "12 bei 60 kg", for an added load "Körpergewicht + 12,5 kg × 9": the value
+    /// in bold, its set in secondary text.
     @ViewBuilder
     private func recordValue(_ line: IOSWorkoutRecordLine) -> some View {
-        let value = Text(iosRecordValueText(type: line.type, value: line.value, unitSystem: unitSystem))
+        let value = Text(iosRecordValueText(type: line.type, value: line.value, unitSystem: unitSystem, addedLoad: line.addedLoad))
             .font(.geist(.headline, weight: .heavy))
             .monospacedDigit()
         if let context = iosRecordContext(line, unitSystem: unitSystem) {
@@ -181,8 +182,8 @@ struct IOSWorkoutRecordsCard: View {
             Text(exercise.name)
                 .font(.geist(.body, weight: .semibold))
                 .lineLimit(2)
-            if let set = exercise.bestSet {
-                Text(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))
+            if let bestSet = iosRecordBestSetText(exercise, unitSystem: unitSystem) {
+                Text(bestSet)
                     .font(.geist(.headline, weight: .heavy))
                     .monospacedDigit()
             }
