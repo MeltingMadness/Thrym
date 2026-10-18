@@ -85,6 +85,19 @@ struct IOSWorkoutExerciseRow: Identifiable, Equatable {
     }
 }
 
+extension Array where Element == IOSWorkoutExerciseRow {
+    /// Planned sets of the workout, after the deload mode is applied.
+    var plannedSetCount: Int { reduce(0) { $0 + $1.loggingSlots.count } }
+
+    /// True once a workout with planned sets has none open; same rule as Android's
+    /// `allPlannedSetsDone()`. A free workout never is. Ad-hoc rows, extra, drop and
+    /// unplanned warm-up sets change nothing, a planned warm-up slot must be filled, and a
+    /// target without slots does not count as done on its own.
+    var allPlannedSetsDone: Bool {
+        plannedSetCount > 0 && reduce(0) { $0 + ($1.remainingPlannedSets ?? 0) } == 0
+    }
+}
+
 /// A render-only block of the workout list, built by `IOSWorkoutExerciseLayout`: a
 /// superset is rendered only when at least two target snapshots that are adjacent in
 /// the default order carry the same group id. Rows that carry an isolated or
@@ -130,6 +143,10 @@ struct IOSWorkoutScreen: View {
     @State private var deletedIntention: ILSetIntention = .unknown
     @State private var undoToken: UUID?
     @State private var isRestoringSet = false
+    /// Counts the saves that completed the plan; each change scrolls to the finish card once.
+    @State private var finishScrollRequest = 0
+    /// Live record notice of the last log or edit; it hides after a few seconds.
+    @State private var recordNotice: IOSWorkoutRecordNotice?
 
     private var data: ILTrainingData? { store.data }
 
@@ -138,18 +155,23 @@ struct IOSWorkoutScreen: View {
     var body: some View {
         screenContent
             .safeAreaInset(edge: .top) {
-                if let deletedSet, deletedSet.sessionId == activeSession?.id {
-                    HStack {
-                        Text("Satz \(deletedSet.setNumber) gelöscht")
-                        Spacer()
-                        Button("Rückgängig", action: undoDeleteSet)
-                            .frame(minHeight: 44)
-                            .disabled(store.isBusy || isRestoringSet)
+                VStack(spacing: 0) {
+                    if let recordNotice, recordNotice.sessionID == activeSession?.id {
+                        recordBanner(recordNotice)
                     }
-                    .font(.geist(.callout))
-                    .padding(.horizontal)
-                    .background(.regularMaterial)
-                    .accessibilityElement(children: .contain)
+                    if let deletedSet, deletedSet.sessionId == activeSession?.id {
+                        HStack {
+                            Text("Satz \(deletedSet.setNumber) gelöscht")
+                            Spacer()
+                            Button("Rückgängig", action: undoDeleteSet)
+                                .frame(minHeight: 44)
+                                .disabled(store.isBusy || isRestoringSet)
+                        }
+                        .font(.geist(.callout))
+                        .padding(.horizontal)
+                        .background(.regularMaterial)
+                        .accessibilityElement(children: .contain)
+                    }
                 }
             }
             .task(id: undoToken) {
@@ -212,6 +234,7 @@ struct IOSWorkoutScreen: View {
             .onChange(of: activeSession?.id) { _, _ in
                 deletedSet = nil
                 undoToken = nil
+                recordNotice = nil
                 updateIdleTimer()
             }
             .onChange(of: scenePhase) { _, _ in updateIdleTimer() }
@@ -319,6 +342,7 @@ struct IOSWorkoutScreen: View {
         let layout = exerciseLayout(session: session, data: data)
         let rows = layout.rows
         let liquidGlass = appearance == .liquidGlass
+        let allPlannedSetsDone = rows.allPlannedSetsDone
         ScrollViewReader { proxy in
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
@@ -365,8 +389,17 @@ struct IOSWorkoutScreen: View {
                 }
                 .buttonStyle(.bordered)
                 .padding(.horizontal)
-                .padding(.bottom, 24)
+                .padding(.bottom, allPlannedSetsDone ? 8 : 24)
                 .accessibilityHint("Öffnet die Suche nach einer weiteren Übung")
+
+                if allPlannedSetsDone {
+                    IOSWorkoutFinishCard(plannedSetCount: rows.plannedSetCount) {
+                        showingFinishConfirmation = true
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 24)
+                    .id("workout-finish")
+                }
             }
             .padding(.top, 8)
         }
@@ -387,17 +420,32 @@ struct IOSWorkoutScreen: View {
                 .buttonStyle(.bordered)
                 .tint(.red)
 
-                Button {
+                let finishButton = Button {
                     showingFinishConfirmation = true
                 } label: {
                     Label("Beenden", systemImage: "checkmark.circle.fill")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent).thrymButtonText()
+                // While the finish card shows, it is the one prominent finish action.
+                if allPlannedSetsDone {
+                    finishButton.buttonStyle(.bordered)
+                } else {
+                    finishButton.buttonStyle(.borderedProminent).thrymButtonText()
+                }
             }
             .padding(.horizontal)
             .padding(.vertical, 10)
             .background(.thinMaterial)
+            }
+        }
+        .onChange(of: finishScrollRequest) { _, _ in
+            // The card is the last item of the lazy stack: let it appear for one turn, then
+            // scroll it above the dock or bar.
+            Task { @MainActor in
+                await Task.yield()
+                withAnimation(reduceMotion || theme.reducedMotion ? nil : .snappy) {
+                    proxy.scrollTo("workout-finish", anchor: .bottom)
+                }
             }
         }
         }
@@ -421,7 +469,13 @@ struct IOSWorkoutScreen: View {
                     dismissRestTimer(rowKey: timer.rowKey)
                 },
                 onClose: { pauseRowKey = nil }
-            )
+            ) {
+                // A record set before the rest opens the pause right away; show it there too,
+                // below the top row, so "Zum Training" and the actions stay free.
+                if let recordNotice, recordNotice.sessionID == activeSession?.id {
+                    recordBanner(recordNotice, cornerRadius: 22)
+                }
+            }
             .background { restCompletionWatchers }
         }
         .onChange(of: Set(restTimers.keys)) { _, keys in
@@ -822,12 +876,36 @@ struct IOSWorkoutScreen: View {
     }
 
     private func saveSet(_ set: ILWorkoutSet, intention: ILSetIntention) async -> Bool {
+        // Only the athlete's own log or edit that completes the plan scrolls to the finish
+        // card. Reopening a complete workout, an undo or a deload switch never does.
+        let session = activeSession
+        let wasDone = session.flatMap { session in
+            data.map { exerciseRows(session: session, data: $0).allPlannedSetsDone }
+        } ?? true
+        // Records compare the exercise's sets before and after the save; warm-ups never count.
+        let recordsBefore = resolvedIOSWorkoutSetType(set) == .warmup
+            ? nil
+            : data.map { IOSWorkoutRecords.recordInputs(exerciseID: set.exerciseId, data: $0) }
         let success = await store.saveSet(set, intention: intention)
         guard success else {
             localErrorMessage = store.errorMessage ?? String(localized: "Der Satz konnte nicht gespeichert werden.")
             return false
         }
         store.errorMessage = nil
+        if let session, let data = store.data {
+            var announcements: [String] = []
+            if let recordsBefore,
+               let notice = showRecordNotice(exerciseID: set.exerciseId, sessionID: session.id, before: recordsBefore, data: data) {
+                announcements.append("\(notice.title). \(notice.detail)")
+            }
+            let rows = exerciseRows(session: session, data: data)
+            if !wasDone, rows.allPlannedSetsDone {
+                finishScrollRequest &+= 1
+                // The finish card appears because of this save: say so once.
+                announcements.append(String(localized: "Alle \(rows.plannedSetCount) geplanten Sätze geschafft"))
+            }
+            announce(announcements)
+        }
 
         // Android keeps one timer per exercise key. A warmup or the final planned
         // work set removes only that row's timer; another superset member keeps
@@ -854,6 +932,61 @@ struct IOSWorkoutScreen: View {
         return true
     }
 
+    /// Live record notice after a log or an edit that beat an earlier best of another workout:
+    /// the banner (also in the pause) and one success haptic; the caller announces it. The
+    /// first workout of an exercise, ties and lowered edits stay quiet and return nil.
+    private func showRecordNotice(
+        exerciseID: Int64,
+        sessionID: Int64,
+        before: [RecordSetInput],
+        data: ILTrainingData
+    ) -> IOSWorkoutRecordNotice? {
+        let lines = IOSWorkoutRecords.liveImprovements(
+            sessionID: sessionID,
+            before: before,
+            after: IOSWorkoutRecords.recordInputs(exerciseID: exerciseID, data: data),
+            data: data
+        )
+        guard let notice = IOSWorkoutRecords.notice(
+            sessionID: sessionID,
+            exerciseName: data.exercises.first { $0.id == exerciseID }?.displayName ?? String(localized: "Übung"),
+            lines: lines,
+            unitSystem: settings.state.unitSystem
+        ) else { return nil }
+        withAnimation(noticeAnimation) { recordNotice = notice }
+        let feedback = UINotificationFeedbackGenerator()
+        feedback.prepare()
+        feedback.notificationOccurred(.success)
+        return notice
+    }
+
+    /// One VoiceOver announcement for everything a save brought. High priority: the save is
+    /// often followed by a focus change (the set editor closes, the pause opens), which would
+    /// cut a default announcement off.
+    private func announce(_ parts: [String]) {
+        guard !parts.isEmpty else { return }
+        var announcement = AttributedString(parts.joined(separator: ". "))
+        announcement.accessibilitySpeechAnnouncementPriority = .high
+        AccessibilityNotification.Announcement(announcement).post()
+    }
+
+    private var noticeAnimation: Animation? {
+        reduceMotion || theme.reducedMotion ? nil : .snappy
+    }
+
+    private func recordBanner(_ notice: IOSWorkoutRecordNotice, cornerRadius: CGFloat = 0) -> some View {
+        IOSWorkoutRecordBanner(notice: notice, cornerRadius: cornerRadius) {
+            dismissRecordNotice(id: notice.id)
+        }
+        .transition(reduceMotion || theme.reducedMotion ? .identity : .move(edge: .top).combined(with: .opacity))
+    }
+
+    /// Hides the notice on a tap or when its time is up, unless a newer one replaced it.
+    private func dismissRecordNotice(id: UUID) {
+        guard recordNotice?.id == id else { return }
+        withAnimation(noticeAnimation) { recordNotice = nil }
+    }
+
     private func deleteSet(_ set: ILWorkoutSet) {
         guard !store.isBusy, !isRestoringSet else { return }
         let intention = store.intention(forSetId: set.id)
@@ -863,6 +996,8 @@ struct IOSWorkoutScreen: View {
                 localErrorMessage = store.errorMessage ?? String(localized: "Der Satz konnte nicht gelöscht werden.")
             } else if activeSession?.id == set.sessionId {
                 store.errorMessage = nil
+                // Undo has priority over a record notice, as on Android.
+                recordNotice = nil
                 deletedSet = set
                 deletedIntention = intention
                 undoToken = UUID()
@@ -911,6 +1046,7 @@ struct IOSWorkoutScreen: View {
                 }
                 showingFinishConfirmation = false
                 store.errorMessage = nil
+                recordNotice = nil
                 restTimers = [:]
                 IOSWorkoutRestTimerPersistence.clear(sessionID: session.id)
                 adHocExerciseIDs = []
@@ -927,6 +1063,7 @@ struct IOSWorkoutScreen: View {
             let success = await store.command("workout.cancel", fields: ["sessionId": session.id])
             if success {
                 store.errorMessage = nil
+                recordNotice = nil
                 restTimers = [:]
                 IOSWorkoutRestTimerPersistence.clear(sessionID: session.id)
                 exerciseOrder = nil

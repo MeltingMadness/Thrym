@@ -35,10 +35,6 @@
         <item quantity="one">Übung</item>
         <item quantity="other">Übungen</item>
     </plurals>
-    <plurals name="workout_glass_new_records">
-        <item quantity="one">Neuer Rekord</item>
-        <item quantity="other">Neue Rekorde</item>
-    </plurals>
     <string name="workout_glass_rail_upcoming">Als Nächstes</string>
     <string name="workout_picker_selected_count">%1$d ausgewählt</string>
     <string name="workout_picker_clear_selection">Auswahl leeren</string>

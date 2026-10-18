@@ -1,6 +1,7 @@
 package com.thrym.app.presentation.workout
 
 import android.annotation.SuppressLint
+import android.view.View
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,28 +19,35 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.runtime.rememberCoroutineScope
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
 import com.thrym.app.presentation.theme.accentText
 import com.thrym.feature.workout.R as WorkoutR
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.key
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -48,11 +56,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -76,9 +87,10 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.spring
 import com.thrym.app.presentation.common.RestTimer
 import com.thrym.app.presentation.common.WorkoutTimer
-import com.thrym.app.presentation.common.labelRes
 import com.thrym.app.presentation.common.localizedName
+import com.thrym.app.presentation.common.HapticFeedbackHelper
 import com.thrym.app.presentation.common.rememberHapticFeedback
+import com.thrym.app.presentation.common.rememberUiStrings
 import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.thrymMotion
 import com.thrym.shared.workout.SessionOrderMove
@@ -114,11 +126,22 @@ fun ActiveWorkoutScreen(
         initialValue = AppPreferences()
     )
     val snackbarHostState = remember { SnackbarHostState() }
-    // Rekordmeldungen erscheinen oben, damit sie den Log-Button unten nie verdecken.
+    // Record and undo messages appear at the top, so they never cover the log button below.
+    // Each has its own host, records above undo, so neither waits behind the other.
     val recordSnackbarHostState = remember { SnackbarHostState() }
+    val undoSnackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val uiStrings by rememberUpdatedState(rememberUiStrings())
     val dims = thrymDimens
     val haptic = rememberHapticFeedback()
+    val view = LocalView.current
+    // One instance that moves into the Liquid Glass pause while it is open, so the hosts keep
+    // their messages and timers.
+    val topNotices = remember(haptic) {
+        movableContentOf { modifier: Modifier ->
+            WorkoutTopNotices(recordSnackbarHostState, undoSnackbarHostState, haptic, modifier)
+        }
+    }
     val activeSession = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
     val liquidGlass = isLiquidGlass()
     var pauseOpen by rememberSaveable { mutableStateOf(false) }
@@ -133,30 +156,50 @@ fun ActiveWorkoutScreen(
     val exerciseGroups = state.exerciseGroups
     val reducedMotion = thrymMotion.reduced
 
+    // The list scrolls to the finish card once, when the athlete's own log or edit completes
+    // the plan. A tap arms the scroll together with the list it saw; the next list either
+    // completes the plan or disarms it, so a later undo or deload switch never scrolls.
+    // Plain arrays, because arming must not restart the effects below.
+    val finishScrollArmed = remember { booleanArrayOf(false) }
+    val finishScrollArmedFor = remember { arrayOfNulls<List<ExerciseWithSets>>(1) }
+
+    // Record messages still showing or waiting for their host.
+    val recordNotices = remember { mutableListOf<Job>() }
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            // Each message gets its own coroutine: a snackbar suspends until it is dismissed,
-            // and an undo offer must not wait behind a queued record message.
-            launch {
-                when (event) {
-                    is WorkoutEvent.NewRecords -> {
-                        haptic.confirm()
-                        val types = event.types.joinToString(", ") { context.getString(it.labelRes()) }
+            // Each message gets its own coroutine, because a snackbar suspends until it is
+            // dismissed and the collector must keep taking events meanwhile.
+            when (event) {
+                is WorkoutEvent.NewRecords -> {
+                    val first = event.records.firstOrNull() ?: return@collect
+                    // A new record replaces the one on screen instead of queueing behind it.
+                    // The haptic comes with the message, see WorkoutTopNotices.
+                    recordNotices.toList().forEach { it.cancel() }
+                    val notice = launch {
                         recordSnackbarHostState.showSnackbar(
-                            message = if (event.types.size == 1) {
-                                context.getString(R.string.workout_new_record_message, event.exerciseName, types)
-                            } else {
-                                context.getString(R.string.workout_new_records_message, event.exerciseName, types)
-                            }
+                            RecordSnackbarVisuals(
+                                title = liveRecordTitle(uiStrings, event),
+                                detail = liveRecordDetail(uiStrings, first, preferences.unitSystem)
+                            )
                         )
                     }
-                    is WorkoutEvent.SetDeleted -> {
-                        val result = recordSnackbarHostState.showSnackbar(
+                    recordNotices += notice
+                    notice.invokeOnCompletion { recordNotices -= notice }
+                }
+                is WorkoutEvent.SetDeleted -> {
+                    // Cancelling dismisses the record message on screen and drops a waiting
+                    // one; either may name the set that was just deleted.
+                    recordNotices.toList().forEach { it.cancel() }
+                    launch {
+                        val result = undoSnackbarHostState.showSnackbar(
                             message = context.getString(R.string.workout_set_deleted, event.setNumber),
                             actionLabel = context.getString(R.string.common_undo),
                             duration = SnackbarDuration.Long
                         )
-                        if (result == SnackbarResult.ActionPerformed) viewModel.undoDeleteSet()
+                        if (result == SnackbarResult.ActionPerformed) {
+                            finishScrollArmed[0] = false
+                            viewModel.undoDeleteSet()
+                        }
                     }
                 }
             }
@@ -185,7 +228,7 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    val completionRecords by viewModel.completionRecords.collectAsStateWithLifecycle()
+    val completionRecordInputs by viewModel.completionRecordInputs.collectAsStateWithLifecycle()
     LaunchedEffect(activeSession?.endTime) {
         if (activeSession?.endTime != null) viewModel.loadCompletionRecords()
     }
@@ -193,7 +236,7 @@ fun ActiveWorkoutScreen(
         WorkoutCompletionScreen(
             session = activeSession,
             rows = state.exercisesWithSets,
-            records = completionRecords,
+            recordInputs = completionRecordInputs,
             unitSystem = preferences.unitSystem,
             finishState = state.finishState,
             onClose = onWorkoutFinished,
@@ -292,6 +335,41 @@ fun ActiveWorkoutScreen(
                     val index = exerciseGroups.indexOfFirst { it.key == focusGroupKey }
                     if (index > 0) listState.animateScrollToItem(index)
                 }
+                val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
+                val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
+                val allPlannedDone = state.exercisesWithSets.allPlannedSetsDone()
+                // Reopening a finished plan, undo or a deload switch leave the list where it is.
+                val allPlannedDoneNow by rememberUpdatedState(allPlannedDone)
+                val currentExercisesWithSets by rememberUpdatedState(state.exercisesWithSets)
+                val armFinishScroll = {
+                    if (!allPlannedDoneNow) {
+                        finishScrollArmed[0] = true
+                        finishScrollArmedFor[0] = currentExercisesWithSets
+                    }
+                }
+                // A new list that leaves a slot open ends the arming: that log or edit did not
+                // complete the plan.
+                LaunchedEffect(state.exercisesWithSets) {
+                    if (!allPlannedDone && finishScrollArmedFor[0] != state.exercisesWithSets) {
+                        finishScrollArmed[0] = false
+                    }
+                }
+                // Keyed on the result alone, so the scroll waits for the new set from the
+                // database rather than for the tap.
+                LaunchedEffect(allPlannedDone) {
+                    if (!allPlannedDone || !finishScrollArmed[0]) return@LaunchedEffect
+                    finishScrollArmed[0] = false
+                    // The blocks, "Übung hinzufügen", then the card.
+                    val index = exerciseGroups.size + 1
+                    withTimeoutOrNull(1_000) {
+                        snapshotFlow { listState.layoutInfo.totalItemsCount }.first { it > index }
+                    } ?: return@LaunchedEffect
+                    // TalkBack hears once, with the scroll, that the plan is done.
+                    view.announce(
+                        uiStrings.getQuantity(WorkoutR.plurals.workout_finish_card_title, plannedSetCount, plannedSetCount)
+                    )
+                    if (reducedMotion) listState.scrollToItem(index) else listState.animateScrollToItem(index)
+                }
                 val moveControls: (Int) -> ExerciseMoveControls = { groupIndex ->
                     val group = exerciseGroups[groupIndex]
                     val move: (SessionOrderMove) -> Unit = { direction ->
@@ -321,8 +399,6 @@ fun ActiveWorkoutScreen(
                 }
                 val railScope = rememberCoroutineScope()
                 activeSession?.let { session ->
-                    val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
-                    val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
                     val loggedSetCount = state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }
                     val loggedVolumeKg = state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }
                     if (liquidGlass) {
@@ -476,6 +552,7 @@ fun ActiveWorkoutScreen(
                                         setIntentionsLoaded = state.setIntentionsLoaded,
                                         setIntentionsFailed = state.setIntentionsFailed,
                                         onLogSet = { reps, weight, setType, intensity, submissionId, intention ->
+                                            armFinishScroll()
                                             viewModel.logSet(
                                                 key = exerciseWithSets.key,
                                                 exerciseId = exerciseWithSets.exercise.id,
@@ -490,7 +567,10 @@ fun ActiveWorkoutScreen(
                                                 intention = intention ?: SetIntention.UNKNOWN
                                             )
                                         },
-                                        onUpdateSet = viewModel::updateSet,
+                                        onUpdateSet = { setId, reps, weight, intensity, intention ->
+                                            armFinishScroll()
+                                            viewModel.updateSet(setId, reps, weight, intensity, intention)
+                                        },
                                         onDeleteSet = viewModel::deleteSet,
                                         haptic = haptic,
                                         // Superset members move with their block from the header.
@@ -519,6 +599,18 @@ fun ActiveWorkoutScreen(
                     )
                 }
 
+                    }
+                    // Last, so it never sits between the exercises; the bottom padding keeps it
+                    // above the rest dock.
+                    if (allPlannedDone) {
+                        item(key = "finish-workout", contentType = "finish") {
+                            WorkoutFinishCard(
+                                plannedSetCount = plannedSetCount,
+                                onFinish = viewModel::showFinishDialog,
+                                modifier = (if (reducedMotion) Modifier else Modifier.animateItem())
+                                    .testTag("workout_finish_card")
+                            )
+                        }
                     }
                 }
             }
@@ -553,6 +645,7 @@ fun ActiveWorkoutScreen(
             val nowMillis = System.currentTimeMillis()
             val dockRows = if (liquidGlass) buildRestDockRows(state.restTimers, nowMillis) else emptyList()
             val pinnedRow = resolvePinnedRestRow(pauseRowKey, state.restTimers, nowMillis)
+            val pauseShown = liquidGlass && dockRows.isNotEmpty() && pauseOpen && pinnedRow != null
             if (liquidGlass && dockRows.isNotEmpty()) {
                 GlassRestDockStack(
                     rows = dockRows.map { it.stableKey to it.glassPauseInfo(state.exercisesWithSets) },
@@ -578,7 +671,7 @@ fun ActiveWorkoutScreen(
                         .onSizeChanged { size -> dockHeight = with(density) { size.height.toDp() } }
                         .padding(horizontal = dims.spacingMd, vertical = dims.spacingMd)
                 )
-                if (pauseOpen && pinnedRow != null) {
+                if (pauseShown) {
                     val pinnedKey = pinnedRow.exerciseKey
                     val pinnedStart = pinnedRow.timer.startTime
                     val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
@@ -636,14 +729,13 @@ fun ActiveWorkoutScreen(
                                 viewModel.dismissRestTimer(pinnedKey)
                             }
                         },
-                        onClose = { pauseOpen = false }
+                        onClose = { pauseOpen = false },
+                        topNotice = { topNotices(Modifier) }
                     )
                 }
             }
-            SnackbarHost(
-                hostState = recordSnackbarHostState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+            // The open pause shows them below its top row instead, see GlassPauseScreen.
+            if (!pauseShown) topNotices(Modifier.align(Alignment.TopCenter))
         }
 
         if (state.showExercisePicker) {
@@ -691,6 +783,73 @@ fun ActiveWorkoutScreen(
                     }
                 }
             )
+        }
+    }
+}
+
+/**
+ * Record notice above the undo message. The success haptic comes when a record notice shows,
+ * not when it waits for its host.
+ */
+@Composable
+private fun WorkoutTopNotices(
+    recordHostState: SnackbarHostState,
+    undoHostState: SnackbarHostState,
+    haptic: HapticFeedbackHelper,
+    modifier: Modifier = Modifier
+) {
+    val shownRecord = recordHostState.currentSnackbarData
+    LaunchedEffect(shownRecord) {
+        if (shownRecord != null) haptic.confirm()
+    }
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        SnackbarHost(hostState = recordHostState) { data ->
+            val recordVisuals = data.visuals as? RecordSnackbarVisuals
+            if (recordVisuals != null) RecordSnackbar(recordVisuals) else Snackbar(data)
+        }
+        SnackbarHost(hostState = undoHostState)
+    }
+}
+
+/**
+ * Has TalkBack say [text] once. Deprecated from API 36 in favour of live regions, but the
+ * finish card is a lazy item that is composed only once the list scrolls to it, and a live
+ * region on it would speak again whenever it scrolls back into view.
+ */
+@Suppress("DEPRECATION")
+private fun View.announce(text: String) = announceForAccessibility(text)
+
+/**
+ * A live record: "1 neuer Rekord · Bankdrücken" over "Gewicht 102,5 kg (+2,5 kg)". [message]
+ * holds both lines for accessibility services that read the visuals instead of the content.
+ */
+private class RecordSnackbarVisuals(val title: String, val detail: String) : SnackbarVisuals {
+    override val message: String = "$title. $detail"
+    override val actionLabel: String? = null
+    override val withDismissAction: Boolean = false
+    override val duration: SnackbarDuration = SnackbarDuration.Short
+}
+
+/** The record message: trophy, title and the record with its gain, in the host's live region. */
+@Composable
+private fun RecordSnackbar(visuals: RecordSnackbarVisuals) {
+    Snackbar(modifier = Modifier.padding(12.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.EmojiEvents,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.inversePrimary
+            )
+            Column {
+                Text(text = visuals.title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    text = visuals.detail,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum")
+                )
+            }
         }
     }
 }

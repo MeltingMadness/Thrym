@@ -1,7 +1,6 @@
 package com.thrym.app.presentation.workout
 
 import com.thrym.feature.workout.R as UxR
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,22 +12,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -46,28 +39,27 @@ import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.theme.AthleticLabel
-import com.thrym.app.presentation.common.label
 import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.theme.GlassLevel
 import com.thrym.app.presentation.theme.liquidGlass
 import com.thrym.core.designsystem.R
 import com.thrym.feature.workout.R as WorkoutR
+import com.thrym.shared.workout.SessionRecordSummary
 /**
  * Workout summary in Liquid Glass: "Geschafft.", three lenses (duration, volume, exercises),
- * records on tinted glass, the logged sets, and "Fertig" as the bright main action. The
- * follow-up actions (plan changes, progression) are the same as in Ember and come in as slots.
+ * the record board on tinted glass, the logged sets, and "Fertig" as the bright main action.
+ * The follow-up actions (plan changes, progression) are the same as in Ember and come in as slots.
  */
 @Composable
 internal fun GlassWorkoutCompletion(
     session: WorkoutSession,
     rows: List<ExerciseWithSets>,
-    records: List<SessionRecordUi>,
+    recordSummary: SessionRecordSummary?,
     unitSystem: UnitSystem,
     onClose: () -> Unit,
     onDetails: () -> Unit,
     followUps: @Composable () -> Unit
 ) {
-    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val sets = rows.flatMap { it.sets }.filter { it.reps > 0 }.distinctBy { it.id }
     val remaining = rows.sumOf { it.openSlotCount() }
     val trainedRows = rows.filter { row -> row.sets.any { it.reps > 0 } }
@@ -146,47 +138,7 @@ internal fun GlassWorkoutCompletion(
                 )
             }
 
-            if (records.isNotEmpty()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .liquidGlass(GlassLevel.TINT, RoundedCornerShape(30.dp))
-                        .padding(18.dp)
-                        .semantics(mergeDescendants = true) {},
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Box(
-                        Modifier
-                            .size(48.dp)
-                            .background(if (dark) Color.White else Color(0xFF0B0D12), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.EmojiEvents,
-                            contentDescription = null,
-                            tint = if (dark) Color(0xFF0B0D12) else Color.White
-                        )
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            pluralStringResource(WorkoutR.plurals.workout_glass_new_records, records.size).uppercase(currentLocale()),
-                            style = AthleticLabel
-                        )
-                        records.forEach { record ->
-                            Text(
-                                stringResource(
-                                    R.string.workout_summary_record_line,
-                                    record.exerciseName,
-                                    record.types.map { it.label() }.joinToString(", ")
-                                ),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                        }
-                    }
-                }
-            }
+            recordSummary?.let { CompletionRecordsCard(it, rows, unitSystem) }
 
             trainedRows.forEach { row ->
                 Column(

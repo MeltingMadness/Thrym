@@ -39,10 +39,6 @@
         <item quantity="one">exercise</item>
         <item quantity="other">exercises</item>
     </plurals>
-    <plurals name="workout_glass_new_records">
-        <item quantity="one">New personal record</item>
-        <item quantity="other">New personal records</item>
-    </plurals>
     <string name="workout_glass_rail_upcoming">up next</string>
     <string name="workout_picker_selected_count" tools:ignore="PluralsCandidate">%1$d selected</string>
     <string name="workout_picker_clear_selection">Clear selection</string>

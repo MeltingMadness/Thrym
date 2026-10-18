@@ -11,10 +11,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.IntensitySystem
-import com.thrym.app.domain.model.PersonalRecord
 import com.thrym.app.domain.model.ProgressionConfig
 import com.thrym.app.domain.model.PreviousSessionScope
-import com.thrym.app.domain.model.RecordType
 import com.thrym.app.domain.model.SetType
 import com.thrym.app.domain.model.WorkoutPlanTarget
 import com.thrym.app.domain.model.WorkoutSession
@@ -28,8 +26,10 @@ import com.thrym.app.domain.util.AppLogger
 import com.thrym.app.domain.util.RpeAutoregulation
 import com.thrym.app.domain.util.WorkoutNumericValidation
 import com.thrym.shared.readinessdata.SetIntention
+import com.thrym.shared.workout.RecordSetInput
 import com.thrym.shared.workout.SessionExerciseOrder
 import com.thrym.shared.workout.SessionOrderMove
+import com.thrym.shared.workout.SessionRecords
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -50,7 +50,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.text.Collator
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -79,10 +78,14 @@ class ActiveWorkoutViewModel(
     private var errorSequence = 0L
     private val mutationMutex = Mutex()
     private var lastDeletedSet: Pair<WorkoutSet, SetIntention>? = null
-    private val _completionRecords = MutableStateFlow<List<SessionRecordUi>>(emptyList())
+    private val _completionRecordInputs = MutableStateFlow<List<RecordSetInput>?>(null)
 
-    /** Records set during this session, loaded once the session is finished. */
-    val completionRecords: StateFlow<List<SessionRecordUi>> = _completionRecords.asStateFlow()
+    /**
+     * Every set of the finished session's exercises, from all sessions, loaded once the session
+     * is finished; null until then. The completion screen derives the records from them in the
+     * workout's display order, see [SessionRecords.summarize].
+     */
+    val completionRecordInputs: StateFlow<List<RecordSetInput>?> = _completionRecordInputs.asStateFlow()
 
     private val sessionPhase = workoutRepository.observeSessionById(sessionId)
         .map<WorkoutSession?, ActiveWorkoutSessionPhase> { session ->
@@ -548,22 +551,17 @@ class ActiveWorkoutViewModel(
                         planTargetSnapshotId = (key as? WorkoutExerciseKey.Planned)?.snapshotId
                     )
                     // The repository owns record recalculation and does it inside the same
-                    // transaction as the insert. The ViewModel only compares before/after and
-                    // must stay inside mutationMutex until that comparison is done, so a
-                    // concurrent delete/update cannot interleave and later be overwritten by
-                    // a stale add-based PR write.
+                    // transaction as the insert. The ViewModel only compares the sets before and
+                    // after and must stay inside mutationMutex until that comparison is done, so
+                    // a concurrent delete/update cannot interleave with it.
                     // Best-effort snapshot: a statistics-read failure must never block the
                     // repository mutation. Without a snapshot no NewRecords event is emitted,
                     // because an unknown baseline could otherwise produce false positives.
-                    val recordsBefore: Map<RecordType, PersonalRecord>? = if (setType != SetType.WARMUP) {
-                        snapshotRecordsBefore(exerciseId)
-                    } else {
-                        null
-                    }
+                    val setsBefore = if (setType != SetType.WARMUP) snapshotRecordSets(exerciseId) else null
                     workoutRepository.addSet(set, intention)
                     persisted = true
-                    if (setType != SetType.WARMUP && recordsBefore != null) {
-                        emitImprovedRecords(exerciseId, recordsBefore)
+                    if (setsBefore != null) {
+                        emitImprovedRecords(exerciseId, setsBefore)
                     }
                     // A zero duration selects the elapsed-time display. Count only NORMAL sets
                     // against the deload-adjusted target for this exact planned row.
@@ -682,40 +680,43 @@ class ActiveWorkoutViewModel(
     }
 
     /**
-     * Emits one NewRecords event for the values that actually improved after a successful
-     * repository mutation; the repository owns record recalculation, so this
-     * never writes a record itself.
+     * Emits one NewRecords event for the records a successful repository mutation beat, by the
+     * shared rule [SessionRecords.liveImprovements]: an earlier best of another workout must
+     * fall, so the first workout of an exercise, a tie and a lowered edit stay quiet. The
+     * repository owns record recalculation, so this never writes a record itself.
      */
-    private suspend fun emitImprovedRecords(
-        exerciseId: Long,
-        recordsBefore: Map<RecordType, PersonalRecord>
-    ) {
+    private suspend fun emitImprovedRecords(exerciseId: Long, setsBefore: List<RecordSetInput>) {
         try {
+            val setsAfter = statisticsRepository.getSetsForExerciseList(exerciseId)
+                .map { it.toRecordInput(sessionFinished = false) }
+            val records = SessionRecords.liveImprovements(sessionId, setsBefore, setsAfter).mapNotNull { line ->
+                val type = recordTypeOf(line.type) ?: return@mapNotNull null
+                // Live lines always have an earlier best; the rule drops them otherwise.
+                val previous = line.previous ?: return@mapNotNull null
+                LiveRecordUi(type = type, value = line.value, previous = previous)
+            }
+            if (records.isEmpty()) return
             val exercise = exerciseRepository.getExerciseById(exerciseId) ?: return
-            val recordsAfter = statisticsRepository.getRecordsForExercisesList(listOf(exerciseId))
-                .associateBy { it.type }
-            val improved = RecordType.entries.filter { type ->
-                val current = recordsAfter[type]?.value ?: return@filter false
-                val previous = recordsBefore[type]?.value
-                previous == null || current > previous
-            }
-            if (improved.isNotEmpty()) {
-                _events.emit(WorkoutEvent.NewRecords(strings.exerciseName(exercise), improved))
-            }
+            _events.emit(WorkoutEvent.NewRecords(strings.exerciseName(exercise), records))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             AppLogger.w("ActiveWorkoutVM", "PR-Pruefung nach Mutation fehlgeschlagen: ${e.message}", e)
         }
     }
 
     /**
-     * Loads the current personal records as a comparison baseline before a repository
-     * mutation. Best-effort by design: when statistics are temporarily unavailable the
-     * mutation still proceeds and the caller simply skips NewRecords emission.
+     * Loads every set of the exercise, from all workouts, as the comparison baseline before a
+     * repository mutation. Volume is never live, so no set needs its finished flag. Best-effort
+     * by design: when statistics are temporarily unavailable the mutation still proceeds and
+     * the caller simply skips NewRecords emission.
      */
-    private suspend fun snapshotRecordsBefore(exerciseId: Long): Map<RecordType, PersonalRecord>? =
+    private suspend fun snapshotRecordSets(exerciseId: Long): List<RecordSetInput>? =
         try {
-            statisticsRepository.getRecordsForExercisesList(listOf(exerciseId))
-                .associateBy { it.type }
+            statisticsRepository.getSetsForExerciseList(exerciseId)
+                .map { it.toRecordInput(sessionFinished = false) }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             AppLogger.w("ActiveWorkoutVM", "PR-Snapshot konnte nicht geladen werden: ${e.message}", e)
             null
@@ -747,30 +748,25 @@ class ActiveWorkoutViewModel(
     }
 
     /**
-     * Loads the personal records whose achievement falls into this finished session. Records
-     * are rebuilt from the sets, so a deleted or restored set is already reflected here.
+     * Loads the sets the completion screen derives the records from: every set of this finished
+     * session's exercises, from all sessions, each marked with whether its session has ended.
+     * The stored records keep no earlier value, so the gain over the best before this workout
+     * can only come from the sets.
      */
     fun loadCompletionRecords() {
         viewModelScope.launch {
             try {
                 val session = workoutRepository.getSessionById(sessionId) ?: return@launch
-                val end = session.endTime ?: return@launch
+                if (session.endTime == null) return@launch
                 val exerciseIds = workoutRepository.getSetsForSessionList(sessionId)
                     .filter { it.reps > 0 }
                     .map { it.exerciseId }
                     .distinct()
                 if (exerciseIds.isEmpty()) return@launch
-                val names = exerciseRepository.getExercisesByIds(exerciseIds).associate { it.id to strings.exerciseName(it) }
-                _completionRecords.value = statisticsRepository.getRecordsForExercisesList(exerciseIds)
-                    .filter { !it.achievedAt.isBefore(session.startTime) && !it.achievedAt.isAfter(end) }
-                    .groupBy { it.exerciseId }
-                    .map { (exerciseId, records) ->
-                        SessionRecordUi(
-                            exerciseName = names[exerciseId].orEmpty(),
-                            types = records.map { it.type }.distinct().sortedBy { it.ordinal }
-                        )
-                    }
-                    .sortedWith(compareBy(Collator.getInstance(strings.locale)) { it.exerciseName })
+                val finishedSessionIds = workoutRepository.getAllCompletedSessionsList().mapTo(HashSet()) { it.id }
+                _completionRecordInputs.value = exerciseIds
+                    .flatMap { statisticsRepository.getSetsForExerciseList(it) }
+                    .map { it.toRecordInput(sessionFinished = it.sessionId in finishedSessionIds) }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 AppLogger.w("ActiveWorkoutVM", "Rekorde fuer die Zusammenfassung nicht geladen: ${e.message}", e)
@@ -837,10 +833,10 @@ class ActiveWorkoutViewModel(
                         weightKg = weightKg,
                         rpe = newRpe
                     )
-                    val recordsBefore = snapshotRecordsBefore(updatedSet.exerciseId)
+                    val setsBefore = snapshotRecordSets(updatedSet.exerciseId)
                     workoutRepository.updateSet(updatedSet, intention)
-                    if (recordsBefore != null) {
-                        emitImprovedRecords(updatedSet.exerciseId, recordsBefore)
+                    if (setsBefore != null) {
+                        emitImprovedRecords(updatedSet.exerciseId, setsBefore)
                     }
                     operationState.update {
                         it.copy(

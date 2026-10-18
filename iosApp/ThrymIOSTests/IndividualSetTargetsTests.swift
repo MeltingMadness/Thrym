@@ -45,6 +45,51 @@ final class IndividualSetTargetsTests: XCTestCase {
         XCTAssertTrue(makeRow(sets: sets + [ILWorkoutSet(id: 4, setType: "NORMAL")]).isComplete)
     }
 
+    func testAllPlannedSetsDoneNeedsPlannedSetsAndNoOpenSlot() {
+        let allSlots = [
+            ILWorkoutSet(id: 1, setType: "WARMUP"),
+            ILWorkoutSet(id: 2, setType: "NORMAL"),
+            ILWorkoutSet(id: 3, setType: "FAILURE"),
+            ILWorkoutSet(id: 4, setType: "BACKOFF")
+        ]
+        let adHoc = IOSWorkoutExerciseRow(id: "adhoc-2", exercise: ILExercise(id: 2), target: nil, displayTarget: nil,
+            sets: [ILWorkoutSet(id: 9, reps: 8, weightKg: 40)], previousWorkWeightKg: nil, nextSetRecommendation: nil)
+
+        // A free workout has nothing planned, also with logged sets.
+        XCTAssertFalse([IOSWorkoutExerciseRow]().allPlannedSetsDone)
+        XCTAssertFalse([adHoc].allPlannedSetsDone)
+        XCTAssertFalse([makeRow()].allPlannedSetsDone)
+        XCTAssertFalse([makeRow(sets: Array(allSlots.dropLast()))].allPlannedSetsDone)
+        XCTAssertTrue([makeRow(sets: allSlots)].allPlannedSetsDone)
+        XCTAssertEqual([makeRow(sets: allSlots)].plannedSetCount, 4)
+
+        // Extra and drop sets keep the plan done; an ad-hoc row never counts as open.
+        XCTAssertTrue([makeRow(sets: allSlots + [ILWorkoutSet(id: 5, setType: "DROP_SET"), ILWorkoutSet(id: 6, setType: "NORMAL")])].allPlannedSetsDone)
+        XCTAssertTrue([makeRow(sets: allSlots), adHoc].allPlannedSetsDone)
+
+        // The planned warm-up slot must be filled; a failure set fills a normal slot.
+        XCTAssertFalse([makeRow(sets: Array(allSlots.dropFirst()) + [ILWorkoutSet(id: 5, setType: "NORMAL")])].allPlannedSetsDone)
+
+        // A target without slots contributes nothing and is not done on its own.
+        let empty = IOSWorkoutExerciseRow(id: "target-3", exercise: ILExercise(id: 3),
+            target: ILWorkoutPlanTarget(id: 3, target: ILProgressionTarget(sets: 0, reps: 8, weightKg: 60)),
+            displayTarget: ILProgressionTarget(sets: 0, reps: 8, weightKg: 60), sets: [], previousWorkWeightKg: nil, nextSetRecommendation: nil)
+        XCTAssertTrue(empty.isComplete)
+        XCTAssertFalse([empty].allPlannedSetsDone)
+        XCTAssertTrue([empty, makeRow(sets: allSlots)].allPlannedSetsDone)
+    }
+
+    func testAllPlannedSetsDoneFollowsTheDeloadTargets() {
+        let sets = [ILWorkoutSet(id: 1, setType: "WARMUP"), ILWorkoutSet(id: 2, setType: "NORMAL"), ILWorkoutSet(id: 3, setType: "NORMAL")]
+        // The back-off slot is still open without a deload.
+        XCTAssertFalse([makeRow(sets: sets, displaySets: 3)].allPlannedSetsDone)
+        // Halved volume drops the last work slot, so the same sets complete the plan.
+        var halved = makeRow(sets: sets, displaySets: 2)
+        halved.deloadMode = "HALVE_SET_VOLUME"
+        XCTAssertEqual(halved.loggingSlots.count, 3)
+        XCTAssertTrue([halved].allPlannedSetsDone)
+    }
+
     private func makeRow(sets: [ILWorkoutSet] = [], displaySets: Int = 3) -> IOSWorkoutExerciseRow {
         let target = ILWorkoutPlanTarget(id: 1, target: ILProgressionTarget(sets: 3, reps: 8, weightKg: 60), setTargets: [
             ILPlannedSet(kind: "WARMUP", reps: 10, weightKg: 20),

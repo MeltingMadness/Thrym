@@ -74,6 +74,16 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 - `workout_plan_targets.orderIndex` und `supersetGroupId` bleiben unberührt. Sie gehören zur Identität der Planposition, die Coach, „Satzwerte übernehmen“ (unter „Planänderungen prüfen“) und Readiness nutzen.
 - Die Reihenfolge ist nicht im Backup. Soll sie dort einmal hinein, dann als additives, nullable Feld mit `@EncodeDefault(NEVER)` und Backup-Schema 16.
 
+## Rekorde eines Trainings
+
+`personal_records` (Android Room, iOS Trainingsgraph) hält je Übung und Typ nur den aktuellen Bestwert, ohne Verlauf; Dashboard, Statistik und Verlauf lesen diese Werte. Was ein Training geschafft hat, leiten beide Plattformen dagegen allein aus den Sätzen ab, mit `SessionRecords` in `:shared` (`shared/src/commonMain/kotlin/com/thrym/shared/workout/SessionRecords.kt`). Gespeichert wird dafür nichts, Room-Schema und Backup bleiben unverändert.
+
+- Verglichen werden die Arbeitssätze des Trainings mit denen aller anderen Sessions. Arbeitssatz: kein Aufwärmsatz, Wiederholungen > 0, endliches Gewicht ≥ 0. Gewicht, Wiederholungen und e1RM (Epley, bei einer Wiederholung das Gewicht selbst) gelten je Satz, Volumen als Summe des Trainings; dessen früherer Bestwert zählt nur abgeschlossene Sessions. Werte ≤ 0 sind kein Rekord, eine Übung mit 0 kg hat also nur Wiederholungsrekorde.
+- Ein Rekord braucht einen Zuwachs von mindestens einem Schritt (0,1 kg, 1 Wdh, 1 kg Volumen). Gleichstand zählt nicht. Eine Übung ohne früheren Arbeitssatz hat keine Rekorde, sondern „erste Bestwerte“.
+- `summarize` liefert die Tafel des Abschlusses, `liveImprovements` die Meldung nach einem Log oder einer Änderung. Live braucht eine Bestmarke aus einem früheren Training und meldet nie Volumen; der Zuwachs bezieht sich in beiden Fällen auf den Bestwert vor dem Training.
+- Android liest die Sätze über `StatisticsRepository.getSetsForExerciseList` (live vor und nach der Änderung, unter dem Mutation-Mutex), iOS aus dem Trainingsgraphen (`IOSWorkoutRecords.swift`).
+- Bekannte Abweichung: Der iOS-Store berechnet den gespeicherten e1RM-Rekord für Einzelwiederholungen noch rein nach Epley (`SharedStateStore`), die Tafel wie Android mit Gewicht = e1RM.
+
 ## Backup
 
 - Format: JSON, `BackupPayloadV1` mit `formatVersion = 1` und `schemaVersion = 15` (`CURRENT_BACKUP_SCHEMA_VERSION`). Es enthält auch die Readiness-Daten, Satzvorgaben, Erfolgsbestätigung und den Satztyp `BACKOFF`. Modelle und Validator liegen in `:shared` (`com.thrym.shared.backup`). `data` nutzt sie über Typaliase. Beim Import werden nur aktive Plan-Konfigurationen auf die aktuelle Regelrevision umgestellt; historische Quellen bleiben erhalten.
@@ -89,7 +99,7 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 
 ## Kotlin Multiplatform (`:shared`)
 
-Enthält den plattformneutralen Kern (`com.thrym.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise (`workout`) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
+Enthält den plattformneutralen Kern (`com.thrym.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise, Reihenfolge und Rekorde im laufenden Training (`workout`) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
 
 Android nutzt daraus vor allem Backup-Format und Validator, Readiness, Progression (über `PortableProgressionAdapter`), Satzvorgaben, Scheibenrechner und die Einstellungs-Controller. Die Android-Datenhaltung bleibt Room. Die iOS-App bindet `:shared` als statisches Framework `Shared` ein, speichert den Trainingsgraphen aus `store` als JSON-Datei unter `Application Support/Thrym/training-state.json` und greift über `IosTrainingFeature` und `IosSettingsFeature` (`shared/src/iosMain`) auf den Kern zu, siehe [`ios-feature-parity.md`](ios-feature-parity.md). Einstellungen liegen auf iOS in `UserDefaults`.
 

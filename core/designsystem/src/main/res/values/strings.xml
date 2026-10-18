@@ -86,8 +86,6 @@
     <string name="workout_summary_duration_under_minute" translatable="false">&lt; 1 min</string>
     <string name="workout_summary_sets">Sets</string>
     <string name="workout_summary_volume">Volume</string>
-    <string name="workout_summary_records_title">🏆 New personal records</string>
-    <string name="workout_summary_record_line" translatable="false">%1$s: %2$s</string>
     <string name="workout_summary_review_plan_changes">Review plan changes</string>
     <string name="workout_summary_plan_changes_applied">Set values applied</string>
     <string name="workout_summary_review_progression">Review progression suggestions</string>
@@ -109,8 +107,6 @@
     <string name="workout_plan_changes_confirm_keep">Keep plan unchanged</string>
     <string name="workout_plan_changes_confirm_apply">Apply set values</string>
     <string name="workout_plan_changes_confirm_editor">Open plan editor</string>
-    <string name="workout_new_record_message">%1$s: new PR (%2$s)</string>
-    <string name="workout_new_records_message">%1$s: new PRs (%2$s)</string>
     <string name="workout_target_with_weight">Target: %1$d x %2$d @ %3$s</string>
     <string name="workout_target_no_weight">Target: %1$d x %2$d</string>
     <string name="workout_target_completed">Target reached</string>

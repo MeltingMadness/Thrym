@@ -75,6 +75,108 @@ final class ThemeContrastTests: XCTestCase {
         print("Knappster geprüfter Kontrast: \(String(format: "%.3f", weakest.ratio)):1 (\(weakest.description))")
     }
 
+    /// The semantic ink on the cards it is made for: the Ember surface with a faint fill and
+    /// tinted glass, each tinted with the ink's own fills (finish card: success, record board:
+    /// warning). The palette text roles must stay readable on them too.
+    func testSemanticInkMeetsWCAGContrastOnTintedCards() {
+        var weakest = (ratio: Double.infinity, description: "")
+
+        for scheme in ThrymTheme.Scheme.allCases {
+            let theme = ThrymTheme(scheme: scheme)
+
+            for colorScheme in [ColorScheme.light, .dark] {
+                let dark = colorScheme == .dark
+                let palette = theme.palette(for: colorScheme)
+                let ink = ThrymSemanticInk.forDark(dark)
+                let backdrop = backdropSamples(primary: rgb(palette.primary), dark: dark)
+                let textRoles = [
+                    ("Erfolgstinte", rgb(ink.success)),
+                    ("Warntinte", rgb(ink.warning)),
+                    ("Nebentext", rgb(palette.textSecondary)),
+                    ("Text", rgb(palette.textPrimary))
+                ]
+
+                for (card, fill) in [("Erfolgskarte", rgb(ink.successFill)), ("Warnkarte", rgb(ink.warningFill))] {
+                    let looks = [
+                        ("Ember", [composite(fill, alpha: 0.08, over: rgb(palette.surface))]),
+                        ("Glas", tintedGlassSamples(over: backdrop, tint: fill, dark: dark))
+                    ]
+
+                    for (look, surfaces) in looks {
+                        let luminances = surfaces.map(luminance)
+                        for (role, foreground) in textRoles {
+                            let ratio = worstContrast(foreground, on: luminances)
+                            let description = "\(scheme.rawValue) \(dark ? "dunkel" : "hell") \(look) \(card) \(role)"
+                            if ratio < weakest.ratio {
+                                weakest = (ratio, description)
+                            }
+                            XCTAssertGreaterThanOrEqual(ratio, 4.5, "\(description): \(String(format: "%.3f", ratio)):1")
+                        }
+                    }
+                }
+            }
+        }
+
+        print("Knappster Kontrast der semantischen Tinte: \(String(format: "%.3f", weakest.ratio)):1 (\(weakest.description))")
+    }
+
+    /// The record board's chips and medallion on its warning-tinted card: the gain in green on
+    /// a success fill, "Erstmals" in gold on a warning fill (text, 4.5:1), and the trophy on the
+    /// medallion (a graphic, 3:1).
+    func testRecordBoardChipsMeetWCAGContrast() {
+        var weakest = (ratio: Double.infinity, description: "")
+
+        for scheme in ThrymTheme.Scheme.allCases {
+            let theme = ThrymTheme(scheme: scheme)
+
+            for colorScheme in [ColorScheme.light, .dark] {
+                let dark = colorScheme == .dark
+                let palette = theme.palette(for: colorScheme)
+                let ink = ThrymSemanticInk.forDark(dark)
+                let warningFill = rgb(ink.warningFill)
+                let cards = [
+                    ("Ember", [composite(warningFill, alpha: 0.08, over: rgb(palette.surface))]),
+                    ("Glas", tintedGlassSamples(over: backdropSamples(primary: rgb(palette.primary), dark: dark), tint: warningFill, dark: dark))
+                ]
+                let marks = [
+                    ("Zuwachs", rgb(ink.success), rgb(ink.successFill), 0.14, 4.5),
+                    ("Erstmals", rgb(ink.warning), warningFill, 0.16, 4.5),
+                    ("Medaille", rgb(ink.warning), warningFill, 0.22, 3.0)
+                ]
+
+                for (look, card) in cards {
+                    for (mark, foreground, fill, alpha, minimum) in marks {
+                        let luminances = card.map { luminance(composite(fill, alpha: alpha, over: $0)) }
+                        let ratio = worstContrast(foreground, on: luminances)
+                        let description = "\(scheme.rawValue) \(dark ? "dunkel" : "hell") \(look) \(mark)"
+                        if ratio / minimum < weakest.ratio {
+                            weakest = (ratio / minimum, description)
+                        }
+                        XCTAssertGreaterThanOrEqual(ratio, minimum, "\(description): \(String(format: "%.3f", ratio)):1")
+                    }
+                }
+            }
+        }
+
+        print("Knappste Rekordmarke, relativ zur Grenze: \(String(format: "%.3f", weakest.ratio)) (\(weakest.description))")
+    }
+
+    /// `.tint` glass with an explicit tint over every backdrop sample and sheen, both with the
+    /// translucent fill and with the stronger fill of Reduce Transparency.
+    private func tintedGlassSamples(
+        over backdrop: [(x: Double, y: Double, color: ThrymTestRGB)],
+        tint: ThrymTestRGB,
+        dark: Bool
+    ) -> [ThrymTestRGB] {
+        backdrop.flatMap { sample in
+            (dark ? [0.20, 0.05, 0.03] : [0.70, 0.30, 0.20]).flatMap { sheenAlpha in
+                [dark ? 0.30 : 0.22, dark ? 0.45 : 0.30].map { tintAlpha in
+                    glassColor(over: sample, primary: tint, level: .tint, dark: dark, sheenAlpha: sheenAlpha, tintAlpha: tintAlpha)
+                }
+            }
+        }
+    }
+
     private func backdropSamples(primary: ThrymTestRGB, dark: Bool) -> [(x: Double, y: Double, color: ThrymTestRGB)] {
         let base = rgb(hex: dark ? 0x07080C : 0xEEF0F6)
         let strength = dark ? 1.0 : 0.55
@@ -114,7 +216,8 @@ final class ThemeContrastTests: XCTestCase {
         primary: ThrymTestRGB,
         level: ThrymGlassLevel,
         dark: Bool,
-        sheenAlpha: Double
+        sheenAlpha: Double,
+        tintAlpha: Double? = nil
     ) -> ThrymTestRGB {
         var result: ThrymTestRGB
         switch level {
@@ -125,7 +228,7 @@ final class ThemeContrastTests: XCTestCase {
                 over: backdrop.color
             )
         case .tint:
-            result = composite(primary, alpha: dark ? 0.30 : 0.22, over: backdrop.color)
+            result = composite(primary, alpha: tintAlpha ?? (dark ? 0.30 : 0.22), over: backdrop.color)
         case .strong:
             return backdrop.color
         }
@@ -169,6 +272,14 @@ final class ThemeContrastTests: XCTestCase {
         let first = luminance(foreground)
         let second = luminance(background)
         return (max(first, second) + 0.05) / (min(first, second) + 0.05)
+    }
+
+    /// Lowest contrast of `foreground` on backgrounds given by their relative luminance.
+    private func worstContrast(_ foreground: ThrymTestRGB, on backgroundLuminances: [Double]) -> Double {
+        let first = luminance(foreground)
+        return backgroundLuminances.map { second in
+            (max(first, second) + 0.05) / (min(first, second) + 0.05)
+        }.min() ?? 0
     }
 
     private func luminance(_ color: ThrymTestRGB) -> Double {

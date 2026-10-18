@@ -41,42 +41,55 @@ struct IOSWorkoutCompletionScreen: View {
     @State private var showPlanChanges = false
     @State private var editPlan = false
     @State private var planApplied = false
+    /// Records of this workout (`IOSWorkoutRecords.summary`), computed outside `body`.
+    @State private var recordSummary: IOSWorkoutRecordSummary?
+    /// The workout whose records already played the success haptic, so a rebuilt or
+    /// restored screen does not celebrate twice.
+    @SceneStorage("thrym.workout.recordsCelebratedSessionID") private var recordsCelebratedSessionID = 0
     private var sets: [ILWorkoutSet] { store.data?.workoutSets.filter { $0.sessionId == session.id && $0.reps > 0 } ?? [] }
     private var remaining: Int { rows.compactMap(\.remainingPlannedSets).reduce(0, +) }
     var body: some View {
-        if appearance == .liquidGlass {
-            glassBody
-        } else {
-            emberBody
+        Group {
+            if appearance == .liquidGlass {
+                glassBody
+            } else {
+                emberBody
+            }
+        }
+        // The order joins the key: a restored screen gets the stored order after its first frame.
+        .task(id: "\(session.id)-\(session.endTime ?? 0)-\(sets.count)-\(rows.map(\.id).joined(separator: ","))") {
+            updateRecords()
         }
     }
 
-    /// Records reached during this workout, grouped per exercise (same rule as Android).
-    private var sessionRecords: [(exercise: String, types: [String])] {
-        guard let data = store.data else { return [] }
-        let end = session.endTime ?? Int64(Date().timeIntervalSince1970 * 1_000)
-        let exerciseIDs = Set(sets.map(\.exerciseId))
-        let names = Dictionary(uniqueKeysWithValues: data.exercises.map { ($0.id, $0.displayName) })
-        let order = ["MAX_WEIGHT", "MAX_REPS", "MAX_VOLUME", "MAX_E1RM"]
-        return Dictionary(grouping: data.personalRecords.filter {
-            exerciseIDs.contains($0.exerciseId) && $0.achievedAt >= session.startTime && $0.achievedAt <= end
-        }, by: \.exerciseId)
-        .map { id, records in
-            let types = Array(Set(records.map { $0.type.uppercased() }))
-                .sorted { (order.firstIndex(of: $0) ?? 9) < (order.firstIndex(of: $1) ?? 9) }
-            return (exercise: names[id] ?? String(localized: "Übung"), types: types)
+    private func updateRecords() {
+        guard let data = store.data else {
+            recordSummary = nil
+            return
         }
-        .sorted { $0.exercise.localizedStandardCompare($1.exercise) == .orderedAscending }
+        let summary = IOSWorkoutRecords.summary(session: session, rows: rows, data: data)
+        recordSummary = summary
+        if summary.recordCount > 0, recordsCelebratedSessionID != Int(session.id) {
+            recordsCelebratedSessionID = Int(session.id)
+            let feedback = UINotificationFeedbackGenerator()
+            feedback.prepare()
+            feedback.notificationOccurred(.success)
+        }
     }
 
-    /// Liquid Glass: "Geschafft.", three lenses, records on tinted glass, the
-    /// logged sets and "Fertig" as the bright main action.
+    @ViewBuilder
+    private var recordsCard: some View {
+        if let recordSummary, !recordSummary.exercises.isEmpty {
+            IOSWorkoutRecordsCard(summary: recordSummary, unitSystem: unitSystem)
+        }
+    }
+
+    /// Liquid Glass: "Geschafft.", three lenses, the record board on tinted glass,
+    /// the logged sets and "Fertig" as the bright main action.
     private var glassBody: some View {
         let volume = sets.reduce(0) { $0 + $1.weightKg * Double($1.reps) }
         let volumeText = ilVolumeText(volume.rounded(), unitSystem: unitSystem)
         let trained = rows.filter { row in row.sets.contains { $0.reps > 0 } }
-        let records = sessionRecords
-        let dark = colorScheme == .dark
         return ScrollView {
             VStack(spacing: 20) {
                 VStack(spacing: 6) {
@@ -106,28 +119,7 @@ struct IOSWorkoutCompletionScreen: View {
                     lens("\(trained.count)", unit: trained.count == 1 ? String(localized: "Übung (Anzahl)", comment: "Unit under the exercise count, like min and kg") : String(localized: "Übungen (Anzahl)", comment: "Unit under the exercise count, like min and kg"), label: String(localized: "Übungen"))
                 }
 
-                if !records.isEmpty {
-                    HStack(spacing: 14) {
-                        Image(systemName: "trophy.fill")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundStyle(dark ? Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255) : .white)
-                            .frame(width: 48, height: 48)
-                            .background(dark ? Color.white : Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255), in: Circle())
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(records.count == 1 ? String(localized: "NEUER REKORD") : String(localized: "NEUE REKORDE"))
-                                .font(.geist(.caption, weight: .bold))
-                                .tracking(0.8)
-                            ForEach(records, id: \.exercise) { record in
-                                Text("\(record.exercise): \(record.types.map(ilRecordTypeText).joined(separator: ", "))")
-                                    .font(.geist(.body, weight: .heavy))
-                            }
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .padding(18)
-                    .liquidGlass(.tint, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
-                    .accessibilityElement(children: .combine)
-                }
+                recordsCard
 
                 ForEach(trained) { row in
                     VStack(alignment: .leading, spacing: 6) {
@@ -220,6 +212,7 @@ struct IOSWorkoutCompletionScreen: View {
                     metric(String(localized: "Sätze"), "\(sets.count)")
                 }
                 metric(String(localized: "Volumen"), iosWorkoutDisplayWeight(kilograms: sets.reduce(0) { $0 + $1.weightKg * Double($1.reps) }, unitSystem: unitSystem))
+                recordsCard
                 ForEach(rows.filter { !$0.sets.isEmpty }) { row in
                     VStack(alignment: .leading, spacing: 10) {
                         Text(row.exercise.displayName).font(.geist(.headline))
