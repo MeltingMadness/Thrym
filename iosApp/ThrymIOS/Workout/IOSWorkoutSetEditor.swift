@@ -77,6 +77,11 @@ struct IOSWorkoutSetEditor: View {
 
     private var isEditing: Bool { context.existingSet != nil }
 
+    /// Bodyweight exercises enter the added load, not the body weight.
+    private var weightLabel: String {
+        context.row.exercise.tracksAddedLoad ? String(localized: "Zusatzgewicht") : String(localized: "Gewicht")
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -108,10 +113,10 @@ struct IOSWorkoutSetEditor: View {
                             .accessibilityLabel("Wiederholungen")
 
                         HStack {
-                            TextField("Gewicht", text: $weightText)
+                            TextField(weightLabel, text: $weightText)
                                 .keyboardType(.decimalPad)
                                 .textContentType(.none)
-                                .accessibilityLabel("Gewicht")
+                                .accessibilityLabel(weightLabel)
                             Text(unitSystem == "IMPERIAL" ? String(localized: "lb") : String(localized: "kg"))
                                 .thrymSecondaryText()
                         }

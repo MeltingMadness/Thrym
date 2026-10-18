@@ -405,6 +405,7 @@ struct IOSHistoryDetailScreen: View {
         .sheet(item: $editingSet) { set in
             IOSHistorySetEditor(
                 set: set,
+                addedLoad: data?.exercises.first(where: { $0.id == set.exerciseId })?.tracksAddedLoad == true,
                 unitSystem: settings.state.unitSystem,
                 isWorking: store.isBusy,
                 intention: store.intention(forSetId: set.id),
@@ -663,7 +664,7 @@ private struct IOSHistoryExerciseSection: View {
             }
 
             ForEach(sets) { set in
-                IOSHistorySetRow(set: set, unitSystem: unitSystem, onEdit: { onEdit(set) }, onDelete: { onDelete(set) })
+                IOSHistorySetRow(set: set, unitSystem: unitSystem, addedLoad: exercise?.tracksAddedLoad == true, onEdit: { onEdit(set) }, onDelete: { onDelete(set) })
                 if set.id != sets.last?.id { Divider() }
             }
         }
@@ -673,6 +674,7 @@ private struct IOSHistoryExerciseSection: View {
 private struct IOSHistorySetRow: View {
     let set: ILWorkoutSet
     let unitSystem: String
+    let addedLoad: Bool
     let onEdit: () -> Void
     let onDelete: () -> Void
 
@@ -682,7 +684,7 @@ private struct IOSHistorySetRow: View {
                     .font(.geist(.subheadline, weight: .semibold))
                     .frame(width: 58, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
-                Text(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))
+                Text(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem, addedLoad: addedLoad))
                     .font(.geist(.body).monospacedDigit())
                 HStack(spacing: 8) {
                     Text(set.iosSetTypeDisplayName)
@@ -710,6 +712,8 @@ private struct IOSHistorySetRow: View {
 
 private struct IOSHistorySetEditor: View {
     let set: ILWorkoutSet
+    /// Bodyweight exercise: the weight field holds the added load.
+    let addedLoad: Bool
     let unitSystem: String
     let isWorking: Bool
     let onSave: (ILWorkoutSet, ILSetIntention) -> Void
@@ -721,8 +725,9 @@ private struct IOSHistorySetEditor: View {
     @State private var intention: ILSetIntention
     @State private var errorMessage: String?
 
-    init(set: ILWorkoutSet, unitSystem: String, isWorking: Bool, intention: ILSetIntention, onSave: @escaping (ILWorkoutSet, ILSetIntention) -> Void, onCancel: @escaping () -> Void) {
+    init(set: ILWorkoutSet, addedLoad: Bool, unitSystem: String, isWorking: Bool, intention: ILSetIntention, onSave: @escaping (ILWorkoutSet, ILSetIntention) -> Void, onCancel: @escaping () -> Void) {
         self.set = set
+        self.addedLoad = addedLoad
         self.unitSystem = unitSystem
         self.isWorking = isWorking
         self.onSave = onSave
@@ -739,11 +744,15 @@ private struct IOSHistorySetEditor: View {
                 Group {
                     Section("Satz \(set.setNumber)") {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))")
+                            Text(addedLoad
+                                 ? String(localized: "Zusatz (\(IOSWeightFormatter.unitLabel(for: unitSystem)))")
+                                 : String(localized: "Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))"))
                                 .font(.geist(.caption)).thrymSecondaryText()
-                            TextField("Gewicht", text: $weightText)
+                            TextField(addedLoad ? String(localized: "Zusatzgewicht") : String(localized: "Gewicht"), text: $weightText)
                                 .keyboardType(.decimalPad)
-                                .accessibilityLabel("Gewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))")
+                                .accessibilityLabel(addedLoad
+                                    ? String(localized: "Zusatzgewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))")
+                                    : String(localized: "Gewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))"))
                         }
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Wiederholungen").font(.geist(.caption)).thrymSecondaryText()

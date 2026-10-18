@@ -57,6 +57,8 @@ import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
 import com.thrym.app.presentation.common.label
 import com.thrym.app.presentation.common.localizedName
+import com.thrym.app.presentation.common.setLoadText
+import com.thrym.app.presentation.common.tracksAddedLoad
 import com.thrym.app.presentation.common.currentLocale
 import com.thrym.shared.readinessdata.SetIntention
 import androidx.compose.material3.Surface
@@ -115,6 +117,7 @@ internal fun ExerciseCard(
     }
     val showHistoryToggle = previousSession != null
     val previousWeightHint = previousSession?.lastWorkSetWeightKg?.let { formatWeightValue(it, unitSystem) }
+    val addedLoad = exerciseWithSets.exercise.tracksAddedLoad
     // RPE_RIR plan targets show what to enter into the intensity field; the
     // stored RPE is 10 - RIR when the RIR scale is active, so the hint mirrors
     // the displayed scale. A missing value would otherwise surface as
@@ -219,7 +222,7 @@ internal fun ExerciseCard(
                         id = WorkoutR.string.workout_audit_plan_target_with_weight,
                         planTarget.target.sets,
                         planTarget.target.reps,
-                        formatTargetWeight(planTarget.target.weightKg, unitSystem)
+                        setLoadText(planTarget.target.weightKg, unitSystem, addedLoad)
                     )
                 } else {
                     stringResource(
@@ -281,6 +284,7 @@ internal fun ExerciseCard(
                                 intentionFailed = setIntentionsFailed,
                                 intensitySystem = rowIntensitySystem,
                                 unitSystem = unitSystem,
+                                addedLoad = addedLoad,
                                 plateCalculatorEnabled = plateCalculatorEnabled,
                                 availablePlates = availablePlates,
                                 barbellWeightKg = barbellWeightKg,
@@ -293,6 +297,12 @@ internal fun ExerciseCard(
                         } else {
                             val isNextToLog = setIndex - 1 == nextSlotIndex
                             if (isNextToLog) {
+                                val prefill = planSlotWeightPrefill(
+                                    slot = slot,
+                                    hasSetTargets = planTarget.setTargets.isNotEmpty(),
+                                    lastWorkSetWeightKg = loggedSets.lastOrNull { (it.setType == SetType.NORMAL || it.setType == SetType.FAILURE) }?.weightKg,
+                                    previousWorkoutWeightKg = previousSession?.sets?.let(::previousWorkoutWorkSetWeightKg)
+                                )
                                 val coachHint = nextSetRecommendation?.recommendedWeightKg?.let {
                                     stringResource(
                                         WorkoutR.string.workout_audit_coach_suggestion,
@@ -305,9 +315,15 @@ internal fun ExerciseCard(
                                     isExtraOrAdHoc = false,
                                     isEditMode = false,
                                     coachHint = coachHint,
-                                    valueSource = if (planTarget.setTargets.isEmpty() && loggedSets.any { (it.setType == SetType.NORMAL || it.setType == SetType.FAILURE) }) stringResource(R.string.workout_value_source_last_set) else stringResource(R.string.workout_value_source_plan),
+                                    valueSource = stringResource(
+                                        when (prefill.source) {
+                                            PlanSlotWeightSource.LAST_SET -> R.string.workout_value_source_last_set
+                                            PlanSlotWeightSource.LAST_WORKOUT -> R.string.workout_value_source_last_workout
+                                            PlanSlotWeightSource.PLAN -> R.string.workout_value_source_plan
+                                        }
+                                    ),
                                     coachRecommendation = nextSetRecommendation,
-                                    defaultWeight = formatWeightValue(if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { (it.setType == SetType.NORMAL || it.setType == SetType.FAILURE) }?.weightKg ?: slot.weightKg else slot.weightKg, unitSystem),
+                                    defaultWeight = formatWeightValue(prefill.weightKg, unitSystem),
                                     weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
                                     defaultReps = (if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { (it.setType == SetType.NORMAL || it.setType == SetType.FAILURE) }?.reps ?: slot.reps else slot.reps).toString(),
                                     repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
@@ -315,6 +331,7 @@ internal fun ExerciseCard(
                                     intensityPlaceholder = intensityPlaceholder,
                                     intensitySystem = rowIntensitySystem,
                                     unitSystem = unitSystem,
+                                    addedLoad = addedLoad,
                                     locked = isLogging,
                                     completedSubmissions = logSuccessSubmissions,
                                     plateCalculatorEnabled = plateCalculatorEnabled,
@@ -329,9 +346,10 @@ internal fun ExerciseCard(
                             } else {
                                 PlannedSetPreviewRow(
                                     setNumber = setIndex,
-                                    targetWeight = formatWeightValue(slot.weightKg, unitSystem),
+                                    targetWeightKg = slot.weightKg,
                                     targetReps = slot.reps.toString(),
-                                    unitSystem = unitSystem
+                                    unitSystem = unitSystem,
+                                    addedLoad = addedLoad
                                 )
                             }
                         }
@@ -344,6 +362,7 @@ internal fun ExerciseCard(
                             intentionFailed = setIntentionsFailed,
                             intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
+                            addedLoad = addedLoad,
                             plateCalculatorEnabled = plateCalculatorEnabled,
                             availablePlates = availablePlates,
                             barbellWeightKg = barbellWeightKg,
@@ -374,6 +393,7 @@ internal fun ExerciseCard(
                             intensityPlaceholder = intensityPlaceholder,
                             intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
+                            addedLoad = addedLoad,
                             locked = isLogging,
                             completedSubmissions = logSuccessSubmissions,
                             plateCalculatorEnabled = plateCalculatorEnabled,
@@ -402,6 +422,7 @@ internal fun ExerciseCard(
                             intentionFailed = setIntentionsFailed,
                             intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
+                            addedLoad = addedLoad,
                             plateCalculatorEnabled = plateCalculatorEnabled,
                             availablePlates = availablePlates,
                             barbellWeightKg = barbellWeightKg,
@@ -430,6 +451,7 @@ internal fun ExerciseCard(
                         intensityPlaceholder = intensityPlaceholder,
                         intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
+                        addedLoad = addedLoad,
                         locked = isLogging,
                         completedSubmissions = logSuccessSubmissions,
                         plateCalculatorEnabled = plateCalculatorEnabled,
@@ -725,9 +747,10 @@ internal fun RecommendationPill(
 @Composable
 internal fun PlannedSetPreviewRow(
     setNumber: Int,
-    targetWeight: String?,
+    targetWeightKg: Double?,
     targetReps: String?,
     unitSystem: UnitSystem,
+    addedLoad: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val dims = thrymDimens
@@ -763,15 +786,9 @@ internal fun PlannedSetPreviewRow(
                 )
             }
 
-            val bodyweightLabel = stringResource(R.string.weight_bodyweight)
+            val loadLabel = targetWeightKg?.let { setLoadText(it, unitSystem, addedLoad) }
             val targetDesc = buildString {
-                if (targetWeight == "0") {
-                    append(bodyweightLabel)
-                } else if (targetWeight != null) {
-                    append(targetWeight)
-                    append(" ")
-                    append(WeightFormatting.unitLabel(unitSystem))
-                }
+                if (loadLabel != null) append(loadLabel)
                 if (targetReps != null) {
                     if (isNotEmpty()) append(" × ")
                     append(targetReps)

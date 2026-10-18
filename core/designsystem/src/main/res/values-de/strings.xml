@@ -124,7 +124,11 @@
     <string name="workout_exercise_done">Erledigt</string>
     <string name="workout_value_source_last_set">Werte aus dem letzten Satz übernommen · editierbar</string>
     <string name="workout_value_source_plan">Werte aus dem Plan · editierbar</string>
+    <string name="workout_value_source_last_workout">Gewicht aus dem letzten Training · editierbar</string>
     <string name="weight_bodyweight">Körpergewicht</string>
+    <string name="weight_bodyweight_plus_load">Körpergewicht + %1$s</string>
+    <string name="weight_added_load">Zusatzgewicht</string>
+    <string name="weight_added_load_field_label">Zusatz (%1$s)</string>
     <string name="workout_edit_set_action">Satz bearbeiten</string>
     <string name="workout_set_details_show">RPE / RIR · Satztyp · Absicht · Scheiben</string>
     <string name="workout_set_details_hide">Details schließen</string>

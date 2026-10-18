@@ -3,6 +3,8 @@ package com.thrym.app.presentation.history
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
 import com.thrym.app.presentation.theme.accentText
 import com.thrym.feature.history.R as UxR
+import com.thrym.app.presentation.common.setLoadText
+import com.thrym.app.presentation.common.tracksAddedLoad
 import com.thrym.app.presentation.common.ThrymTopBar
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -97,12 +99,14 @@ fun WorkoutDetailScreen(
     var confirmNotesDelete by remember { mutableStateOf(false) }
 
     editSetId?.let { setId ->
-        val set = state.exercises.asSequence().flatMap { it.sets.asSequence() }.firstOrNull { it.id == setId }
+        val detail = state.exercises.firstOrNull { detail -> detail.sets.any { it.id == setId } }
+        val set = detail?.sets?.firstOrNull { it.id == setId }
         if (set == null) {
             editSetId = null
         } else {
             HistorySetEditDialog(
                 set = set,
+                addedLoad = detail.exercise.tracksAddedLoad,
                 intention = state.setIntentions[set.id],
                 intentionsLoaded = state.intentionsLoaded,
                 unitSystem = preferences.unitSystem,
@@ -348,11 +352,7 @@ fun WorkoutDetailScreen(
                                     Text(
                                         text = stringResource(
                                             id = R.string.workout_detail_set_value,
-                                            if (set.weightKg == 0.0) {
-                                                stringResource(R.string.weight_bodyweight)
-                                            } else {
-                                                WeightFormatting.formatWeight(set.weightKg, preferences.unitSystem)
-                                            },
+                                            setLoadText(set.weightKg, preferences.unitSystem, exerciseDetail.exercise.tracksAddedLoad),
                                             set.reps
                                         ) + intensityString,
                                         style = MaterialTheme.typography.bodyMedium,

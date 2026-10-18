@@ -14,6 +14,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
+import com.thrym.app.presentation.common.tracksAddedLoad
+import com.thrym.app.presentation.common.setLoadText
 import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.rememberHapticFeedback
 import com.thrym.app.presentation.common.rememberUiStrings
@@ -97,8 +99,10 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
     val remaining = rows.sumOf { it.openSlotCount() }
     // Records follow the workout's display order; the rows keep it also after a cold restore.
     val recordOrder = rows.filter { row -> row.sets.any { it.reps > 0 } }.map { it.exercise.id }.distinct()
-    val recordSummary = remember(recordInputs, recordOrder) {
-        recordInputs?.let { SessionRecords.summarize(session.id, recordOrder, it) }
+    // Bodyweight exercises count their weight as an added load: only weight and reps records.
+    val addedLoadIds = rows.filter { it.exercise.tracksAddedLoad }.map { it.exercise.id }.distinct()
+    val recordSummary = remember(recordInputs, recordOrder, addedLoadIds) {
+        recordInputs?.let { SessionRecords.summarize(session.id, recordOrder, it, addedLoadIds) }
     }
     // One haptic the first time the board shows records, not again after rotation or a restore.
     val haptic = rememberHapticFeedback()
@@ -172,7 +176,7 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
             rows.filter { it.sets.any { set -> set.reps > 0 } }.forEach { row ->
                 Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(row.exercise.localizedName(), style = MaterialTheme.typography.titleMedium)
-                    row.sets.filter { it.reps > 0 }.forEach { set -> Text(pluralStringResource(R.plurals.workout_summary_set_line, set.reps, set.setNumber, if (set.weightKg == 0.0) stringResource(R.string.weight_bodyweight) else formatTargetWeight(set.weightKg, unitSystem), set.reps)) }
+                    row.sets.filter { it.reps > 0 }.forEach { set -> Text(pluralStringResource(R.plurals.workout_summary_set_line, set.reps, set.setNumber, setLoadText(set.weightKg, unitSystem, row.exercise.tracksAddedLoad), set.reps)) }
                 } }
             }
             followUps()

@@ -46,6 +46,7 @@
 		5B3A946D7318148052FC8A9E /* IOSWorkoutFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B61A56EC5B76B344A0B6AB /* IOSWorkoutFormatting.swift */; };
 		5B4063CD77FDFA3C1B8FC30D /* AnalyticsPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CD69523523CDDA46DF2B17A /* AnalyticsPresentation.swift */; };
 		5E22350D24D617FBD09D1618 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B88909E7F012EDD309E39DEE /* Assets.xcassets */; };
+		5E2AC9B49488759F6D6D13C3 /* BodyweightLoadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7895A2550F6ED77BA59949FE /* BodyweightLoadTests.swift */; };
 		5EC635BE001AEBD56C864D1C /* ThrymCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2359EA6854A042AFE4135A8C /* ThrymCard.swift */; };
 		626FB6DF1330A4D64555E2C3 /* ThrymWeeklyMuscleVolume.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0128D750AEA5D9C781C284DA /* ThrymWeeklyMuscleVolume.swift */; };
 		681D867FEABAF5CD430DAFC0 /* IOSDashboardGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1A20B4255E767E6B53EDA5 /* IOSDashboardGlass.swift */; };
@@ -142,6 +143,7 @@
 		6DDEE657B9E610EEE48DAF5D /* IOSWorkoutScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutScreen.swift; sourceTree = "<group>"; };
 		776FF4C0E45990C16F2728D2 /* IOSWorkoutSuperset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutSuperset.swift; sourceTree = "<group>"; };
 		7838DB869BCC15E07679638E /* BackupBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupBridgeTests.swift; sourceTree = "<group>"; };
+		7895A2550F6ED77BA59949FE /* BodyweightLoadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyweightLoadTests.swift; sourceTree = "<group>"; };
 		7CF45EE706088987B53B2E57 /* Geist-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Black.ttf; sourceTree = "<group>"; };
 		7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Exercises.xcstrings; sourceTree = "<group>"; };
 		80AEE8232159C992682399E7 /* IOSWorkoutFinishCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutFinishCard.swift; sourceTree = "<group>"; };
@@ -373,6 +375,7 @@
 		children = (
 			7838DB869BCC15E07679638E /* BackupBridgeTests.swift */,
 			2D5315BA288ECA3E76867E77 /* BinaryFileDocumentTests.swift */,
+			7895A2550F6ED77BA59949FE /* BodyweightLoadTests.swift */,
 			D9874E75EFD4E071277479B2 /* DashboardWeekStripTests.swift */,
 			F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */,
 			00A68B1AAFF337FCFDA4931F /* HistoryWeekTests.swift */,
@@ -592,6 +595,7 @@
 			files = (
 				9060EB2531467B89CBFEF653 /* BackupBridgeTests.swift in Sources */, 
 				D883EE647FD2F508F84819DA /* BinaryFileDocumentTests.swift in Sources */, 
+				5E2AC9B49488759F6D6D13C3 /* BodyweightLoadTests.swift in Sources */, 
 				2851A4E549A9EC0DD9E63BED /* DashboardWeekStripTests.swift in Sources */, 
 				6D4718E6C37028AAA5148B9D /* ExerciseDisplayNameTests.swift in Sources */, 
 				6DA78A548D7F2D8A288EA295 /* HistoryWeekTests.swift in Sources */, 

@@ -40,6 +40,8 @@ import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.RecordType
 import com.thrym.app.domain.model.SetType
 import com.thrym.app.domain.repository.AppPreferencesRepository
+import com.thrym.app.presentation.common.setLoadText
+import com.thrym.app.presentation.common.tracksAddedLoad
 import com.thrym.app.presentation.common.rememberDateTimeFormatter
 import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
@@ -183,7 +185,7 @@ fun ExerciseStatsScreen(
                     }
                 }
                 if (state.recentSets.isNotEmpty()) {
-                    item { RecentSetsCard(sets = state.recentSets, unitSystem = preferences.unitSystem) }
+                    item { RecentSetsCard(sets = state.recentSets, unitSystem = preferences.unitSystem, addedLoad = state.exercise?.tracksAddedLoad == true) }
                 }
                 item { WeeklyMuscleVolumeCard(volumes = state.weeklyMuscleVolume) }
             }
@@ -436,7 +438,8 @@ fun ExerciseStatsScreen(
                     item {
                         RecentSetsCard(
                             sets = state.recentSets,
-                            unitSystem = preferences.unitSystem
+                            unitSystem = preferences.unitSystem,
+                            addedLoad = state.exercise?.tracksAddedLoad == true
                         )
                     }
                 }
@@ -512,7 +515,8 @@ private fun LastWorkoutComparisonCard(
 @Composable
 private fun RecentSetsCard(
     sets: List<com.thrym.app.domain.model.WorkoutSet>,
-    unitSystem: com.thrym.app.domain.model.UnitSystem
+    unitSystem: com.thrym.app.domain.model.UnitSystem,
+    addedLoad: Boolean
 ) {
     val dims = thrymDimens
     ThrymSurfaceCard(
@@ -546,7 +550,7 @@ private fun RecentSetsCard(
                         text = stringResource(
                             StatisticsR.string.stats_recent_set_value,
                             recentSetTypeLabel(set.setType),
-                            WeightFormatting.formatWeight(set.weightKg, unitSystem),
+                            setLoadText(set.weightKg, unitSystem, addedLoad),
                             set.reps
                         ),
                         style = MaterialTheme.typography.bodyMedium,

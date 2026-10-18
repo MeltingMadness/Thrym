@@ -43,6 +43,7 @@
         <item quantity="other">%1$d new PRs · %2$s</item>
     </plurals>
     <string name="workout_record_live_detail" translatable="false">%1$s %2$s (%3$s)</string>
-    <!-- A reps record names its unit in place of the label, e.g. "12 reps (+2)". -->
-    <string name="workout_record_live_detail_reps" translatable="false">%1$s (%2$s)</string>
+    <!-- A record whose value says what it is needs no label: reps with their unit, e.g.
+         "12 reps (+2)", and the weight of a bodyweight exercise, e.g. "Bodyweight + 12.5 kg (+2.5 kg)". -->
+    <string name="workout_record_live_detail_unlabeled" translatable="false">%1$s (%2$s)</string>
 </resources>

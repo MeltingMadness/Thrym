@@ -7381,7 +7381,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Weight from last workout · editable"
+            "value": "Weight from your last workout · editable"
           }
         }
       }
@@ -8554,6 +8554,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bodyweight"
+          }
+        }
+      }
+    },
+    "Körpergewicht + %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Körpergewicht + %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bodyweight + %@"
           }
         }
       }
@@ -16450,6 +16466,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Summary"
+          }
+        }
+      }
+    },
+    "Zusatz (%@)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zusatz (%@)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added (%@)"
+          }
+        }
+      }
+    },
+    "Zusatzgewicht": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zusatzgewicht"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added weight"
+          }
+        }
+      }
+    },
+    "Zusatzgewicht in %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zusatzgewicht in %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added weight in %@"
           }
         }
       }

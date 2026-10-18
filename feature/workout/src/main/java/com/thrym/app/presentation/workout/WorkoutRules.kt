@@ -7,6 +7,7 @@ import com.thrym.app.domain.model.WorkoutPlanTarget
 import com.thrym.app.domain.model.WorkoutSet
 import com.thrym.app.domain.util.RpeAutoregulation
 import com.thrym.app.domain.util.WeightFormatting
+import com.thrym.shared.plans.PlannedSet
 import kotlinx.coroutines.flow.map
 
 private val submissionIdSequence = java.util.concurrent.atomic.AtomicLong(0L)
@@ -29,6 +30,41 @@ fun lastWorkSetReachedTarget(
     return lastWorkSet.reps >= target.target.reps &&
         lastWorkSet.weightKg >= target.target.weightKg
 }
+
+internal enum class PlanSlotWeightSource { PLAN, LAST_SET, LAST_WORKOUT }
+
+internal data class PlanSlotWeightPrefill(val weightKg: Double, val source: PlanSlotWeightSource)
+
+/**
+ * Weight prefilled for the next planned set. Individual set targets are taken as planned. A
+ * simple target takes the last work set of this workout first; a target without weight (0 kg)
+ * then falls back to the last work set of the previous matching workout, so an added load on a
+ * bodyweight exercise (pull-ups + 10 kg) is offered again. Same order as iOS
+ * `IOSWorkoutExerciseRow.defaultWeightKg`.
+ */
+internal fun planSlotWeightPrefill(
+    slot: PlannedSet,
+    hasSetTargets: Boolean,
+    lastWorkSetWeightKg: Double?,
+    previousWorkoutWeightKg: Double?
+): PlanSlotWeightPrefill = when {
+    hasSetTargets -> PlanSlotWeightPrefill(slot.weightKg, PlanSlotWeightSource.PLAN)
+    lastWorkSetWeightKg != null -> PlanSlotWeightPrefill(lastWorkSetWeightKg, PlanSlotWeightSource.LAST_SET)
+    slot.weightKg <= 0.0 && previousWorkoutWeightKg != null ->
+        PlanSlotWeightPrefill(previousWorkoutWeightKg, PlanSlotWeightSource.LAST_WORKOUT)
+    else -> PlanSlotWeightPrefill(slot.weightKg, PlanSlotWeightSource.PLAN)
+}
+
+/**
+ * Weight of the last work set (normal or failure) of the previous matching workout, newest by
+ * completion time, then id. Drop and backoff sets do not count. Same rule as iOS
+ * `previousWorkWeight`.
+ */
+internal fun previousWorkoutWorkSetWeightKg(previousSets: List<WorkoutSet>): Double? =
+    previousSets
+        .filter { it.setType == SetType.NORMAL || it.setType == SetType.FAILURE }
+        .maxWithOrNull(compareBy<WorkoutSet>({ it.completedAt }, { it.id }))
+        ?.weightKg
 
 /**
  * Passt ein Planziel an den aktiven Deload-Modus an (nur Anzeigeebene — die

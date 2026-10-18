@@ -130,9 +130,79 @@ class WorkoutRecordFormattingTest {
     @Test
     fun `the live notice names the reps with their unit in place of the label`() {
         assertEquals(
-            "string:${WorkoutR.string.workout_record_live_detail_reps}:" +
+            "string:${WorkoutR.string.workout_record_live_detail_unlabeled}:" +
                 "[plurals:${R.plurals.common_record_reps}:12:[12], +2]",
             liveRecordDetail(german, LiveRecordUi(RecordType.MAX_REPS, value = 12.0, previous = 10.0), UnitSystem.METRIC)
+        )
+    }
+
+    @Test
+    fun `an added load reads as bodyweight plus the load and keeps plain gains`() {
+        val plusLoad = "string:${R.string.weight_bodyweight_plus_load}"
+        assertEquals("$plusLoad:[12,5 kg]", formatRecordValue(german, RecordType.MAX_WEIGHT, 12.5, UnitSystem.METRIC, addedLoad = true))
+        assertEquals("$plusLoad:[27.6 lb]", formatRecordValue(english, RecordType.MAX_WEIGHT, 12.5, UnitSystem.IMPERIAL, addedLoad = true))
+        // Reps stay a bare count, and the chip shows the gain of the load alone.
+        assertEquals("12", formatRecordValue(german, RecordType.MAX_REPS, 12.0, UnitSystem.METRIC, addedLoad = true))
+        assertEquals("+2,5 kg", formatRecordDelta(german, RecordType.MAX_WEIGHT, 2.5, UnitSystem.METRIC))
+    }
+
+    @Test
+    fun `an added-load reps record names its load as bodyweight plus the load`() {
+        assertEquals(
+            "string:${WorkoutR.string.workout_records_context_weight}:[string:${R.string.weight_bodyweight_plus_load}:[10 kg]]",
+            formatRecordContext(german, RecordType.MAX_REPS, set(weightKg = 10.0, reps = 12), UnitSystem.METRIC, addedLoad = true)
+        )
+        assertEquals(
+            "string:${WorkoutR.string.workout_records_context_reps}:[9]",
+            formatRecordContext(german, RecordType.MAX_WEIGHT, set(weightKg = 12.5, reps = 9), UnitSystem.METRIC, addedLoad = true)
+        )
+        // Plain bodyweight still has no load to name.
+        assertNull(formatRecordContext(german, RecordType.MAX_REPS, set(weightKg = 0.0, reps = 12), UnitSystem.METRIC, addedLoad = true))
+    }
+
+    @Test
+    fun `a spoken added-load weight row reads the load as on screen and the gain unsigned`() {
+        val label = "string:${WorkoutR.string.workout_records_label_weight}:[]"
+        assertEquals(
+            "string:${WorkoutR.string.workout_records_row_cd}:" +
+                "[$label, string:${R.string.weight_bodyweight_plus_load}:[12,5 kg] × 9, 2,5 kg]",
+            recordRowDescription(german, RecordType.MAX_WEIGHT, 12.5, "× 9", 2.5, UnitSystem.METRIC, addedLoad = true)
+        )
+    }
+
+    @Test
+    fun `a first best set reads its load like the logged set`() {
+        val reps = "plurals:${R.plurals.common_reps_unit}"
+        assertEquals(
+            "string:${WorkoutR.string.workout_weighted_set_value}:[80, kg, 8, $reps:8:[]]",
+            formatFirstBestSet(german, set(weightKg = 80.0, reps = 8), UnitSystem.METRIC)
+        )
+        assertEquals(
+            "string:${WorkoutR.string.workout_bodyweight_set_value}:" +
+                "[string:${R.string.weight_bodyweight_plus_load}:[10 kg], 8, $reps:8:[]]",
+            formatFirstBestSet(german, set(weightKg = 10.0, reps = 8), UnitSystem.METRIC, addedLoad = true)
+        )
+        // 0 kg is plain bodyweight, with or without an added load.
+        listOf(false, true).forEach { addedLoad ->
+            assertEquals(
+                "string:${WorkoutR.string.workout_bodyweight_set_value}:[string:${R.string.weight_bodyweight}:[], 12, $reps:12:[]]",
+                formatFirstBestSet(german, set(weightKg = 0.0, reps = 12), UnitSystem.METRIC, addedLoad)
+            )
+        }
+    }
+
+    @Test
+    fun `the live notice shows the added load in place of the weight label`() {
+        assertEquals(
+            "string:${WorkoutR.string.workout_record_live_detail_unlabeled}:" +
+                "[string:${R.string.weight_bodyweight_plus_load}:[12,5 kg], +2,5 kg]",
+            liveRecordDetail(german, LiveRecordUi(RecordType.MAX_WEIGHT, value = 12.5, previous = 10.0, addedLoad = true), UnitSystem.METRIC)
+        )
+        // Reps read the same with an added load.
+        assertEquals(
+            "string:${WorkoutR.string.workout_record_live_detail_unlabeled}:" +
+                "[plurals:${R.plurals.common_record_reps}:12:[12], +2]",
+            liveRecordDetail(german, LiveRecordUi(RecordType.MAX_REPS, value = 12.0, previous = 10.0, addedLoad = true), UnitSystem.METRIC)
         )
     }
 

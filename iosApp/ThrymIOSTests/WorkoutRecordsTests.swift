@@ -9,6 +9,9 @@ import XCTest
 final class WorkoutRecordsTests: XCTestCase {
     private let bench = ILExercise(id: 1, name: "Bank eng", isCustom: true)
     private let rowing = ILExercise(id: 2, name: "Rudern breit", isCustom: true)
+    /// Bodyweight exercises: their set weight is the load on top of the body.
+    private let pullUps = ILExercise(id: 3, name: "Klimmzüge eng", category: "EIGENGEWICHT", isCustom: true)
+    private let dips = ILExercise(id: 4, name: "Dips breit", category: "EIGENGEWICHT", isCustom: true)
     private let german = Locale(identifier: "de_DE")
     private let english = Locale(identifier: "en_US")
 
@@ -81,6 +84,58 @@ final class WorkoutRecordsTests: XCTestCase {
         XCTAssertTrue(summary.exercises.isEmpty)
     }
 
+    func testSummaryCountsOnlyWeightAndRepsOfAnAddedLoad() throws {
+        let data = withPullUpHistory(trainingData(current: [
+            ILWorkoutSet(id: 11, sessionId: 2, exerciseId: 1, setNumber: 1, reps: 5, weightKg: 85, completedAt: 210),
+            ILWorkoutSet(id: 31, sessionId: 2, exerciseId: 3, setNumber: 1, reps: 9, weightKg: 12.5, completedAt: 220)
+        ]))
+        let session = try XCTUnwrap(data.workoutSessions.first { $0.id == 2 })
+        let rows = [row(bench, sets: data.sets(for: 2).filter { $0.exerciseId == 1 }), row(pullUps, sets: data.sets(for: 2).filter { $0.exerciseId == 3 })]
+
+        let summary = IOSWorkoutRecords.summary(session: session, rows: rows, data: data)
+
+        XCTAssertEqual(summary.exercises.map(\.exerciseID), [1, 3])
+        let barbell = summary.exercises[0]
+        XCTAssertFalse(barbell.addedLoad)
+        XCTAssertEqual(barbell.lines.map(\.type), ["MAX_WEIGHT", "MAX_E1RM", "MAX_VOLUME"])
+        XCTAssertEqual(barbell.lines.map(\.addedLoad), [false, false, false])
+
+        let bodyweight = summary.exercises[1]
+        XCTAssertTrue(bodyweight.addedLoad)
+        // + 10 kg × 8 before. An e1RM or a volume of the added load alone is no record.
+        XCTAssertEqual(bodyweight.lines.map(\.type), ["MAX_WEIGHT", "MAX_REPS"])
+        XCTAssertEqual(bodyweight.lines.map(\.addedLoad), [true, true])
+        XCTAssertEqual(bodyweight.lines[0].value, 12.5)
+        XCTAssertEqual(bodyweight.lines[0].previous, 10)
+        XCTAssertEqual(bodyweight.lines[0].set?.id, 31)
+        XCTAssertEqual(bodyweight.lines[1].value, 9)
+        XCTAssertEqual(bodyweight.lines[1].previous, 8)
+        XCTAssertEqual(summary.recordCount, 5)
+    }
+
+    func testFirstBestsOfAnAddedLoadNameTheBodyweight() throws {
+        var data = trainingData(current: [
+            ILWorkoutSet(id: 21, sessionId: 2, exerciseId: 2, setNumber: 1, reps: 10, weightKg: 50, completedAt: 210),
+            ILWorkoutSet(id: 31, sessionId: 2, exerciseId: 3, setNumber: 1, reps: 8, weightKg: 10, completedAt: 220),
+            ILWorkoutSet(id: 41, sessionId: 2, exerciseId: 4, setNumber: 1, reps: 12, weightKg: 0, completedAt: 230)
+        ])
+        data.exercises += [pullUps, dips]
+        let session = try XCTUnwrap(data.workoutSessions.first { $0.id == 2 })
+        let rows = [rowing, pullUps, dips].map { exercise in row(exercise, sets: data.sets(for: 2).filter { $0.exerciseId == exercise.id }) }
+
+        let summary = IOSWorkoutRecords.summary(session: session, rows: rows, data: data)
+
+        XCTAssertEqual(summary.firstTimeExercises.map(\.exerciseID), [2, 3, 4])
+        XCTAssertEqual(summary.firstTimeExercises.map(\.addedLoad), [false, true, true])
+        let texts = summary.firstTimeExercises.map { iosRecordBestSetText($0, unitSystem: "METRIC") }
+        XCTAssertEqual(texts, [
+            String(localized: "\(iosWorkoutDisplayWeight(kilograms: 50, unitSystem: "METRIC")) × \(10) Wdh"),
+            String(localized: "\(iosSetLoadText(weightKg: 10, unitSystem: "METRIC", addedLoad: true)) × \(8) Wdh"),
+            String(localized: "\(String(localized: "Körpergewicht")) × \(12) Wdh")
+        ])
+        XCTAssertEqual(texts[1], iosSetValueText(weightKg: 10, reps: 8, unitSystem: "METRIC", addedLoad: true))
+    }
+
     func testLiveWrapperStaysQuietForAFirstTimeExerciseAndForTies() {
         let before = trainingData(current: [ILWorkoutSet(id: 11, sessionId: 2, exerciseId: 2, reps: 8, weightKg: 50, completedAt: 210)])
         var after = before
@@ -113,6 +168,66 @@ final class WorkoutRecordsTests: XCTestCase {
             "\(iosRecordLabel("MAX_WEIGHT")) \(iosRecordWeightText(85, unitSystem: "METRIC")) (\(iosRecordWeightText(5, unitSystem: "METRIC", signed: true)))"
         )
         XCTAssertNil(IOSWorkoutRecords.notice(sessionID: 2, exerciseName: "Bank eng", lines: [], unitSystem: "METRIC"))
+    }
+
+    func testLiveWrapperPassesTheAddedLoadAndLeavesOutItsE1RM() throws {
+        let before = withPullUpHistory(trainingData(current: []))
+        let after = appending(ILWorkoutSet(id: 31, sessionId: 2, exerciseId: 3, reps: 8, weightKg: 12.5, completedAt: 220), to: before)
+
+        // The same set counts an e1RM for an exercise that does not track an added load.
+        XCTAssertEqual(live(exerciseID: 3, before: before, after: after).map(\.type), ["MAX_WEIGHT", "MAX_E1RM"])
+
+        let lines = live(exerciseID: 3, before: before, after: after, addedLoad: true)
+
+        XCTAssertEqual(lines.map(\.type), ["MAX_WEIGHT"])
+        XCTAssertEqual(lines[0].value, 12.5)
+        XCTAssertEqual(lines[0].previous, 10)
+        XCTAssertTrue(lines[0].addedLoad)
+
+        // The load text names the weight, so the label goes.
+        let notice = try XCTUnwrap(IOSWorkoutRecords.notice(sessionID: 2, exerciseName: "Klimmzüge eng", lines: lines, unitSystem: "METRIC"))
+        XCTAssertEqual(notice.title, String(localized: "\(1) neue Rekorde · \("Klimmzüge eng")"))
+        XCTAssertEqual(
+            notice.detail,
+            "\(iosSetLoadText(weightKg: 12.5, unitSystem: "METRIC", addedLoad: true)) (\(iosRecordWeightText(2.5, unitSystem: "METRIC", signed: true)))"
+        )
+
+        let reps = IOSWorkoutRecordLine(type: "MAX_REPS", value: 12, previous: 10, set: ILWorkoutSet(id: 32, reps: 12, weightKg: 10), addedLoad: true)
+        let repsNotice = try XCTUnwrap(IOSWorkoutRecords.notice(sessionID: 2, exerciseName: "Klimmzüge eng", lines: [reps], unitSystem: "METRIC"))
+        XCTAssertEqual(repsNotice.detail, "\(String(localized: "\(12) Wdh.")) (+2)")
+    }
+
+    func testAddedLoadRowsShowTheSetLoad() {
+        let load = String(localized: "Körpergewicht + \(iosRecordWeightText(12.5, unitSystem: "METRIC", locale: german))")
+        XCTAssertEqual(iosRecordValueText(type: "MAX_WEIGHT", value: 12.5, unitSystem: "METRIC", addedLoad: true, locale: german), load)
+        // The same text as the set lines; only the plain weight stays without "Körpergewicht".
+        XCTAssertEqual(
+            iosRecordValueText(type: "MAX_WEIGHT", value: 12.5, unitSystem: "METRIC", addedLoad: true),
+            iosSetLoadText(weightKg: 12.5, unitSystem: "METRIC", addedLoad: true)
+        )
+        XCTAssertEqual(iosRecordValueText(type: "MAX_WEIGHT", value: 12.5, unitSystem: "METRIC", locale: german), "12,5 kg")
+        // Pounds keep the record format of the gain beside it, like Android.
+        XCTAssertTrue(iosRecordValueText(type: "MAX_WEIGHT", value: 12.5, unitSystem: "IMPERIAL", addedLoad: true, locale: english).hasSuffix(" + 27.6 lb"))
+
+        let weight = IOSWorkoutRecordLine(type: "MAX_WEIGHT", value: 12.5, previous: 10, set: ILWorkoutSet(id: 1, reps: 9, weightKg: 12.5), addedLoad: true)
+        XCTAssertEqual(iosRecordContext(weight, unitSystem: "METRIC"), "× 9")
+        XCTAssertEqual(iosRecordDeltaText(type: "MAX_WEIGHT", delta: 2.5, unitSystem: "METRIC", locale: german), "+2,5 kg")
+        let loadWithReps = iosSetLoadText(weightKg: 12.5, unitSystem: "METRIC", addedLoad: true) + " × 9"
+        XCTAssertEqual(
+            iosRecordAccessibilityText(weight, unitSystem: "METRIC"),
+            String(localized: "\(iosRecordLabel("MAX_WEIGHT")) \(loadWithReps), \(iosRecordWeightText(2.5, unitSystem: "METRIC")) mehr als bisher")
+        )
+
+        let reps = IOSWorkoutRecordLine(type: "MAX_REPS", value: 12, previous: 10, set: ILWorkoutSet(id: 2, reps: 12, weightKg: 10), addedLoad: true)
+        let atLoad = String(localized: "bei \(iosSetLoadText(weightKg: 10, unitSystem: "METRIC", addedLoad: true))")
+        XCTAssertEqual(iosRecordContext(reps, unitSystem: "METRIC"), atLoad)
+        XCTAssertEqual(
+            iosRecordAccessibilityText(reps, unitSystem: "METRIC"),
+            String(localized: "\(String(localized: "\(12) Wiederholungen") + " " + atLoad), \(2) mehr als bisher")
+        )
+        // At bodyweight alone the reps keep no context.
+        let bodyweightReps = IOSWorkoutRecordLine(type: "MAX_REPS", value: 12, previous: 10, set: ILWorkoutSet(id: 3, reps: 12, weightKg: 0), addedLoad: true)
+        XCTAssertNil(iosRecordContext(bodyweightReps, unitSystem: "METRIC"))
     }
 
     func testRecordWeightKeepsQuarterStepsAndRoundsComputedValues() {
@@ -230,17 +345,25 @@ final class WorkoutRecordsTests: XCTestCase {
         )
     }
 
+    /// Adds pull-ups to `data`, with + 10 kg × 8 in the earlier workout (session 1).
+    private func withPullUpHistory(_ data: ILTrainingData) -> ILTrainingData {
+        var copy = appending(ILWorkoutSet(id: 3, sessionId: 1, exerciseId: 3, setNumber: 3, reps: 8, weightKg: 10, completedAt: 30), to: data)
+        copy.exercises.append(pullUps)
+        return copy
+    }
+
     private func appending(_ set: ILWorkoutSet, to data: ILTrainingData) -> ILTrainingData {
         var copy = data
         copy.workoutSets.append(set)
         return copy
     }
 
-    private func live(exerciseID: Int64, before: ILTrainingData, after: ILTrainingData) -> [IOSWorkoutRecordLine] {
+    private func live(exerciseID: Int64, before: ILTrainingData, after: ILTrainingData, addedLoad: Bool = false) -> [IOSWorkoutRecordLine] {
         IOSWorkoutRecords.liveImprovements(
             sessionID: 2,
             before: IOSWorkoutRecords.recordInputs(exerciseID: exerciseID, data: before),
             after: IOSWorkoutRecords.recordInputs(exerciseID: exerciseID, data: after),
+            addedLoad: addedLoad,
             data: after
         )
     }

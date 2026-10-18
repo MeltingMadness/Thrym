@@ -941,15 +941,17 @@ struct IOSWorkoutScreen: View {
         before: [RecordSetInput],
         data: ILTrainingData
     ) -> IOSWorkoutRecordNotice? {
+        let exercise = data.exercises.first { $0.id == exerciseID }
         let lines = IOSWorkoutRecords.liveImprovements(
             sessionID: sessionID,
             before: before,
             after: IOSWorkoutRecords.recordInputs(exerciseID: exerciseID, data: data),
+            addedLoad: exercise?.tracksAddedLoad == true,
             data: data
         )
         guard let notice = IOSWorkoutRecords.notice(
             sessionID: sessionID,
-            exerciseName: data.exercises.first { $0.id == exerciseID }?.displayName ?? String(localized: "Übung"),
+            exerciseName: exercise?.displayName ?? String(localized: "Übung"),
             lines: lines,
             unitSystem: settings.state.unitSystem
         ) else { return nil }

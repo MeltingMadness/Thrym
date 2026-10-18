@@ -202,7 +202,8 @@ struct IOSExerciseStatisticsScreen: View {
             if !analyticsExercise.recentSets.isEmpty {
                 IOSExerciseRecentSetsCard(
                     sets: analyticsExercise.recentSets,
-                    unitSystem: unitSystem
+                    unitSystem: unitSystem,
+                    addedLoad: exercise?.tracksAddedLoad == true
                 )
             }
         }
@@ -247,7 +248,7 @@ struct IOSExerciseStatisticsScreen: View {
             }
             IOSExerciseSessionHistoryCard(sessions: analyticsExercise.sessions, selectedMetric: selectedMetric, unitSystem: unitSystem)
             if !analyticsExercise.recentSets.isEmpty {
-                IOSExerciseRecentSetsCard(sets: analyticsExercise.recentSets, unitSystem: unitSystem)
+                IOSExerciseRecentSetsCard(sets: analyticsExercise.recentSets, unitSystem: unitSystem, addedLoad: exercise?.tracksAddedLoad == true)
             }
         }
         .padding(.horizontal, 20)
@@ -510,6 +511,7 @@ private struct IOSExerciseSessionHistoryCard: View {
 private struct IOSExerciseRecentSetsCard: View {
     let sets: [ILExerciseSetStatistics]
     let unitSystem: String
+    var addedLoad = false
 
     var body: some View {
         ThrymCard(title: String(localized: "Letzte Sätze"), tone: .muted) {
@@ -520,7 +522,7 @@ private struct IOSExerciseRecentSetsCard: View {
                         .thrymSecondaryText()
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Text("\(setTypeText(set.setType)) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))")
+                    Text("\(setTypeText(set.setType)) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem, addedLoad: addedLoad))")
                         .font(.geist(.body, weight: .medium))
                         .multilineTextAlignment(.trailing)
                 }
