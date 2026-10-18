@@ -41,7 +41,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -76,7 +78,10 @@ private data class ExerciseCreateState(
     val primaryMuscleGroup: MuscleGroup = MuscleGroup.BRUST,
     val secondaryMuscleGroups: Set<MuscleGroup> = emptySet(),
     val category: ExerciseCategory = ExerciseCategory.LANGHANTEL,
-    val notes: String = ""
+    val notes: String = "",
+    // A failed creation is shown inside the dialog: the screen behind the modal sheet would hide it.
+    val errorMessage: String? = null,
+    val isSaving: Boolean = false
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -235,6 +240,10 @@ fun ExercisePickerSheet(
             onStateChange = { createState = it },
             onDismiss = { showCreateDialog = false },
             onConfirm = {
+                // The name check runs in the repository, so a second tap while the first insert is
+                // still running could create the same exercise twice.
+                if (createState.isSaving) return@CreateExerciseDialog
+                createState = createState.copy(isSaving = true, errorMessage = null)
                 scope.launch {
                     runCatching {
                         val exerciseId = exerciseRepository.addCustomExercise(
@@ -261,8 +270,10 @@ fun ExercisePickerSheet(
                         selectedExercises = selectedExercises + exercise
                     }.onFailure { throwable ->
                         if (throwable is CancellationException) throw throwable
-                        onCreationError?.invoke(
-                            throwable.userMessageOrNull(strings) ?: strings.get(UxR.string.workout_picker_create_failed)
+                        createState = createState.copy(
+                            isSaving = false,
+                            errorMessage = throwable.userMessageOrNull(strings)
+                                ?: strings.get(UxR.string.workout_picker_create_failed)
                         )
                     }
                 }
@@ -291,11 +302,19 @@ private fun CreateExerciseDialog(
             Column(verticalArrangement = Arrangement.spacedBy(dims.spacingSm)) {
                 com.thrym.app.presentation.common.ThrymTextField(
                     value = state.name,
-                    onValueChange = { onStateChange(state.copy(name = it)) },
+                    onValueChange = { onStateChange(state.copy(name = it, errorMessage = null)) },
                     label = { Text(stringResource(id = R.string.exercises_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                state.errorMessage?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                    )
+                }
 
                 Box {
                     com.thrym.app.presentation.common.ThrymTextField(
@@ -413,7 +432,7 @@ private fun CreateExerciseDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                enabled = state.name.isNotBlank(),
+                enabled = state.name.isNotBlank() && !state.isSaving,
                 colors = ThrymInteractiveColors.textButton()
             ) {
                 Text(stringResource(id = R.string.common_create))
