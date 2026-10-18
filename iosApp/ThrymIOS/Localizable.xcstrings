@@ -55,6 +55,38 @@
         }
       }
     },
+    "%@ nach oben verschieben": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ nach oben verschieben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move %@ up"
+          }
+        }
+      }
+    },
+    "%@ nach unten verschieben": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ nach unten verschieben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move %@ down"
+          }
+        }
+      }
+    },
     "%@ starten": {
       "localizations": {
         "de": {
@@ -12945,6 +12977,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Superset #%lld"
+          }
+        }
+      }
+    },
+    "Superset #%lld nach oben verschieben": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superset #%lld nach oben verschieben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move superset #%lld up"
+          }
+        }
+      }
+    },
+    "Superset #%lld nach unten verschieben": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superset #%lld nach unten verschieben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move superset #%lld down"
           }
         }
       }

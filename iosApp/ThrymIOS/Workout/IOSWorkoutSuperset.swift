@@ -18,6 +18,11 @@ struct IOSWorkoutSupersetHeader: View {
     let groupID: Int
     let exerciseCount: Int
     let exerciseNames: String
+    /// Moving the whole superset; nil hides the arrows.
+    var canMoveUp = false
+    var canMoveDown = false
+    var onMoveUp: (() -> Void)?
+    var onMoveDown: (() -> Void)?
 
     @Environment(\.thrymTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
@@ -25,28 +30,45 @@ struct IOSWorkoutSupersetHeader: View {
     var body: some View {
         let palette = theme.palette(for: colorScheme)
 
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Image(systemName: "link")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.purple)
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: "link")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.purple)
 
-                Text("Superset #\(groupID)")
-                    .font(.geist(.subheadline, weight: .semibold))
-                    .foregroundStyle(.purple)
+                    Text("Superset #\(groupID)")
+                        .font(.geist(.subheadline, weight: .semibold))
+                        .foregroundStyle(.purple)
 
-                Spacer(minLength: 8)
+                    Spacer(minLength: 8)
 
-                Text(ilExerciseCountText(exerciseCount))
+                    Text(ilExerciseCountText(exerciseCount))
+                        .font(.geist(.caption))
+                        .foregroundStyle(palette.textSecondary)
+                }
+
+                Text(exerciseNames)
                     .font(.geist(.caption))
                     .foregroundStyle(palette.textSecondary)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
             }
+            // The summary stays one element; the arrows next to it remain their own buttons.
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Superset #\(groupID), \(exerciseCount) Übungen")
+            .accessibilityValue(exerciseNames)
 
-            Text(exerciseNames)
-                .font(.geist(.caption))
-                .foregroundStyle(palette.textSecondary)
-                .lineLimit(2)
-                .truncationMode(.tail)
+            if let onMoveUp, let onMoveDown {
+                IOSWorkoutMoveControls(
+                    upLabel: String(localized: "Superset #\(groupID) nach oben verschieben"),
+                    downLabel: String(localized: "Superset #\(groupID) nach unten verschieben"),
+                    canMoveUp: canMoveUp,
+                    canMoveDown: canMoveDown,
+                    onMoveUp: onMoveUp,
+                    onMoveDown: onMoveDown
+                )
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
@@ -56,8 +78,6 @@ struct IOSWorkoutSupersetHeader: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(.purple.opacity(0.28), lineWidth: 1)
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Superset #\(groupID), \(exerciseCount) Übungen")
-        .accessibilityValue(exerciseNames)
+        .accessibilityElement(children: .contain)
     }
 }

@@ -11,6 +11,11 @@ struct IOSWorkoutExerciseCard: View {
     let onDeleteSet: (ILWorkoutSet) -> Void
     let sessionID: Int64
     let onSaveSet: (ILWorkoutSet, ILSetIntention) async -> Bool
+    /// Moving a single exercise; nil hides the arrows (superset members move with their header).
+    var canMoveUp = false
+    var canMoveDown = false
+    var onMoveUp: (() -> Void)?
+    var onMoveDown: (() -> Void)?
 
     @Environment(\.thrymTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
@@ -50,6 +55,16 @@ struct IOSWorkoutExerciseCard: View {
                         .thrymSecondaryText()
                 }
                 Spacer(minLength: 8)
+                if let onMoveUp, let onMoveDown {
+                    IOSWorkoutMoveControls(
+                        upLabel: String(localized: "\(row.exercise.displayName) nach oben verschieben"),
+                        downLabel: String(localized: "\(row.exercise.displayName) nach unten verschieben"),
+                        canMoveUp: canMoveUp,
+                        canMoveDown: canMoveDown,
+                        onMoveUp: onMoveUp,
+                        onMoveDown: onMoveDown
+                    )
+                }
                 Menu {
                     Button("Satz hinzufügen", systemImage: "plus") { onAddSet() }
                 } label: {
@@ -151,6 +166,47 @@ struct IOSWorkoutExerciseCard: View {
                     .padding(.leading, 1)
             }
         }
+    }
+}
+
+/// Up and down for one block of the workout: a single exercise or, in its header, a whole
+/// superset. At an edge the button is disabled; no foreground style is forced, so it dims.
+struct IOSWorkoutMoveControls: View {
+    let upLabel: String
+    let downLabel: String
+    let canMoveUp: Bool
+    let canMoveDown: Bool
+    let onMoveUp: () -> Void
+    let onMoveDown: () -> Void
+
+    @Environment(\.thrymTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.thrymAppearance) private var appearance
+
+    var body: some View {
+        let controls = HStack(spacing: 0) {
+            arrow("chevron.up", label: upLabel, enabled: canMoveUp, action: onMoveUp)
+            arrow("chevron.down", label: downLabel, enabled: canMoveDown, action: onMoveDown)
+        }
+        if appearance == .liquidGlass {
+            controls.liquidGlass(in: Capsule())
+        } else {
+            controls.overlay {
+                Capsule().stroke(theme.palette(for: colorScheme).separator, lineWidth: 1)
+            }
+        }
+    }
+
+    private func arrow(_ systemImage: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .disabled(!enabled)
+        .accessibilityLabel(label)
     }
 }
 

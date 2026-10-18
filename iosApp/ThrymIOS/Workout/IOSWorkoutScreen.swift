@@ -85,10 +85,10 @@ struct IOSWorkoutExerciseRow: Identifiable, Equatable {
     }
 }
 
-/// A render-only grouping of adjacent workout rows. The group mirrors Android's
-/// `buildExerciseRenderGroups`: a superset is rendered only when at least two
-/// adjacent immutable target snapshots carry the same group id. Rows that carry
-/// an isolated or interrupted group id stay ordinary cards.
+/// A render-only block of the workout list, built by `IOSWorkoutExerciseLayout`: a
+/// superset is rendered only when at least two target snapshots that are adjacent in
+/// the default order carry the same group id. Rows that carry an isolated or
+/// interrupted group id stay ordinary cards. A block moves as a whole.
 struct IOSWorkoutExerciseRenderGroup: Identifiable {
     let id: String
     let supersetGroupID: Int?
@@ -102,6 +102,7 @@ struct IOSWorkoutScreen: View {
     @Environment(IOSTrainingStore.self) private var store
     @EnvironmentObject private var settings: IOSSettingsViewModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @SceneStorage("thrym.workout.completedSessionID") private var completedSessionID = 0
     @State private var isFinishing = false
@@ -111,6 +112,9 @@ struct IOSWorkoutScreen: View {
     @State private var showingCancelConfirmation = false
     @State private var editingContext: IOSWorkoutSetEditorContext?
     @State private var adHocExerciseIDs: [Int64] = []
+    /// Row keys in display order, nil while the workout keeps its default order. Lives
+    /// outside the training graph (`IOSWorkoutExerciseOrderPersistence`).
+    @State private var exerciseOrder: [String]?
     /// Rest timers are keyed by the immutable exercise row identity, matching
     /// Android's `Map<WorkoutExerciseKey, RestTimerUi>` so supersets can count
     /// down independently.
@@ -181,7 +185,7 @@ struct IOSWorkoutScreen: View {
             }
             .sheet(isPresented: $showingFinishConfirmation) {
                 if let session = activeSession, let data {
-                    IOSWorkoutFinishSheet(rows: exerciseRows(session: session, data: data), busy: isFinishing || store.isBusy, error: localErrorMessage,
+                    IOSWorkoutFinishSheet(rows: exerciseLayout(session: session, data: data).rows, busy: isFinishing || store.isBusy, error: localErrorMessage,
                         onContinue: { showingFinishConfirmation = false }, onFinish: finishWorkout)
                         .interactiveDismissDisabled(isFinishing)
                 }
@@ -220,8 +224,8 @@ struct IOSWorkoutScreen: View {
     private var screenContent: some View {
         if let data {
             if data.activeSession == nil, let session = data.workoutSessions.first(where: { $0.id == Int64(completedSessionID) && $0.endTime != nil }) {
-                IOSWorkoutCompletionScreen(session: session, rows: exerciseRows(session: session, data: data), unitSystem: settings.state.unitSystem,
-                    onClose: { completedSessionID = 0 })
+                IOSWorkoutCompletionScreen(session: session, rows: exerciseLayout(session: session, data: data).rows, unitSystem: settings.state.unitSystem,
+                    onClose: closeCompletion)
             } else if let session = data.activeSession {
                 activeWorkout(session: session, data: data)
             } else {
@@ -267,11 +271,26 @@ struct IOSWorkoutScreen: View {
             adHocExerciseIDs = []
             restTimers = [:]
             IOSWorkoutRestTimerPersistence.clear()
+            // The completion screen keeps the order of the workout it shows.
+            if completedSessionID != 0,
+               let completed = data?.workoutSessions.first(where: { $0.id == Int64(completedSessionID) && $0.endTime != nil }) {
+                exerciseOrder = IOSWorkoutExerciseOrderPersistence.load(for: completed)
+            } else {
+                exerciseOrder = nil
+                IOSWorkoutExerciseOrderPersistence.clear()
+            }
             updateIdleTimer()
             return
         }
 
+        // A new workout ends the completion screen of the previous one. Loading the new
+        // workout's order removes the stored order of that screen, so it must not come back,
+        // for example after the new workout is discarded.
+        if completedSessionID != 0, completedSessionID != Int(activeSession.id) {
+            completedSessionID = 0
+        }
         loadAdHocExercises(for: activeSession.id)
+        exerciseOrder = IOSWorkoutExerciseOrderPersistence.load(for: activeSession)
         if let data {
             restoreRestTimers(for: activeSession, data: data)
         } else {
@@ -297,20 +316,21 @@ struct IOSWorkoutScreen: View {
 
     @ViewBuilder
     private func activeWorkout(session: ILWorkoutSession, data: ILTrainingData) -> some View {
-        let rows = exerciseRows(session: session, data: data)
+        let layout = exerciseLayout(session: session, data: data)
+        let rows = layout.rows
         let liquidGlass = appearance == .liquidGlass
         ScrollViewReader { proxy in
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 if liquidGlass {
-                    glassWorkoutHeader(session: session, rows: rows, proxy: proxy)
+                    glassWorkoutHeader(session: session, layout: layout, proxy: proxy)
                 } else {
                     workoutHeader(session: session)
                 }
 
                 // Liquid Glass shows the timers in the dock and pause screen instead.
                 if !liquidGlass {
-                    restTimersView(rows: rows)
+                    restTimersView(layout: layout)
                 }
 
                 if let message = store.errorMessage ?? localErrorMessage {
@@ -331,8 +351,8 @@ struct IOSWorkoutScreen: View {
                     }
                     .padding(.vertical, 30)
                 } else {
-                    ForEach(exerciseRenderGroups(rows)) { group in
-                        exerciseRenderGroup(group, sessionID: session.id)
+                    ForEach(layout.groups) { group in
+                        exerciseRenderGroup(group, layout: layout, sessionID: session.id)
                             .id(group.id)
                     }
                 }
@@ -453,10 +473,11 @@ struct IOSWorkoutScreen: View {
     /// the rail scrolls to that exercise.
     private func glassWorkoutHeader(
         session: ILWorkoutSession,
-        rows: [IOSWorkoutExerciseRow],
+        layout: IOSWorkoutExerciseLayout,
         proxy: ScrollViewProxy
     ) -> some View {
-        let groups = exerciseRenderGroups(rows)
+        let rows = layout.rows
+        let groups = layout.groups
         let currentIndex = groups.firstIndex { group in
             group.rows.contains { $0.target != nil && !$0.isComplete }
         }
@@ -498,12 +519,11 @@ struct IOSWorkoutScreen: View {
     }
 
     @ViewBuilder
-    private func restTimersView(rows: [IOSWorkoutExerciseRow]) -> some View {
+    private func restTimersView(layout: IOSWorkoutExerciseLayout) -> some View {
         if !restTimers.isEmpty {
-            let groups = exerciseRenderGroups(rows)
             VStack(spacing: 8) {
                 ForEach(orderedRestTimers) { timer in
-                    restTimerView(timer, rows: rows, groups: groups)
+                    restTimerView(timer, rows: layout.rows, groups: layout.groups)
                 }
             }
             .padding(.horizontal)
@@ -513,20 +533,32 @@ struct IOSWorkoutScreen: View {
     @ViewBuilder
     private func exerciseRenderGroup(
         _ group: IOSWorkoutExerciseRenderGroup,
+        layout: IOSWorkoutExerciseLayout,
         sessionID: Int64
     ) -> some View {
+        // Moving needs a neighbour; a workout with a single block shows no arrows.
+        let movable = layout.groups.count > 1
+        let canMoveUp = layout.canMove(groupID: group.id, direction: .up)
+        let canMoveDown = layout.canMove(groupID: group.id, direction: .down)
+        // Any member moves the whole block.
+        let blockRowID = group.rows.first?.id ?? group.id
         VStack(alignment: .leading, spacing: 8) {
             if let groupID = group.supersetGroupID {
                 IOSWorkoutSupersetHeader(
                     groupID: groupID,
                     exerciseCount: group.rows.count,
-                    exerciseNames: group.rows.map { $0.exercise.displayName }.joined(separator: " • ")
+                    exerciseNames: group.rows.map { $0.exercise.displayName }.joined(separator: " • "),
+                    canMoveUp: canMoveUp,
+                    canMoveDown: canMoveDown,
+                    onMoveUp: movable ? { moveExercise(rowID: blockRowID, direction: .up) } : nil,
+                    onMoveDown: movable ? { moveExercise(rowID: blockRowID, direction: .down) } : nil
                 )
                 .padding(.horizontal)
             }
 
-            ForEach(group.rows.indices, id: \.self) { index in
-                let row = group.rows[index]
+            ForEach(Array(group.rows.enumerated()), id: \.element.id) { index, row in
+                // Superset members move with their header, so only single cards get arrows.
+                let single = movable && group.supersetGroupID == nil
                 IOSWorkoutExerciseCard(
                     row: row,
                     unitSystem: settings.state.unitSystem,
@@ -547,7 +579,11 @@ struct IOSWorkoutScreen: View {
                     onEditSet: { set in presentEditSet(set, row: row, sessionID: sessionID) },
                     onDeleteSet: deleteSet,
                     sessionID: sessionID,
-                    onSaveSet: saveSet
+                    onSaveSet: saveSet,
+                    canMoveUp: canMoveUp,
+                    canMoveDown: canMoveDown,
+                    onMoveUp: single ? { moveExercise(rowID: row.id, direction: .up) } : nil,
+                    onMoveDown: single ? { moveExercise(rowID: row.id, direction: .down) } : nil
                 )
                 .padding(.horizontal)
             }
@@ -622,10 +658,7 @@ struct IOSWorkoutScreen: View {
             ))
         }
 
-        let adHocIDs = Set(adHocExerciseIDs).union(
-            sessionSets.filter { $0.planTargetSnapshotId == nil }.map(\.exerciseId)
-        )
-        for exerciseID in adHocIDs.sorted() {
+        for exerciseID in IOSWorkoutExerciseLayout.adHocExerciseIDs(added: adHocExerciseIDs, sets: sessionSets) {
             guard let exercise = exerciseByID[exerciseID] else { continue }
             let sets = sessionSets
                 .filter { $0.planTargetSnapshotId == nil && $0.exerciseId == exerciseID }
@@ -648,60 +681,13 @@ struct IOSWorkoutScreen: View {
         return rows
     }
 
-    /// Builds contiguous superset runs without changing the order or identity of
-    /// the target snapshots. This deliberately operates after the rows have been
-    /// resolved, so ad-hoc exercises can never be accidentally folded into a plan
-    /// superset and repeated planned exercises remain separate rows.
-    private func exerciseRenderGroups(_ rows: [IOSWorkoutExerciseRow]) -> [IOSWorkoutExerciseRenderGroup] {
-        guard !rows.isEmpty else { return [] }
-
-        var groups: [IOSWorkoutExerciseRenderGroup] = []
-        var cursor = 0
-
-        while cursor < rows.count {
-            let groupID = rows[cursor].target?.supersetGroupId
-            guard let groupID else {
-                let row = rows[cursor]
-                groups.append(
-                    IOSWorkoutExerciseRenderGroup(
-                        id: "single-\(row.id)",
-                        supersetGroupID: nil,
-                        rows: [row]
-                    )
-                )
-                cursor += 1
-                continue
-            }
-
-            var endExclusive = cursor + 1
-            while endExclusive < rows.count,
-                  rows[endExclusive].target?.supersetGroupId == groupID {
-                endExclusive += 1
-            }
-
-            let run = Array(rows[cursor..<endExclusive])
-            if run.count < 2 {
-                let row = run[0]
-                groups.append(
-                    IOSWorkoutExerciseRenderGroup(
-                        id: "single-\(row.id)",
-                        supersetGroupID: nil,
-                        rows: [row]
-                    )
-                )
-            } else {
-                groups.append(
-                    IOSWorkoutExerciseRenderGroup(
-                        id: "superset-\(groupID)-\(run.map(\.id).joined(separator: "-"))",
-                        supersetGroupID: groupID,
-                        rows: run
-                    )
-                )
-            }
-            cursor = endExclusive
-        }
-
-        return groups
+    /// Rows and blocks in display order: the default order from `exerciseRows`, arranged
+    /// by the stored order of this workout.
+    private func exerciseLayout(session: ILWorkoutSession, data: ILTrainingData) -> IOSWorkoutExerciseLayout {
+        IOSWorkoutExerciseLayout(
+            rowsInDefaultOrder: exerciseRows(session: session, data: data),
+            storedKeys: exerciseOrder ?? []
+        )
     }
 
     /// Applies the shared display-only deload helper. The returned DTO is deliberately a fresh
@@ -790,6 +776,22 @@ struct IOSWorkoutScreen: View {
         guard let session = activeSession, !adHocExerciseIDs.contains(exercise.id) else { return }
         adHocExerciseIDs.append(exercise.id)
         saveAdHocExercises(for: session.id)
+        // Without a stored order the default order already lists ad-hoc exercises as added.
+        if var order = exerciseOrder {
+            order.append("adhoc-\(exercise.id)")
+            exerciseOrder = order
+            IOSWorkoutExerciseOrderPersistence.save(order, for: session)
+        }
+    }
+
+    /// Moves the block that contains `rowID` (a single exercise or a whole superset) one
+    /// place up or down. Only the display order changes: no store command, no
+    /// `orderIndex` or superset id, so coach, plan write-back and readiness are untouched.
+    private func moveExercise(rowID: String, direction: SessionOrderMove) {
+        guard let session = activeSession, session.endTime == nil, let data else { return }
+        guard let next = exerciseLayout(session: session, data: data).move(key: rowID, direction: direction) else { return }
+        withAnimation(reduceMotion || theme.reducedMotion ? nil : .default) { exerciseOrder = next }
+        IOSWorkoutExerciseOrderPersistence.save(next, for: session)
     }
 
     private func presentNewSet(
@@ -892,11 +894,21 @@ struct IOSWorkoutScreen: View {
     private func finishWorkout() {
         guard let session = activeSession, !isFinishing, !store.isBusy else { return }
         isFinishing = true
+        // The order on screen, also without a move: the completion screen no longer knows the
+        // order in which ad-hoc exercises were added.
+        let order = data.map { exerciseLayout(session: session, data: $0).rows.map(\.id) } ?? exerciseOrder
         Task {
             defer { isFinishing = false }
             let success = await store.command("workout.finish", fields: ["sessionId": session.id])
             if success {
                 completedSessionID = Int(session.id)
+                // The completion screen lists the exercises in this order. The store
+                // observer can publish the finished session first, and the restore that
+                // follows would then drop the order before `completedSessionID` is set.
+                exerciseOrder = order
+                if let order {
+                    IOSWorkoutExerciseOrderPersistence.save(order, for: session)
+                }
                 showingFinishConfirmation = false
                 store.errorMessage = nil
                 restTimers = [:]
@@ -917,12 +929,20 @@ struct IOSWorkoutScreen: View {
                 store.errorMessage = nil
                 restTimers = [:]
                 IOSWorkoutRestTimerPersistence.clear(sessionID: session.id)
+                exerciseOrder = nil
+                IOSWorkoutExerciseOrderPersistence.clear()
                 adHocExerciseIDs = []
                 UserDefaults.standard.removeObject(forKey: adHocKey(for: session.id))
             } else {
                 localErrorMessage = store.errorMessage ?? String(localized: "Training konnte nicht verworfen werden.")
             }
         }
+    }
+
+    private func closeCompletion() {
+        completedSessionID = 0
+        exerciseOrder = nil
+        IOSWorkoutExerciseOrderPersistence.clear()
     }
 
     private func saveNotes(_ notes: String) {
