@@ -61,8 +61,8 @@ struct IOSWorkoutSupersetHeader: View {
 
             if let onMoveUp, let onMoveDown {
                 IOSWorkoutMoveControls(
-                    upLabel: String(localized: "Superset #\(groupID) nach oben"),
-                    downLabel: String(localized: "Superset #\(groupID) nach unten"),
+                    upLabel: String(localized: "Superset #\(groupID) nach oben verschieben"),
+                    downLabel: String(localized: "Superset #\(groupID) nach unten verschieben"),
                     canMoveUp: canMoveUp,
                     canMoveDown: canMoveDown,
                     onMoveUp: onMoveUp,

@@ -55,12 +55,12 @@
         }
       }
     },
-    "%@ nach oben": {
+    "%@ nach oben verschieben": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ nach oben"
+            "value": "%@ nach oben verschieben"
           }
         },
         "en": {
@@ -71,12 +71,12 @@
         }
       }
     },
-    "%@ nach unten": {
+    "%@ nach unten verschieben": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ nach unten"
+            "value": "%@ nach unten verschieben"
           }
         },
         "en": {
@@ -12981,12 +12981,12 @@
         }
       }
     },
-    "Superset #%lld nach oben": {
+    "Superset #%lld nach oben verschieben": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Superset #%lld nach oben"
+            "value": "Superset #%lld nach oben verschieben"
           }
         },
         "en": {
@@ -12997,12 +12997,12 @@
         }
       }
     },
-    "Superset #%lld nach unten": {
+    "Superset #%lld nach unten verschieben": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Superset #%lld nach unten"
+            "value": "Superset #%lld nach unten verschieben"
           }
         },
         "en": {

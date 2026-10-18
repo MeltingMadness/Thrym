@@ -102,6 +102,7 @@ struct IOSWorkoutScreen: View {
     @Environment(IOSTrainingStore.self) private var store
     @EnvironmentObject private var settings: IOSSettingsViewModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @SceneStorage("thrym.workout.completedSessionID") private var completedSessionID = 0
     @State private var isFinishing = false
@@ -783,7 +784,7 @@ struct IOSWorkoutScreen: View {
     private func moveExercise(rowID: String, direction: SessionOrderMove) {
         guard let session = activeSession, session.endTime == nil, let data else { return }
         guard let next = exerciseLayout(session: session, data: data).move(key: rowID, direction: direction) else { return }
-        withAnimation { exerciseOrder = next }
+        withAnimation(reduceMotion || theme.reducedMotion ? nil : .default) { exerciseOrder = next }
         IOSWorkoutExerciseOrderPersistence.save(next, for: session)
     }
 
@@ -887,7 +888,9 @@ struct IOSWorkoutScreen: View {
     private func finishWorkout() {
         guard let session = activeSession, !isFinishing, !store.isBusy else { return }
         isFinishing = true
-        let order = exerciseOrder
+        // The order on screen, also without a move: the completion screen no longer knows the
+        // order in which ad-hoc exercises were added.
+        let order = data.map { exerciseLayout(session: session, data: $0).rows.map(\.id) } ?? exerciseOrder
         Task {
             defer { isFinishing = false }
             let success = await store.command("workout.finish", fields: ["sessionId": session.id])

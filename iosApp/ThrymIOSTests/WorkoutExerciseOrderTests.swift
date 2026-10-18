@@ -132,6 +132,25 @@ final class WorkoutExerciseOrderTests: XCTestCase {
         XCTAssertEqual(ids, [5, 3, 8, 7, 6])
     }
 
+    func testOrderStoredAtFinishKeepsTheAddedOrderOnTheCompletionScreen() {
+        // B (5) added before A (3), A logged first, nothing moved.
+        let sets = [
+            ILWorkoutSet(id: 1, exerciseId: 3, completedAt: 100),
+            ILWorkoutSet(id: 2, exerciseId: 5, completedAt: 200),
+        ]
+        let adHocRows: ([Int64]) -> [IOSWorkoutExerciseRow] = { added in
+            IOSWorkoutExerciseLayout.adHocExerciseIDs(added: added, sets: sets)
+                .map { self.row("adhoc-\($0)", planned: false) }
+        }
+        let running = IOSWorkoutExerciseLayout(rowsInDefaultOrder: [row("target-1")] + adHocRows([5, 3]), storedKeys: [])
+        let storedAtFinish = running.rows.map(\.id)
+        XCTAssertEqual(storedAtFinish, ["target-1", "adhoc-5", "adhoc-3"])
+
+        // The completion screen no longer knows the added order and falls back to the first set.
+        let completion = IOSWorkoutExerciseLayout(rowsInDefaultOrder: [row("target-1")] + adHocRows([]), storedKeys: storedAtFinish)
+        XCTAssertEqual(completion.rows.map(\.id), storedAtFinish)
+    }
+
     private func row(_ id: String, group: Int? = nil, planned: Bool = true) -> IOSWorkoutExerciseRow {
         let numericID = Int64(id.split(separator: "-").last ?? "0") ?? 0
         return IOSWorkoutExerciseRow(

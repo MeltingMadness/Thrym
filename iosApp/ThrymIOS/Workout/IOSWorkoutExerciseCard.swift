@@ -57,8 +57,8 @@ struct IOSWorkoutExerciseCard: View {
                 Spacer(minLength: 8)
                 if let onMoveUp, let onMoveDown {
                     IOSWorkoutMoveControls(
-                        upLabel: String(localized: "\(row.exercise.displayName) nach oben"),
-                        downLabel: String(localized: "\(row.exercise.displayName) nach unten"),
+                        upLabel: String(localized: "\(row.exercise.displayName) nach oben verschieben"),
+                        downLabel: String(localized: "\(row.exercise.displayName) nach unten verschieben"),
                         canMoveUp: canMoveUp,
                         canMoveDown: canMoveDown,
                         onMoveUp: onMoveUp,
