@@ -42,12 +42,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -101,14 +99,12 @@ class ActiveWorkoutViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /**
-     * Completes with the first target list of this session. Until then [planTargets] holds its
-     * empty start value, and an order computed from it would drop the stored planned rows.
+     * Plan target snapshots of this session, null until the first list has arrived. An order
+     * computed before that would drop the stored planned rows, see [awaitPlanTargets].
      */
-    private val planTargetsLoaded = CompletableDeferred<Unit>()
-
-    private val planTargets = progressionRepository.observeTargetsForSession(sessionId)
-        .onEach { planTargetsLoaded.complete(Unit) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    private val planTargets: StateFlow<List<WorkoutPlanTarget>?> =
+        progressionRepository.observeTargetsForSession(sessionId)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val shareWeightHistoryAcrossContexts =
         appPreferencesRepository.preferences
@@ -127,7 +123,7 @@ class ActiveWorkoutViewModel(
         shareWeightHistoryAcrossContexts,
         deloadMode
     ) { sets, added, targets, shareAcrossContexts, activeDeloadMode ->
-        val orderedTargets = targets.sortedWith(
+        val orderedTargets = targets.orEmpty().sortedWith(
             compareBy(WorkoutPlanTarget::orderIndex, WorkoutPlanTarget::id)
         )
         val adHocExercises = added.distinctBy { it.id }
@@ -430,7 +426,7 @@ class ActiveWorkoutViewModel(
         }
         val key = WorkoutExerciseKey.AdHoc(exercise.id).stableListKey()
         viewModelScope.launch {
-            planTargetsLoaded.await()
+            awaitPlanTargets()
             // Stored with the order, so the exercise survives a cold start even without sets.
             exerciseOrder.update { storedKeys ->
                 if (key in storedKeys) return@update null
@@ -450,7 +446,7 @@ class ActiveWorkoutViewModel(
      */
     fun moveExercise(key: WorkoutExerciseKey, direction: SessionOrderMove) {
         viewModelScope.launch {
-            planTargetsLoaded.await()
+            awaitPlanTargets()
             exerciseOrder.update(precondition = ::sessionAllowsReorder) { storedKeys ->
                 SessionExerciseOrder.move(
                     arranged = SessionExerciseOrder.arrange(currentOrderRows(), storedKeys),
@@ -461,7 +457,15 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    private fun currentOrderRows() = sessionOrderRows(planTargets.value, addedExercises.value)
+    private fun currentOrderRows() = sessionOrderRows(planTargets.value.orEmpty(), addedExercises.value)
+
+    /**
+     * Suspends until the first target list is in [planTargets]. A StateFlow sets its value before
+     * a collector sees it, so the caller reads the loaded list whatever dispatcher resumes it.
+     */
+    private suspend fun awaitPlanTargets() {
+        planTargets.first { it != null }
+    }
 
     private suspend fun sessionAllowsReorder(): Boolean = try {
         sessionIsMutable()
@@ -564,7 +568,7 @@ class ActiveWorkoutViewModel(
                     // A zero duration selects the elapsed-time display. Count only NORMAL sets
                     // against the deload-adjusted target for this exact planned row.
                     val plannedTarget = (key as? WorkoutExerciseKey.Planned)?.let { planned ->
-                        planTargets.value.find { it.id == planned.snapshotId }
+                        planTargets.value.orEmpty().find { it.id == planned.snapshotId }
                     }
                     val exerciseComplete = isPlannedExerciseComplete(
                         planTarget = plannedTarget,
@@ -646,7 +650,7 @@ class ActiveWorkoutViewModel(
         if (configured != IntensitySystem.OFF || key !is WorkoutExerciseKey.Planned) {
             return configured
         }
-        val target = planTargets.value.find { it.id == key.snapshotId }
+        val target = planTargets.value.orEmpty().find { it.id == key.snapshotId }
         return effectiveRowIntensitySystem(configured, target)
     }
 
