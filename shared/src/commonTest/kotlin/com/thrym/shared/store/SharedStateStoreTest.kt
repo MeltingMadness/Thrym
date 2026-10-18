@@ -3,6 +3,8 @@ package com.thrym.shared.store
 import com.thrym.shared.backup.BackupExercise
 import com.thrym.shared.backup.BackupMetaPlanItem
 import com.thrym.shared.backup.BackupMetaTrainingPlan
+import com.thrym.shared.backup.BackupPayloadV1
+import com.thrym.shared.backup.BackupPersonalRecord
 import com.thrym.shared.backup.BackupPlanExercise
 import com.thrym.shared.backup.BackupProgressionConfig
 import com.thrym.shared.backup.BackupTrainingPlan
@@ -23,6 +25,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.encodeToString
 
 class SharedStateStoreTest {
+
+    private val payloadFormat = kotlinx.serialization.json.Json {
+        encodeDefaults = true
+        explicitNulls = true
+    }
 
     private val exercise = BackupExercise(
         id = 1L,
@@ -763,6 +770,74 @@ class SharedStateStoreTest {
         )
     }
 
+    @Test
+    fun newRecordsSkipEveryIdOfAnImportedDuplicateRecord() = runTest {
+        val store = newStore(MemoryPersistence())
+        // A backup may hold two rows for one logical record. Only one of them survives the rebuild,
+        // but the new records must not take the id of the other one either.
+        store.importJson(
+            payloadJson(
+                store.snapshot().copy(
+                    personalRecords = listOf(
+                        BackupPersonalRecord(id = 2L, exerciseId = exercise.id, type = "MAX_WEIGHT", value = 100.0, achievedAt = 500L),
+                        BackupPersonalRecord(id = 1L, exerciseId = exercise.id, type = "MAX_WEIGHT", value = 100.0, achievedAt = 400L),
+                    ),
+                ),
+            ),
+        )
+        val sessionId = store.startWorkout(name = "Gym")
+
+        store.addSet(
+            BackupWorkoutSet(
+                id = 0L,
+                sessionId = sessionId,
+                exerciseId = exercise.id,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 100.0,
+                setType = NORMAL_SET_TYPE,
+                completedAt = 1_000L,
+            ),
+        )
+
+        val records = store.snapshot().personalRecords.associate { it.type to it.id }
+        assertEquals(1L, records["MAX_WEIGHT"])
+        assertEquals(setOf(3L, 4L), setOf(records.getValue("MAX_REPS"), records.getValue("MAX_E1RM")))
+    }
+
+    @Test
+    fun recordIdAtTheTopOfTheRangeDoesNotBlockNewRecords() = runTest {
+        val store = newStore(MemoryPersistence())
+        store.importJson(
+            payloadJson(
+                store.snapshot().copy(
+                    personalRecords = listOf(
+                        BackupPersonalRecord(id = Long.MAX_VALUE, exerciseId = exercise.id, type = "MAX_WEIGHT", value = 100.0, achievedAt = 500L),
+                    ),
+                ),
+            ),
+        )
+        val sessionId = store.startWorkout(name = "Gym")
+
+        // A bodyweight set drops the imported weight record and adds a new reps record.
+        store.addSet(
+            BackupWorkoutSet(
+                id = 0L,
+                sessionId = sessionId,
+                exerciseId = exercise.id,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 0.0,
+                setType = NORMAL_SET_TYPE,
+                completedAt = 1_000L,
+            ),
+        )
+
+        val record = store.snapshot().personalRecords.single()
+        assertEquals("MAX_REPS", record.type)
+        assertEquals(1L, record.id)
+    }
+
     private fun newStore(
         persistence: MemoryPersistence,
         now: () -> Long = { 1_000L },
@@ -771,6 +846,8 @@ class SharedStateStoreTest {
         seedExercises = listOf(exercise),
         nowEpochMillis = now,
     )
+
+    private fun payloadJson(payload: BackupPayloadV1): String = payloadFormat.encodeToString(payload)
 
     private fun linearProgressionConfig() = BackupProgressionConfig(
         scheme = "LINEAR",

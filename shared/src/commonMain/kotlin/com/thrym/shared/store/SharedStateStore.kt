@@ -1052,13 +1052,15 @@ class SharedStateStore(
         val retainedRecords = state.personalRecords
             .filterNot { it.exerciseId in affectedExerciseIds && it.type in PERSONAL_RECORD_TYPES }
             .toMutableList()
-        val oldRecords = state.personalRecords
+        val rebuiltRecords = state.personalRecords
             .filter { it.exerciseId in affectedExerciseIds && it.type in PERSONAL_RECORD_TYPES }
-            .associateBy { it.exerciseId to it.type }
+        val oldRecords = rebuiltRecords.associateBy { it.exerciseId to it.type }
         val usedRecordIds = retainedRecords.map { it.id }.toMutableSet()
         // Fresh ids are allocated above every previous record id, so a record that is new in this
-        // rebuild never takes the old id of a record that is rebuilt after it.
-        val previousRecordIds = oldRecords.values.map { it.id }.toSet()
+        // rebuild never takes the old id of a record that is rebuilt after it. The ids come from
+        // all rebuilt rows: an imported backup may hold two rows for one record, and associateBy
+        // keeps only one of them.
+        val previousRecordIds = rebuiltRecords.map { it.id }.toSet()
         val sessionsById = state.workoutSessions.associateBy { it.id }
         val setsByExercise = state.workoutSets
             .asSequence()
@@ -1188,10 +1190,12 @@ class SharedStateStore(
         )
     }
 
-    private fun nextUnusedId(usedIds: Set<Long>): Long {
-        val next = nextId(usedIds)
-        require(next !in usedIds) { "No free personal record id remains" }
-        return next
+    private fun nextUnusedId(excludedIds: Set<Long>): Long {
+        val maximum = excludedIds.maxOrNull() ?: 0L
+        if (maximum < Long.MAX_VALUE) return maximum + 1L
+        // Only an imported id at the top of the range gets here. Take the lowest free id instead
+        // of blocking every later save.
+        return generateSequence(1L) { it + 1L }.first { it !in excludedIds }
     }
 
     private fun loadInitialState(): BackupPayloadV1 {
