@@ -379,8 +379,8 @@ struct IOSWorkoutGlassRestDock: View {
     }
 }
 
-/// All running rests as dock rows, in the order the caller passes (see
-/// `IOSWorkoutRestDock.ordered`). Each row keeps its identity per exercise row.
+/// The running rests as dock rows, in the order the caller passes (see
+/// `IOSWorkoutRestDock.dockTimers`). Each row keeps its identity per exercise row.
 /// Above `maxHeight` the stack scrolls, so many timers never cover the workout.
 /// The screen puts the stack in its bottom safe-area inset, so the list can
 /// always scroll its last action above the stack.
@@ -403,10 +403,10 @@ struct IOSWorkoutGlassRestDockStack: View {
     static let rowHeight: CGFloat = 72
     static let rowSpacing: CGFloat = 8
 
-    /// Three rows and half of a fourth: from four timers on, the cut row shows
-    /// that the stack scrolls. On short screens at most 40 % of the height.
+    /// At most three rows, as on Android; from four timers on the stack scrolls.
+    /// On short screens, such as in landscape, at most 40 % of the height.
     static func maxHeight(viewportHeight: CGFloat) -> CGFloat {
-        let preferred = 3.5 * rowHeight + 3 * rowSpacing
+        let preferred = 3 * rowHeight + 2 * rowSpacing
         guard viewportHeight > 0 else { return preferred }
         return min(preferred, (viewportHeight * 0.4).rounded(.down))
     }

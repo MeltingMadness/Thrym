@@ -68,34 +68,30 @@ struct IOSWorkoutRestTimer: Codable, Equatable, Identifiable {
     }
 }
 
-/// Rules of the Liquid Glass rest dock, which shows one row per running timer.
+/// Rules of the Liquid Glass rest dock. They match Android's dock, so both
+/// platforms show the same rows and open the pause at the same moments.
 enum IOSWorkoutRestDock {
-    /// Countdowns first, shortest remaining time on top; count-up timers follow
-    /// in start order. Remaining time orders like the deadline, so the order
-    /// only changes when a timer starts, moves or ends, not every second.
-    static func ordered<Timers: Collection>(_ timers: Timers) -> [IOSWorkoutRestTimer]
+    /// The dock rows: every countdown, shortest remaining time on top, then the
+    /// most recently started count-up timer as the last row. Older count-up
+    /// timers keep running but share that one row. Remaining time orders like
+    /// the deadline, so the order only changes when a timer starts, moves or
+    /// ends, not every second. Ties go to the earlier start, then the row key.
+    static func dockTimers<Timers: Collection>(_ timers: Timers) -> [IOSWorkoutRestTimer]
     where Timers.Element == IOSWorkoutRestTimer {
-        timers.sorted { lhs, rhs in
-            switch (lhs.deadlineEpochMillis, rhs.deadlineEpochMillis) {
-            case let (left?, right?) where left != right:
-                return left < right
-            case (.some, nil):
-                return true
-            case (nil, .some):
-                return false
-            default:
-                return lhs.startedAtEpochMillis == rhs.startedAtEpochMillis
-                    ? lhs.rowKey < rhs.rowKey
-                    : lhs.startedAtEpochMillis < rhs.startedAtEpochMillis
-            }
+        let countdowns = timers.filter(\.isCountdown).sorted { lhs, rhs in
+            lhs.deadlineEpochMillis == rhs.deadlineEpochMillis
+                ? startsEarlier(lhs, rhs)
+                : (lhs.deadlineEpochMillis ?? 0) < (rhs.deadlineEpochMillis ?? 0)
         }
+        let newestCountUp = timers.filter { !$0.isCountdown }.max(by: startsEarlier)
+        return countdowns + (newestCountUp.map { [$0] } ?? [])
     }
 
-    /// Whether `started` opens the full-screen pause by itself. Only a countdown
-    /// does, and only when it begins a series (no other exercise has a countdown
-    /// still running) or when it is the next set of an exercise that already has
-    /// a timer. A second superset exercise therefore stays in the dock. Timers
-    /// that end or are removed never call this, so they never open the pause.
+    /// Whether `started` opens the full-screen pause by itself: only a countdown,
+    /// and only when no other timer is running once it has started. The first
+    /// set of a series and the next set of a lone exercise open it; a second
+    /// superset exercise stays in the dock. Timers that end, are skipped or are
+    /// restored after a rebuild never call this, so they never open the pause.
     ///
     /// - Parameter running: the timers before `started` replaces its row's timer.
     static func opensPause(
@@ -104,10 +100,16 @@ enum IOSWorkoutRestDock {
         now: Date = Date()
     ) -> Bool {
         guard started.isCountdown else { return false }
-        if running[started.rowKey] != nil { return true }
+        // A countdown at zero has ended and no longer runs; a count-up timer always runs.
         return !running.values.contains { timer in
-            timer.rowKey != started.rowKey && timer.isCountdown && !timer.hasElapsed(at: now)
+            timer.rowKey != started.rowKey && !timer.hasElapsed(at: now)
         }
+    }
+
+    private static func startsEarlier(_ lhs: IOSWorkoutRestTimer, _ rhs: IOSWorkoutRestTimer) -> Bool {
+        lhs.startedAtEpochMillis == rhs.startedAtEpochMillis
+            ? lhs.rowKey < rhs.rowKey
+            : lhs.startedAtEpochMillis < rhs.startedAtEpochMillis
     }
 }
 

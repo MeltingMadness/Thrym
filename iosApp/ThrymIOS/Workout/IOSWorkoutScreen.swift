@@ -412,13 +412,14 @@ struct IOSWorkoutScreen: View {
         }
     }
 
-    /// One dock row per running rest. The completion watchers sit here because the
-    /// inset, unlike the lazy list, stays alive while the athlete scrolls.
+    /// The rest dock: a row per countdown and one for the newest count-up timer
+    /// (`IOSWorkoutRestDock.dockTimers`). The completion watchers sit here because
+    /// the inset, unlike the lazy list, stays alive while the athlete scrolls.
     @ViewBuilder
     private func glassRestDock(rows: [IOSWorkoutExerciseRow]) -> some View {
         if !restTimers.isEmpty {
             IOSWorkoutGlassRestDockStack(
-                entries: IOSWorkoutRestDock.ordered(restTimers.values).map { timer in
+                entries: IOSWorkoutRestDock.dockTimers(restTimers.values).map { timer in
                     IOSWorkoutGlassRestDockStack.Entry(
                         timer: timer,
                         exerciseName: rows.first { $0.id == timer.rowKey }?.exercise.displayName ?? String(localized: "Pause")
@@ -1007,8 +1008,6 @@ struct IOSWorkoutScreen: View {
         IOSWorkoutRestTimerPersistence.upsert(timer)
         if opensPause {
             pauseRowKey = rowKey
-        } else if pauseRowKey == rowKey {
-            pauseRowKey = nil
         }
     }
 

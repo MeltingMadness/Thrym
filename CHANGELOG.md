@@ -15,7 +15,6 @@
 - Persönliche Skripte, Notizen, Mockups und Screenshots aus dem Repository entfernt.
 - Technische Basis aktualisiert (Kotlin 2.4, Compose 1.12, compileSdk 37, Vico 3). Android-Einstellungen: Abschnittstitel werden nach der App-Sprache großgeschrieben statt nach der Gerätesprache.
 - iOS-Rekorde: Das Beenden eines Trainings mit mehreren Übungen konnte mit „Invalid workout state: Backup contains duplicate personal record id“ scheitern, weil ein neuer Rekord die ID eines bestehenden bekam. Neue Rekorde bekommen jetzt immer eine freie ID, bestehende behalten ihre. Gespeicherte Daten waren nicht betroffen.
-- iOS, Liquid Glass: Laufen mehrere Pausen-Timer (etwa im Supersatz), zeigt das Dock jeden als eigene Zeile, die kürzeste Restzeit oben; ab vier Timern scrollt der Stapel, statt das Training zu verdecken. Bisher war nur der zuletzt gestartete Timer zu sehen, die übrigen liefen unsichtbar weiter. Die Vollbild-Pause öffnet sich von selbst nur noch beim ersten Countdown einer Serie oder beim nächsten Satz derselben Übung. Sie springt nicht mehr zu einer anderen Übung und öffnet sich nicht, wenn ein Timer abläuft oder übersprungen wird. Ein Tipp auf eine Dock-Zeile öffnet die Pause dieser Übung.
 
 ## 1.4.0 (Android versionCode 9 / iOS Build 4) – Polish und Parität · 26.09.2026
 
