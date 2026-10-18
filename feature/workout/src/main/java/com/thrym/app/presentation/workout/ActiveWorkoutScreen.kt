@@ -80,8 +80,13 @@ import com.thrym.app.presentation.common.labelRes
 import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.rememberHapticFeedback
 import com.thrym.app.presentation.theme.thrymDimens
+import com.thrym.app.presentation.theme.thrymMotion
+import com.thrym.shared.workout.SessionOrderMove
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+
+/** Screen position of a moved block: its list item [offset] when it sat at [fromIndex]. */
+private data class MoveAnchor(val key: String, val fromIndex: Int, val offset: Int)
 
 @Composable
 private fun RestDockRow.glassPauseInfo(exercises: List<ExerciseWithSets>): GlassPauseInfo {
@@ -125,9 +130,8 @@ fun ActiveWorkoutScreen(
     val density = LocalDensity.current
     val currentRestTimers by rememberUpdatedState(state.restTimers)
 
-    val exerciseGroups = remember(state.exercisesWithSets) {
-        buildExerciseRenderGroups(state.exercisesWithSets)
-    }
+    val exerciseGroups = state.exerciseGroups
+    val reducedMotion = thrymMotion.reduced
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -252,10 +256,68 @@ fun ActiveWorkoutScreen(
                 val focusGroupIndex = exerciseGroups.indexOfFirst { group ->
                     group.exercises.any { it.planTarget != null && it.openSlotCount() > 0 }
                 }
+                val focusGroupKey = exerciseGroups.getOrNull(focusGroupIndex)?.key
                 var expansionOverrides by rememberSaveable { mutableStateOf(mapOf<String, Boolean>()) }
+                val isExpanded: (ExerciseWithSets, Int) -> Boolean = { exerciseWithSets, groupIndex ->
+                    expansionOverrides[exerciseWithSets.key.stableListKey()]
+                        ?: (exerciseWithSets.planTarget == null || groupIndex == focusGroupIndex)
+                }
                 val listState = rememberLazyListState()
-                LaunchedEffect(focusGroupIndex) {
-                    if (focusGroupIndex > 0) listState.animateScrollToItem(focusGroupIndex)
+                // The list holds its first visible block in place when the data changes. A block
+                // moved past that one would jump away from the finger, and a quick second tap
+                // would hit another control. So the moved block goes back to where it sat.
+                val moveAnchor = remember { arrayOfNulls<MoveAnchor>(1) }
+                moveAnchor[0]?.let { anchor ->
+                    val index = exerciseGroups.indexOfFirst { it.key == anchor.key }
+                    if (index < 0) {
+                        moveAnchor[0] = null
+                    } else if (index != anchor.fromIndex) {
+                        moveAnchor[0] = anchor.copy(fromIndex = index)
+                        listState.requestScrollToItem(index, -anchor.offset)
+                    }
+                }
+                val previousFocusGroupKey = remember { arrayOfNulls<String>(1) }
+                // Keyed by the focus block, not its index: moving another block above it shifts
+                // the index but must not scroll the list. The list also stays put when a move
+                // makes another block the focus while the previous one still has open sets; it
+                // scrolls on first load and once the previous focus block is done.
+                LaunchedEffect(focusGroupKey) {
+                    val previousKey = previousFocusGroupKey[0]
+                    previousFocusGroupKey[0] = focusGroupKey
+                    val previousStillOpen = exerciseGroups.any { group ->
+                        group.key == previousKey &&
+                            group.exercises.any { it.planTarget != null && it.openSlotCount() > 0 }
+                    }
+                    if (previousStillOpen) return@LaunchedEffect
+                    val index = exerciseGroups.indexOfFirst { it.key == focusGroupKey }
+                    if (index > 0) listState.animateScrollToItem(index)
+                }
+                val moveControls: (Int) -> ExerciseMoveControls = { groupIndex ->
+                    val group = exerciseGroups[groupIndex]
+                    val move: (SessionOrderMove) -> Unit = { direction ->
+                        // A move never collapses an open card: the moved block and the focus
+                        // block keep their expanded cards, even if the focus moves elsewhere.
+                        val pinned = listOfNotNull(groupIndex, focusGroupIndex.takeIf { it >= 0 })
+                            .flatMap { index ->
+                                exerciseGroups[index].exercises.filter { isExpanded(it, index) }
+                            }
+                            .map { it.key.stableListKey() }
+                        expansionOverrides = expansionOverrides + pinned.associateWith { true }
+                        // A block that is the first visible one already stays put, and keeps
+                        // the slide animation that a requested scroll would reset.
+                        val visibleItems = listState.layoutInfo.visibleItemsInfo
+                        moveAnchor[0] = visibleItems
+                            .firstOrNull { it.key == group.key }
+                            ?.takeIf { it.index != visibleItems.first().index }
+                            ?.let { MoveAnchor(group.key, groupIndex, it.offset) }
+                        viewModel.moveExercise(group.exercises.first().key, direction)
+                    }
+                    ExerciseMoveControls(
+                        canMoveUp = groupIndex > 0,
+                        canMoveDown = groupIndex < exerciseGroups.lastIndex,
+                        onMoveUp = { move(SessionOrderMove.UP) },
+                        onMoveDown = { move(SessionOrderMove.DOWN) }
+                    )
                 }
                 val railScope = rememberCoroutineScope()
                 activeSession?.let { session ->
@@ -370,60 +432,75 @@ fun ActiveWorkoutScreen(
                     )
                 ) {
                     itemsIndexed(exerciseGroups, key = { _, group -> group.key }) { groupIndex, group ->
-                        Column(verticalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                        Column(
+                            modifier = if (reducedMotion) Modifier else Modifier.animateItem(),
+                            verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                        ) {
                             group.supersetGroupId?.let { supersetGroupId ->
                                 SupersetHeader(
                                     groupId = supersetGroupId,
                                     exerciseCount = group.exercises.size,
                                     exerciseNames = group.exercises
                                         .map { it.exercise.localizedName() }
-                                        .joinToString(separator = " • ")
+                                        .joinToString(separator = " • "),
+                                    moveControls = moveControls(groupIndex).takeIf {
+                                        group.exercises.any { isExpanded(it, groupIndex) }
+                                    }
                                 )
                             }
                             group.exercises.forEachIndexed { indexInSuperset, exerciseWithSets ->
                                 val expansionKey = exerciseWithSets.key.stableListKey()
-                                val defaultExpanded = exerciseWithSets.planTarget == null || groupIndex == focusGroupIndex
-                                val expanded = expansionOverrides[expansionKey] ?: defaultExpanded
-                                ExerciseCard(
-                                    exerciseWithSets = exerciseWithSets,
-                                    expanded = expanded,
-                                    onToggleExpanded = {
-                                        expansionOverrides = expansionOverrides + (expansionKey to !expanded)
-                                    },
-                                    nextSetRecommendation = state.nextSetRecommendations[exerciseWithSets.key],
-                                    tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
-                                    defaultWarmupFlag = preferences.defaultWarmupFlag,
-                                    intensitySystem = preferences.intensitySystem,
-                                    unitSystem = preferences.unitSystem,
-                                    plateCalculatorEnabled = preferences.plateCalculatorEnabled,
-                                    availablePlates = preferences.availablePlates,
-                                    barbellWeightKg = preferences.barbellWeightKg,
-                                    isLogging = (state.logInFlightByExercise[exerciseWithSets.key] ?: 0) > 0,
-                                    logSuccessSubmissions = state.logSuccessSubmissions,
-                                    updateInFlightBySet = state.updateInFlightBySet,
-                                    updateSuccessCountBySet = state.updateSuccessCountBySet,
-                                    setIntentions = state.setIntentions,
-                                    setIntentionsLoaded = state.setIntentionsLoaded,
-                                    setIntentionsFailed = state.setIntentionsFailed,
-                                    onLogSet = { reps, weight, setType, intensity, submissionId, intention ->
-                                        viewModel.logSet(
-                                            key = exerciseWithSets.key,
-                                            exerciseId = exerciseWithSets.exercise.id,
-                                            reps = reps,
-                                            weightKg = weight,
-                                            setType = setType,
-                                            intensity = intensity,
-                                            submissionId = submissionId,
-                                            // A brand-new set has no stored answer to preserve:
-                                            // "no deliberate choice" becomes the explicit UNKNOWN,
-                                            // which stores no record.
-                                            intention = intention ?: SetIntention.UNKNOWN
-                                        )
-                                    },
-                                    onUpdateSet = viewModel::updateSet,
-                                    onDeleteSet = viewModel::deleteSet,
-                                    haptic = haptic
-                                )
+                                val expanded = isExpanded(exerciseWithSets, groupIndex)
+                                // The key keeps each card's input state with its exercise when
+                                // the block moves.
+                                key(expansionKey) {
+                                    ExerciseCard(
+                                        exerciseWithSets = exerciseWithSets,
+                                        expanded = expanded,
+                                        onToggleExpanded = {
+                                            expansionOverrides = expansionOverrides + (expansionKey to !expanded)
+                                        },
+                                        nextSetRecommendation = state.nextSetRecommendations[exerciseWithSets.key],
+                                        tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
+                                        defaultWarmupFlag = preferences.defaultWarmupFlag,
+                                        intensitySystem = preferences.intensitySystem,
+                                        unitSystem = preferences.unitSystem,
+                                        plateCalculatorEnabled = preferences.plateCalculatorEnabled,
+                                        availablePlates = preferences.availablePlates,
+                                        barbellWeightKg = preferences.barbellWeightKg,
+                                        isLogging = (state.logInFlightByExercise[exerciseWithSets.key] ?: 0) > 0,
+                                        logSuccessSubmissions = state.logSuccessSubmissions,
+                                        updateInFlightBySet = state.updateInFlightBySet,
+                                        updateSuccessCountBySet = state.updateSuccessCountBySet,
+                                        setIntentions = state.setIntentions,
+                                        setIntentionsLoaded = state.setIntentionsLoaded,
+                                        setIntentionsFailed = state.setIntentionsFailed,
+                                        onLogSet = { reps, weight, setType, intensity, submissionId, intention ->
+                                            viewModel.logSet(
+                                                key = exerciseWithSets.key,
+                                                exerciseId = exerciseWithSets.exercise.id,
+                                                reps = reps,
+                                                weightKg = weight,
+                                                setType = setType,
+                                                intensity = intensity,
+                                                submissionId = submissionId,
+                                                // A brand-new set has no stored answer to preserve:
+                                                // "no deliberate choice" becomes the explicit UNKNOWN,
+                                                // which stores no record.
+                                                intention = intention ?: SetIntention.UNKNOWN
+                                            )
+                                        },
+                                        onUpdateSet = viewModel::updateSet,
+                                        onDeleteSet = viewModel::deleteSet,
+                                        haptic = haptic,
+                                        // Superset members move with their block from the header.
+                                        moveControls = if (group.supersetGroupId == null) {
+                                            moveControls(groupIndex)
+                                        } else {
+                                            null
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

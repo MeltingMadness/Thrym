@@ -7,7 +7,7 @@ Fachliche Grundlage: [`../research/2026-08-08-progression-schemes.md`](../resear
 ## Ablauf
 
 1. **Plan-Editor:** Pro Planübung ein Schema wählen („Progression: Aus“ oder Schemaname). Neue und bestehende Übungen starten mit **Aus** (`MANUAL`).
-2. **Workout-Start:** Die App speichert pro Planübung einen unveränderlichen Snapshot aus Zielwerten, Schema und Konfiguration (`workout_plan_targets`). Jeder Satz verweist auf seine Planposition (`planTargetSnapshotId`). Spätere Planänderungen deuten das Training nicht mehr um.
+2. **Workout-Start:** Die App speichert pro Planübung einen unveränderlichen Snapshot aus Zielwerten, Schema und Konfiguration (`workout_plan_targets`). Jeder Satz verweist auf seine Planposition (`planTargetSnapshotId`). Spätere Planänderungen deuten das Training nicht mehr um. Die Reihenfolge auf dem Trainingsbildschirm ist davon getrennt; Verschieben ändert den Snapshot nicht.
 3. **Während des Workouts:** Keine vorläufigen Vorschläge. Angezeigt werden Schema, Ziel und Hinweise:
    - Gewicht: das zuletzt trainierte Gewicht, sonst das Planziel
    - RPE/RIR-Schema: Ziel-RPE als Platzhalter (bei RIR: 10 − Ziel-RPE)

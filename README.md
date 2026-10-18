@@ -22,7 +22,7 @@ Thrym was previously called **IronLog**. See [Migrating from IronLog](#migrating
 | Area | What the app does |
 |---|---|
 | **Home** | Start a workout (from a plan, a meta-plan or as a free session), daily readiness check-in and training readiness, deload hint and deload mode (half the sets or −15 % weight), weekly volume per muscle group (MEV/MAV), 8-week volume trend, notice of pending progression suggestions |
-| **Active workout** | Direct logging with prefilled values (weight, reps), expandable extra fields (RPE/RIR, set type, set intention, plate calculator), set types normal/warm-up/drop/failure, rest timer, supersets, multi-select when adding exercises, live detection of personal records, finishing early with open sets, and a summary |
+| **Active workout** | Direct logging with prefilled values (weight, reps), expandable extra fields (RPE/RIR, set type, set intention, plate calculator), set types normal/warm-up/drop/failure, rest timer, supersets, moving exercises and supersets up or down during the session (Android), multi-select when adding exercises, live detection of personal records, finishing early with open sets, and a summary |
 | **Plans** | Training plans with targets and optional individual set targets per exercise, meta-plans (a rotation through several plans, including "skip"), a progression scheme per plan exercise |
 | **Progression coach** | After the workout: suggestions for new targets, which are applied to the plan only after you confirm them |
 | **History** | All workouts (paged) with search and filters by time period and plan, a detail view to correct or delete single sets and add a workout note, swipe to delete |

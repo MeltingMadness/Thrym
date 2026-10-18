@@ -28,6 +28,8 @@ import com.thrym.app.domain.util.AppLogger
 import com.thrym.app.domain.util.RpeAutoregulation
 import com.thrym.app.domain.util.WorkoutNumericValidation
 import com.thrym.shared.readinessdata.SetIntention
+import com.thrym.shared.workout.SessionExerciseOrder
+import com.thrym.shared.workout.SessionOrderMove
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,6 +39,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -71,6 +74,7 @@ class ActiveWorkoutViewModel(
     private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
     private val _error = MutableStateFlow<WorkoutErrorUi?>(null)
     private val restTimers = WorkoutRestTimerStore(sessionId, workoutRepository, appPreferencesRepository)
+    private val exerciseOrder = WorkoutExerciseOrderStore(sessionId, workoutRepository, appPreferencesRepository)
     private val operationState = MutableStateFlow(OperationUiState())
     private var errorSequence = 0L
     private val mutationMutex = Mutex()
@@ -94,8 +98,13 @@ class ActiveWorkoutViewModel(
     private val sessionSets = workoutRepository.getSetsForSession(sessionId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val planTargets = progressionRepository.observeTargetsForSession(sessionId)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    /**
+     * Plan target snapshots of this session, null until the first list has arrived. An order
+     * computed before that would drop the stored planned rows, see [awaitPlanTargets].
+     */
+    private val planTargets: StateFlow<List<WorkoutPlanTarget>?> =
+        progressionRepository.observeTargetsForSession(sessionId)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val shareWeightHistoryAcrossContexts =
         appPreferencesRepository.preferences
@@ -114,7 +123,7 @@ class ActiveWorkoutViewModel(
         shareWeightHistoryAcrossContexts,
         deloadMode
     ) { sets, added, targets, shareAcrossContexts, activeDeloadMode ->
-        val orderedTargets = targets.sortedWith(
+        val orderedTargets = targets.orEmpty().sortedWith(
             compareBy(WorkoutPlanTarget::orderIndex, WorkoutPlanTarget::id)
         )
         val adHocExercises = added.distinctBy { it.id }
@@ -182,6 +191,17 @@ class ActiveWorkoutViewModel(
         }
         plannedRows + adHocRows
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * [exercisesWithSets] in the display order of this session. Waits for the stored order, so
+     * the first list the screen gets is already arranged and never jumps after a restart.
+     */
+    private val exerciseGroups = combine(
+        exercisesWithSets,
+        exerciseOrder.keys.filterNotNull()
+    ) { rows, storedKeys ->
+        arrangeExerciseGroups(rows, storedKeys)
+    }
 
     /**
      * Real-time next-set load hints: built from the last work set of each
@@ -289,15 +309,16 @@ class ActiveWorkoutViewModel(
 
     val uiState: StateFlow<ActiveWorkoutUiState> = combine(
         sessionPhase,
-        combine(exercisesWithSets, intentions) { exercises, snapshot -> exercises to snapshot },
+        combine(exerciseGroups, intentions) { groups, snapshot -> groups to snapshot },
         nextSetRecommendations,
         chromeState,
         operationState
-    ) { phase, exercisesAndIntentions, recommendations, chrome, operation ->
-        val (exercises, intentionSnapshot) = exercisesAndIntentions
+    ) { phase, groupsAndIntentions, recommendations, chrome, operation ->
+        val (groups, intentionSnapshot) = groupsAndIntentions
         ActiveWorkoutUiState(
             sessionPhase = phase,
-            exercisesWithSets = exercises,
+            exercisesWithSets = groups.flatMap { it.exercises },
+            exerciseGroups = groups,
             nextSetRecommendations = recommendations,
             showExercisePicker = chrome.showExercisePicker,
             showFinishDialog = chrome.showFinishDialog,
@@ -318,6 +339,7 @@ class ActiveWorkoutViewModel(
         restoreAddedExercises()
         persistAddedExerciseIds()
         viewModelScope.launch { restTimers.restore() }
+        viewModelScope.launch { exerciseOrder.restore(::restoreOrderedAdHocExercises) }
         observeExerciseReconciliation()
         recoverCompletedSession()
     }
@@ -380,10 +402,78 @@ class ActiveWorkoutViewModel(
         }
     }
 
+    /**
+     * Brings back the ad-hoc exercises listed in the stored order. The SavedStateHandle only
+     * survives process death; after a cold start an added exercise without sets would otherwise
+     * be gone.
+     */
+    private suspend fun restoreOrderedAdHocExercises(exerciseIds: List<Long>) {
+        val knownIds = addedExercises.value.map { it.id }.toSet()
+        val missingIds = exerciseIds.filterNot { it in knownIds }
+        if (missingIds.isEmpty()) return
+        val restoredById = exerciseRepository.getExercisesByIds(missingIds).associateBy { it.id }
+        val restored = missingIds.mapNotNull { restoredById[it] }
+        if (restored.isEmpty()) return
+        addedExercises.update { current ->
+            val currentIds = current.map { it.id }.toSet()
+            current + restored.filterNot { it.id in currentIds }
+        }
+    }
+
     fun addExercise(exercise: Exercise) {
         addedExercises.update { current ->
             if (current.any { it.id == exercise.id }) current else current + exercise
         }
+        val key = WorkoutExerciseKey.AdHoc(exercise.id).stableListKey()
+        viewModelScope.launch {
+            awaitPlanTargets()
+            // Stored with the order, so the exercise survives a cold start even without sets.
+            exerciseOrder.update { storedKeys ->
+                if (key in storedKeys) return@update null
+                val arranged = SessionExerciseOrder.arrange(currentOrderRows(), storedKeys)
+                    .flatMap { it.memberKeys }
+                if (key in arranged) arranged else arranged + key
+            }
+        }
+    }
+
+    /**
+     * Moves the exercise or superset block containing [key] one place up or down. Only the
+     * display order of this session changes; plan targets, their `orderIndex` and superset
+     * groups stay as they are. The step is computed on the order in memory under the store
+     * mutex, so two quick taps move two places. It waits for the plan targets, like
+     * [addExercise].
+     */
+    fun moveExercise(key: WorkoutExerciseKey, direction: SessionOrderMove) {
+        viewModelScope.launch {
+            awaitPlanTargets()
+            exerciseOrder.update(precondition = ::sessionAllowsReorder) { storedKeys ->
+                SessionExerciseOrder.move(
+                    arranged = SessionExerciseOrder.arrange(currentOrderRows(), storedKeys),
+                    key = key.stableListKey(),
+                    direction = direction
+                )
+            }
+        }
+    }
+
+    private fun currentOrderRows() = sessionOrderRows(planTargets.value.orEmpty(), addedExercises.value)
+
+    /**
+     * Suspends until the first target list is in [planTargets]. A StateFlow sets its value before
+     * a collector sees it, so the caller reads the loaded list whatever dispatcher resumes it.
+     */
+    private suspend fun awaitPlanTargets() {
+        planTargets.first { it != null }
+    }
+
+    private suspend fun sessionAllowsReorder(): Boolean = try {
+        sessionIsMutable()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        AppLogger.w("ActiveWorkoutVM", "Session fuer das Verschieben nicht lesbar: ${e.message}", e)
+        false
     }
 
     fun showExercisePicker() {
@@ -478,7 +568,7 @@ class ActiveWorkoutViewModel(
                     // A zero duration selects the elapsed-time display. Count only NORMAL sets
                     // against the deload-adjusted target for this exact planned row.
                     val plannedTarget = (key as? WorkoutExerciseKey.Planned)?.let { planned ->
-                        planTargets.value.find { it.id == planned.snapshotId }
+                        planTargets.value.orEmpty().find { it.id == planned.snapshotId }
                     }
                     val exerciseComplete = isPlannedExerciseComplete(
                         planTarget = plannedTarget,
@@ -560,7 +650,7 @@ class ActiveWorkoutViewModel(
         if (configured != IntensitySystem.OFF || key !is WorkoutExerciseKey.Planned) {
             return configured
         }
-        val target = planTargets.value.find { it.id == key.snapshotId }
+        val target = planTargets.value.orEmpty().find { it.id == key.snapshotId }
         return effectiveRowIntensitySystem(configured, target)
     }
 
@@ -821,6 +911,8 @@ class ActiveWorkoutViewModel(
                                     )
                                 }
                                 restTimers.clear()
+                                // A discarded session has no summary that could show the order.
+                                exerciseOrder.clear()
                             } else {
                                 workoutRepository.finishWorkout(sessionId)
                                 showFinishDialog.value = false

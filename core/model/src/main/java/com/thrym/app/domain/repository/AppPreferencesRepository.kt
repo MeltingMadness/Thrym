@@ -45,4 +45,15 @@ interface AppPreferencesRepository {
     suspend fun readRestTimerState(sessionId: Long): String? = null
 
     suspend fun writeRestTimerState(sessionId: Long, encodedState: String?) = Unit
+
+    /**
+     * Persists the display order of the exercises in the active workout.
+     *
+     * There is at most one entry. The payload carries its own session guard and stays opaque
+     * here, like the rest timer state; `null` removes the entry. It is not part of the backup
+     * and never touches the plan target order.
+     */
+    suspend fun readWorkoutExerciseOrder(): String? = null
+
+    suspend fun writeWorkoutExerciseOrder(encoded: String?) = Unit
 }

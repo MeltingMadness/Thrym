@@ -124,6 +124,25 @@ class AppPreferencesDataStoreTest {
     }
 
     @Test
+    fun `workout exercise order persists one entry and null removes it`() = runTest {
+        val repository = AppPreferencesRepositoryImpl(createContextWithTempDataStore())
+
+        assertEquals(null, repository.readWorkoutExerciseOrder())
+
+        repository.writeWorkoutExerciseOrder("v1|7|1700000000000|planned-2,planned-1")
+        repository.writeRestTimerState(7L, "1700000000000#")
+        assertEquals("v1|7|1700000000000|planned-2,planned-1", repository.readWorkoutExerciseOrder())
+
+        repository.writeWorkoutExerciseOrder("v1|8|1700000000001|adhoc-3")
+        assertEquals("v1|8|1700000000001|adhoc-3", repository.readWorkoutExerciseOrder())
+
+        repository.writeWorkoutExerciseOrder(null)
+        assertEquals(null, repository.readWorkoutExerciseOrder())
+        // The order has its own key and never removes the rest timer state.
+        assertEquals("1700000000000#", repository.readRestTimerState(7L))
+    }
+
+    @Test
     fun `enabling deload mode marks the running session as a planned deload`() = runTest {
         val context = createContextWithTempDataStore()
         val sessionDao = mockk<WorkoutSessionDao>()

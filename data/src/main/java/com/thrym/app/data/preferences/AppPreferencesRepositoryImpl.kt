@@ -253,4 +253,19 @@ class AppPreferencesRepositoryImpl(
             }
         }
     }
+
+    override suspend fun readWorkoutExerciseOrder(): String? =
+        context.appPreferencesDataStore.data
+            .catch { emit(emptyPreferences()) }
+            .first()[AppPreferenceKeys.ACTIVE_WORKOUT_EXERCISE_ORDER]
+
+    override suspend fun writeWorkoutExerciseOrder(encoded: String?) {
+        context.appPreferencesDataStore.edit { prefs ->
+            if (encoded.isNullOrBlank()) {
+                prefs.remove(AppPreferenceKeys.ACTIVE_WORKOUT_EXERCISE_ORDER)
+            } else {
+                prefs[AppPreferenceKeys.ACTIVE_WORKOUT_EXERCISE_ORDER] = encoded
+            }
+        }
+    }
 }

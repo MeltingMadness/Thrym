@@ -26,12 +26,16 @@ import com.thrym.app.fakes.FakeExerciseRepository
 import com.thrym.app.fakes.FakeStatisticsRepository
 import com.thrym.app.fakes.FakeTrainingPlanRepository
 import com.thrym.app.fakes.FakeWorkoutRepository
+import com.thrym.shared.workout.SessionExerciseOrderCodec
+import com.thrym.shared.workout.SessionOrderMove
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -39,6 +43,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.confirmVerified
+import io.mockk.verify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -3179,6 +3185,365 @@ class ActiveWorkoutViewModelTest {
         )
 
         collector.cancel()
+    }
+
+    // --- Session exercise order ---
+
+    private fun orderExercise(id: Long): Exercise =
+        testExercise.copy(id = id, name = "Uebung $id").also { exerciseRepo.addExercise(it) }
+
+    private fun plannedTargets(vararg supersetGroups: Int?): List<WorkoutPlanTarget> =
+        supersetGroups.mapIndexed { index, group ->
+            val exercise = if (index == 0) testExercise else orderExercise(index + 1L)
+            snapshotTarget(
+                id = 41L + index,
+                exerciseId = exercise.id,
+                orderIndex = index,
+                supersetGroupId = group
+            )
+        }
+
+    /** Same row keys as the stored order (`stableListKey` is internal to the feature module). */
+    private fun WorkoutExerciseKey.orderKey(): String = when (this) {
+        is WorkoutExerciseKey.Planned -> "planned-$snapshotId"
+        is WorkoutExerciseKey.AdHoc -> "adhoc-$exerciseId"
+    }
+
+    private fun ActiveWorkoutViewModel.displayedKeys(): List<String> =
+        uiState.value.exercisesWithSets.map { it.key.orderKey() }
+
+    private fun ActiveWorkoutViewModel.displayedGroupKeys(): List<String> =
+        uiState.value.exerciseGroups.map { it.key }
+
+    private suspend fun sessionStartEpochMillis(): Long = workoutRepo.getSessionById(sessionId)!!
+        .startTime
+        .atZone(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli()
+
+    @Test
+    fun `moveExercise aendert nur die Anzeige und schreibt nichts in die Repositories`() = runTest {
+        val targets = plannedTargets(null, 1, 1)
+        progressionTargets.value = targets
+        val vm = createSnapshotViewModel(progressionRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("planned-41", "planned-42", "planned-43"), vm.displayedKeys())
+
+        vm.moveExercise(WorkoutExerciseKey.Planned(41L), SessionOrderMove.DOWN)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf("planned-42", "planned-43", "planned-41"), vm.displayedKeys())
+        // The snapshot keeps its plan-slot identity: orderIndex and superset group are untouched.
+        assertEquals(targets, progressionTargets.value)
+        val rows = vm.uiState.value.exercisesWithSets.associateBy { it.key }
+        targets.forEach { target ->
+            val row = rows.getValue(WorkoutExerciseKey.Planned(target.id))
+            assertEquals(target.orderIndex, row.originalPlanTarget?.orderIndex)
+            assertEquals(target.supersetGroupId, row.originalPlanTarget?.supersetGroupId)
+        }
+        verify(exactly = 1) { progressionRepo.observeTargetsForSession(sessionId) }
+        confirmVerified(progressionRepo)
+        assertEquals(0, workoutRepo.addSetCallCount)
+        assertEquals(0, workoutRepo.updateSetCallCount)
+        assertEquals(0, workoutRepo.deleteSetCallCount)
+        assertEquals(0, workoutRepo.finishWorkoutCallCount)
+        assertEquals(0, workoutRepo.deleteSessionCallCount)
+        assertNotNull(prefsRepo.workoutExerciseOrder)
+        collector.cancel()
+    }
+
+    @Test
+    fun `zwei Moves ohne Emission dazwischen ergeben zwei Schritte`() = runTest {
+        progressionTargets.value = plannedTargets(null, null, null)
+        val vm = createSnapshotViewModel(progressionRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+        // Nobody collects, so no list is built between the taps. The first write is held, so the
+        // second tap has to wait for the first one under the store mutex.
+        val writeGate = CompletableDeferred<Unit>()
+        prefsRepo.workoutExerciseOrderWriteGate = writeGate
+
+        vm.moveExercise(WorkoutExerciseKey.Planned(41L), SessionOrderMove.DOWN)
+        vm.moveExercise(WorkoutExerciseKey.Planned(41L), SessionOrderMove.DOWN)
+        assertEquals(1, prefsRepo.workoutExerciseOrderWriteCount)
+        writeGate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Collected on the unconfined dispatcher: advanceUntilIdle skips a late background task.
+        val collector = backgroundScope.launch(testDispatcher) { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("planned-42", "planned-43", "planned-41"), vm.displayedKeys())
+        assertEquals(2, prefsRepo.workoutExerciseOrderWriteCount)
+        collector.cancel()
+    }
+
+    @Test
+    fun `ein Supersatz bewegt sich als Block und behaelt seinen Gruppen-Key`() = runTest {
+        progressionTargets.value = plannedTargets(null, 1, 1, null)
+        val vm = createSnapshotViewModel(progressionRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        val supersetKey = "superset-1-planned-42-planned-43"
+        assertEquals(
+            listOf("single-planned-41", supersetKey, "single-planned-44"),
+            vm.displayedGroupKeys()
+        )
+
+        // Any member key moves the whole block.
+        vm.moveExercise(WorkoutExerciseKey.Planned(43L), SessionOrderMove.UP)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(
+            listOf(supersetKey, "single-planned-41", "single-planned-44"),
+            vm.displayedGroupKeys()
+        )
+        val superset = vm.uiState.value.exerciseGroups.first()
+        assertEquals(1, superset.supersetGroupId)
+        assertEquals(
+            listOf(WorkoutExerciseKey.Planned(42L), WorkoutExerciseKey.Planned(43L)),
+            superset.exercises.map { it.key }
+        )
+
+        vm.moveExercise(WorkoutExerciseKey.Planned(42L), SessionOrderMove.DOWN)
+        vm.moveExercise(WorkoutExerciseKey.Planned(42L), SessionOrderMove.DOWN)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(
+            listOf("single-planned-41", "single-planned-44", supersetKey),
+            vm.displayedGroupKeys()
+        )
+        assertEquals(
+            listOf("planned-41", "planned-44", "planned-42", "planned-43"),
+            vm.displayedKeys()
+        )
+        collector.cancel()
+    }
+
+    @Test
+    fun `eine Zusatzuebung laesst sich ueber geplante schieben und eine neue wird angehaengt`() = runTest {
+        progressionTargets.value = plannedTargets(null, null)
+        val firstExtra = orderExercise(5L)
+        val secondExtra = orderExercise(6L)
+        val vm = createSnapshotViewModel(progressionRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.addExercise(firstExtra)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("planned-41", "planned-42", "adhoc-5"), vm.displayedKeys())
+
+        vm.moveExercise(WorkoutExerciseKey.AdHoc(5L), SessionOrderMove.UP)
+        vm.moveExercise(WorkoutExerciseKey.AdHoc(5L), SessionOrderMove.UP)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("adhoc-5", "planned-41", "planned-42"), vm.displayedKeys())
+
+        vm.addExercise(secondExtra)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("adhoc-5", "planned-41", "planned-42", "adhoc-6"), vm.displayedKeys())
+        collector.cancel()
+    }
+
+    @Test
+    fun `die Reihenfolge uebersteht ein neues ViewModel und schon die erste Emission hat sie`() = runTest {
+        progressionTargets.value = plannedTargets(null, null, null)
+        val vm = createSnapshotViewModel(progressionRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.moveExercise(WorkoutExerciseKey.Planned(43L), SessionOrderMove.UP)
+        vm.moveExercise(WorkoutExerciseKey.Planned(43L), SessionOrderMove.UP)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNotNull(prefsRepo.workoutExerciseOrder)
+
+        // Hold the read so the recreated ViewModel has rows but no order yet.
+        val readGate = CompletableDeferred<Unit>()
+        prefsRepo.workoutExerciseOrderReadGate = readGate
+        val restoredVm = createSnapshotViewModel(progressionRepo)
+        val emissions = mutableListOf<List<String>>()
+        val collector = backgroundScope.launch(testDispatcher) {
+            restoredVm.uiState.collect { state ->
+                emissions += state.exercisesWithSets.map { it.key.orderKey() }
+            }
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(emissions.all { it.isEmpty() })
+
+        readGate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val expected = listOf("planned-43", "planned-41", "planned-42")
+        assertEquals(expected, emissions.first { it.isNotEmpty() })
+        assertTrue(emissions.filter { it.isNotEmpty() }.all { it == expected })
+        collector.cancel()
+    }
+
+    @Test
+    fun `ein Datensatz einer anderen Session oder Startzeit wird ignoriert und entfernt`() = runTest {
+        progressionTargets.value = plannedTargets(null, null)
+        val start = sessionStartEpochMillis()
+        val swapped = listOf("planned-42", "planned-41")
+        listOf(
+            SessionExerciseOrderCodec.encode(sessionId + 1, start, swapped),
+            SessionExerciseOrderCodec.encode(sessionId, start + 1, swapped),
+            "kein gueltiger Datensatz"
+        ).forEach { foreign ->
+            prefsRepo.workoutExerciseOrder = foreign
+            val vm = createSnapshotViewModel(progressionRepo)
+            val collector = backgroundScope.launch { vm.uiState.collect { } }
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(listOf("planned-41", "planned-42"), vm.displayedKeys())
+            assertNull(prefsRepo.workoutExerciseOrder)
+            collector.cancel()
+        }
+    }
+
+    @Test
+    fun `ein Move auf eine beendete Session wird ignoriert`() = runTest {
+        progressionTargets.value = plannedTargets(null, null)
+        val vm = createSnapshotViewModel(progressionRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        workoutRepo.finishWorkout(sessionId)
+        vm.moveExercise(WorkoutExerciseKey.Planned(41L), SessionOrderMove.DOWN)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf("planned-41", "planned-42"), vm.displayedKeys())
+        assertEquals(0, prefsRepo.workoutExerciseOrderWriteCount)
+        assertNull(prefsRepo.workoutExerciseOrder)
+        collector.cancel()
+    }
+
+    @Test
+    fun `Verwerfen einer leeren Session loescht die Reihenfolge`() = runTest {
+        progressionTargets.value = plannedTargets(null, null)
+        val vm = createSnapshotViewModel(progressionRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.moveExercise(WorkoutExerciseKey.Planned(41L), SessionOrderMove.DOWN)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNotNull(prefsRepo.workoutExerciseOrder)
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(workoutRepo.getSessionById(sessionId))
+        assertNull(prefsRepo.workoutExerciseOrder)
+        collector.cancel()
+    }
+
+    @Test
+    fun `normales Beenden behaelt die Reihenfolge fuer den Abschlussbildschirm`() = runTest {
+        progressionTargets.value = plannedTargets(null, null)
+        val vm = createSnapshotViewModel(progressionRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.moveExercise(WorkoutExerciseKey.Planned(42L), SessionOrderMove.UP)
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(41L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 100.0
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
+        assertNotNull(prefsRepo.workoutExerciseOrder)
+        assertEquals(listOf("planned-42", "planned-41"), vm.displayedKeys())
+        collector.cancel()
+    }
+
+    @Test
+    fun `eine Zusatzuebung ohne Saetze kommt nach einem Kaltstart zurueck`() = runTest {
+        progressionTargets.value = plannedTargets(null)
+        val extra = orderExercise(5L)
+        val vm = createSnapshotViewModel(progressionRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.addExercise(extra)
+        vm.moveExercise(WorkoutExerciseKey.AdHoc(5L), SessionOrderMove.UP)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("adhoc-5", "planned-41"), vm.displayedKeys())
+        collector.cancel()
+
+        // A cold start brings no SavedStateHandle; only the stored order still knows the exercise.
+        val restoredVm = createSnapshotViewModel(progressionRepo)
+        val restoredCollector = backgroundScope.launch { restoredVm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf("adhoc-5", "planned-41"), restoredVm.displayedKeys())
+        assertTrue(restoredVm.uiState.value.exercisesWithSets.first().sets.isEmpty())
+        restoredCollector.cancel()
+    }
+
+    @Test
+    fun `eine Zusatzuebung vor dem Laden der Planziele behaelt die gespeicherte Reihenfolge`() = runTest {
+        progressionTargets.value = plannedTargets(null, null)
+        val vm = createSnapshotViewModel(progressionRepo)
+        val firstCollector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.moveExercise(WorkoutExerciseKey.Planned(42L), SessionOrderMove.UP)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("planned-42", "planned-41"), vm.displayedKeys())
+        firstCollector.cancel()
+
+        // Cold start: the stored order is read, but the plan targets arrive late.
+        val targetsGate = CompletableDeferred<Unit>()
+        every { progressionRepo.observeTargetsForSession(any()) } returns flow {
+            targetsGate.await()
+            emitAll(progressionTargets)
+        }
+        val restoredVm = createSnapshotViewModel(progressionRepo)
+        val collector = backgroundScope.launch { restoredVm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        restoredVm.addExercise(orderExercise(5L))
+        testDispatcher.scheduler.advanceUntilIdle()
+        targetsGate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf("planned-42", "planned-41", "adhoc-5"), restoredVm.displayedKeys())
+        collector.cancel()
+
+        // The durable copy kept the moved plan order as well.
+        every { progressionRepo.observeTargetsForSession(any()) } returns progressionTargets
+        val nextVm = createSnapshotViewModel(progressionRepo)
+        val nextCollector = backgroundScope.launch { nextVm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf("planned-42", "planned-41", "adhoc-5"), nextVm.displayedKeys())
+        nextCollector.cancel()
+    }
+
+    @Test
+    fun `ein Schreibfehler behaelt die Reihenfolge im Speicher`() = runTest {
+        progressionTargets.value = plannedTargets(null, null, null)
+        prefsRepo.workoutExerciseOrderWriteError = IOException("Speicher voll")
+        mockkObject(AppLogger)
+        try {
+            every { AppLogger.w(any(), any(), any()) } returns Unit
+            val vm = createSnapshotViewModel(progressionRepo)
+            val collector = backgroundScope.launch { vm.uiState.collect { } }
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            vm.moveExercise(WorkoutExerciseKey.Planned(41L), SessionOrderMove.DOWN)
+            vm.moveExercise(WorkoutExerciseKey.Planned(41L), SessionOrderMove.DOWN)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(listOf("planned-42", "planned-43", "planned-41"), vm.displayedKeys())
+            assertNull(prefsRepo.workoutExerciseOrder)
+            assertNull(vm.uiState.value.error)
+            verify(exactly = 2) {
+                AppLogger.w(
+                    "ActiveWorkoutVM",
+                    match { it.startsWith("Uebungsreihenfolge konnte nicht gespeichert werden") },
+                    any()
+                )
+            }
+            collector.cancel()
+        } finally {
+            unmockkObject(AppLogger)
+        }
     }
 
     private fun snapshotSet(

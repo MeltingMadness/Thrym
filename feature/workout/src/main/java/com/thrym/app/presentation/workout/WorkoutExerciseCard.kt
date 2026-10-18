@@ -100,7 +100,8 @@ internal fun ExerciseCard(
     onLogSet: (Int, Double, SetType, String, Long, SetIntention?) -> Unit,
     onUpdateSet: (Long, Int, Double, String, SetIntention?) -> Unit,
     onDeleteSet: (Long) -> Unit,
-    haptic: HapticFeedbackHelper
+    haptic: HapticFeedbackHelper,
+    moveControls: ExerciseMoveControls? = null
 ) {
     val dims = thrymDimens
     val planTarget = exerciseWithSets.planTarget
@@ -174,6 +175,13 @@ internal fun ExerciseCard(
                         style = AthleticLabel,
                         color = if (isDone) MaterialTheme.semanticText.success else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = dims.spacingXs)
+                    )
+                }
+                if (expanded && moveControls != null) {
+                    ExerciseMoveButtons(
+                        controls = moveControls,
+                        moveUpDescription = stringResource(WorkoutR.string.workout_exercise_move_up_cd, exerciseName),
+                        moveDownDescription = stringResource(WorkoutR.string.workout_exercise_move_down_cd, exerciseName)
                     )
                 }
                 if (showHistoryToggle && expanded) {

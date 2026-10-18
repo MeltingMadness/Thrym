@@ -131,7 +131,10 @@ data class WorkoutErrorUi(
 
 data class ActiveWorkoutUiState(
     val sessionPhase: ActiveWorkoutSessionPhase = ActiveWorkoutSessionPhase.Loading,
+    /** All exercises flat in the display order of this session, the same order as [exerciseGroups]. */
     val exercisesWithSets: List<ExerciseWithSets> = emptyList(),
+    /** Single exercises and superset blocks in the display order of this session. */
+    val exerciseGroups: List<ExerciseRenderGroup> = emptyList(),
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
     val restTimers: Map<WorkoutExerciseKey, RestTimerUi> = emptyMap(),

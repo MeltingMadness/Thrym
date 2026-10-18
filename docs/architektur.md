@@ -63,6 +63,17 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 - **Workouts arbeiten mit einem Snapshot des Plans.** Wird der Plan während oder nach dem Training geändert, bleibt die damalige Vorgabe erhalten.
 - **Import ist fail-closed.** Ein ungültiges Backup verändert keine Daten.
 
+## Reihenfolge im laufenden Training
+
+Übungen und Supersätze lassen sich im laufenden Training mit Pfeilen nach oben und unten verschieben, auch Zusatzübungen. Die Anzeigereihenfolge ist vom Snapshot getrennt:
+
+- Android speichert sie im DataStore unter `active_workout_exercise_order` (`WorkoutExerciseOrderStore` in `feature/workout`), iOS künftig in `UserDefaults` unter `thrym.workout.exerciseOrder`. Es gibt höchstens einen Eintrag. Format und Regeln liegen in `:shared` (`SessionExerciseOrder`, `SessionExerciseOrderCodec`).
+- Der Eintrag ist durch Session-ID und Startzeit geschützt, wie die Pausentimer. Ein Eintrag einer anderen Session oder Startzeit wird ignoriert und beim Laden einer laufenden Session entfernt. Ein verworfenes leeres Training löscht ihn; nach normalem Beenden bleibt er für den Abschlussbildschirm stehen.
+- Gespeichert werden Zeilenschlüssel (`planned-<snapshotId>`, `adhoc-<exerciseId>`). Zusatzübungen stehen auch ohne Sätze darin und kommen so nach einem Kaltstart zurück.
+- Ein Supersatz bewegt sich als Block; innerhalb wird nicht umsortiert. Die Blöcke entstehen immer aus der Standardreihenfolge (`orderIndex`, dann Zusatzübungen in Einfügereihenfolge).
+- `workout_plan_targets.orderIndex` und `supersetGroupId` bleiben unberührt. Sie gehören zur Identität der Planposition, die Coach, „Satzwerte übernehmen“ (unter „Planänderungen prüfen“) und Readiness nutzen.
+- Die Reihenfolge ist nicht im Backup. Soll sie dort einmal hinein, dann als additives, nullable Feld mit `@EncodeDefault(NEVER)` und Backup-Schema 16.
+
 ## Backup
 
 - Format: JSON, `BackupPayloadV1` mit `formatVersion = 1` und `schemaVersion = 15` (`CURRENT_BACKUP_SCHEMA_VERSION`). Es enthält auch die Readiness-Daten, Satzvorgaben, Erfolgsbestätigung und den Satztyp `BACKOFF`. Modelle und Validator liegen in `:shared` (`com.thrym.shared.backup`). `data` nutzt sie über Typaliase. Beim Import werden nur aktive Plan-Konfigurationen auf die aktuelle Regelrevision umgestellt; historische Quellen bleiben erhalten.
