@@ -115,9 +115,12 @@ struct IOSWorkoutScreen: View {
     /// Android's `Map<WorkoutExerciseKey, RestTimerUi>` so supersets can count
     /// down independently.
     @State private var restTimers: [String: IOSWorkoutRestTimer] = [:]
-    /// Liquid Glass pause screen: open state and the timer start it was last opened for.
-    @State private var pauseOpen = false
-    @State private var pauseShownForStart: Int64?
+    /// Liquid Glass pause screen: the row whose rest it shows, nil while closed.
+    /// Only a timer start (`startRestTimer`) or a tap on a dock row sets it, so
+    /// restoring timers after the view is rebuilt never reopens the pause.
+    @State private var pauseRowKey: String?
+    /// Height of the workout area, which caps the rest dock stack.
+    @State private var viewportHeight: CGFloat = 0
     @State private var localErrorMessage: String?
     @State private var deletedSet: ILWorkoutSet?
     @State private var deletedIntention: ILSetIntention = .unknown
@@ -305,14 +308,8 @@ struct IOSWorkoutScreen: View {
                     workoutHeader(session: session)
                 }
 
-                if liquidGlass {
-                    // Timers show in the dock and pause screen; these keep the end-of-rest behavior.
-                    ForEach(orderedRestTimers) { timer in
-                        IOSWorkoutRestCompletionWatcher(timer: timer) {
-                            dismissRestTimer(rowKey: timer.rowKey)
-                        }
-                    }
-                } else {
+                // Liquid Glass shows the timers in the dock and pause screen instead.
+                if !liquidGlass {
                     restTimersView(rows: rows)
                 }
 
@@ -356,16 +353,9 @@ struct IOSWorkoutScreen: View {
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) {
             // Liquid Glass moves "Beenden" and "Verwerfen" into the head and shows
-            // the running rest as a dock instead.
+            // every running rest as a dock row instead.
             if liquidGlass {
-                if let timer = orderedRestTimers.last {
-                    IOSWorkoutGlassRestDock(
-                        timer: timer,
-                        exerciseName: rows.first { $0.id == timer.rowKey }?.exercise.displayName ?? String(localized: "Pause"),
-                        onOpen: { pauseOpen = true },
-                        onSkip: { dismissRestTimer(rowKey: timer.rowKey) }
-                    )
-                }
+                glassRestDock(rows: rows)
             } else {
             HStack(spacing: 12) {
                 Button {
@@ -391,38 +381,72 @@ struct IOSWorkoutScreen: View {
             }
         }
         }
-        .fullScreenCover(isPresented: $pauseOpen) {
-            if let timer = orderedRestTimers.last {
-                let row = rows.first { $0.id == timer.rowKey }
-                let planned = rows.reduce(0) { $0 + $1.loggingSlots.count }
-                let open = rows.reduce(0) { $0 + ($1.remainingPlannedSets ?? 0) }
-                let logged = rows.reduce(0) { $0 + $1.sets.count }
-                IOSWorkoutGlassPauseScreen(
-                    timer: timer,
-                    exerciseName: row?.exercise.displayName ?? String(localized: "Übung"),
-                    nextSetNumber: row?.nextSetNumber ?? 1,
-                    progressText: planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilSetCountText(logged),
-                    onMinus: { adjustRestTimer(rowKey: timer.rowKey, by: -15) },
-                    onPlus: { adjustRestTimer(rowKey: timer.rowKey, by: 30) },
-                    onSkip: {
-                        pauseOpen = false
-                        dismissRestTimer(rowKey: timer.rowKey)
-                    },
-                    onClose: { pauseOpen = false }
-                )
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewportHeight = $0 }
+        .fullScreenCover(item: pausePresentation) { presented in
+            // While the cover slides away after its timer ended, it keeps the last value.
+            let timer = restTimers[presented.id] ?? presented.timer
+            let row = rows.first { $0.id == timer.rowKey }
+            let planned = rows.reduce(0) { $0 + $1.loggingSlots.count }
+            let open = rows.reduce(0) { $0 + ($1.remainingPlannedSets ?? 0) }
+            let logged = rows.reduce(0) { $0 + $1.sets.count }
+            IOSWorkoutGlassPauseScreen(
+                timer: timer,
+                exerciseName: row?.exercise.displayName ?? String(localized: "Übung"),
+                nextSetNumber: row?.nextSetNumber ?? 1,
+                progressText: planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilSetCountText(logged),
+                onMinus: { adjustRestTimer(rowKey: timer.rowKey, by: -15) },
+                onPlus: { adjustRestTimer(rowKey: timer.rowKey, by: 30) },
+                onSkip: {
+                    pauseRowKey = nil
+                    dismissRestTimer(rowKey: timer.rowKey)
+                },
+                onClose: { pauseRowKey = nil }
+            )
+            .background { restCompletionWatchers }
+        }
+        .onChange(of: Set(restTimers.keys)) { _, keys in
+            // The shown rest ended: close instead of moving on to another exercise.
+            if let pauseRowKey, !keys.contains(pauseRowKey) {
+                self.pauseRowKey = nil
             }
         }
-        .onChange(of: orderedRestTimers.last?.startedAtEpochMillis) { _, start in
-            guard let timer = orderedRestTimers.last, let start else {
-                pauseOpen = false
-                return
-            }
-            // A freshly started countdown opens the pause screen once.
-            if liquidGlass, timer.isCountdown, pauseShownForStart != start {
-                pauseShownForStart = start
-                pauseOpen = true
-            }
+    }
+
+    /// The rest dock: a row per countdown and one for the newest count-up timer
+    /// (`IOSWorkoutRestDock.dockTimers`). The completion watchers sit here because
+    /// the inset, unlike the lazy list, stays alive while the athlete scrolls.
+    @ViewBuilder
+    private func glassRestDock(rows: [IOSWorkoutExerciseRow]) -> some View {
+        if !restTimers.isEmpty {
+            IOSWorkoutGlassRestDockStack(
+                entries: IOSWorkoutRestDock.dockTimers(restTimers.values).map { timer in
+                    IOSWorkoutGlassRestDockStack.Entry(
+                        timer: timer,
+                        exerciseName: rows.first { $0.id == timer.rowKey }?.exercise.displayName ?? String(localized: "Pause")
+                    )
+                },
+                maxHeight: IOSWorkoutGlassRestDockStack.maxHeight(viewportHeight: viewportHeight),
+                onOpen: { pauseRowKey = $0.rowKey },
+                onSkip: { dismissRestTimer(rowKey: $0.rowKey) }
+            )
+            .background { restCompletionWatchers }
         }
+    }
+
+    /// End-of-rest watchers for every timer. The pause screen repeats them so a rest
+    /// also ends on time while the cover hides the dock; `completeRestTimer` keeps
+    /// the second report from counting.
+    private var restCompletionWatchers: some View {
+        ForEach(orderedRestTimers) { timer in
+            IOSWorkoutRestCompletionWatcher(timer: timer) { completeRestTimer(timer) }
+        }
+    }
+
+    private var pausePresentation: Binding<IOSWorkoutPausePresentation?> {
+        Binding(
+            get: { pauseRowKey.flatMap { restTimers[$0] }.map(IOSWorkoutPausePresentation.init(timer:)) },
+            set: { pauseRowKey = $0?.id }
+        )
     }
 
     /// Liquid Glass head: position, time, progress and the exercise rail. A tap on
@@ -978,8 +1002,23 @@ struct IOSWorkoutScreen: View {
                 settings.state.autoRestTimerEnabled ? settings.state.defaultRestTimeSeconds : 0
             )
         )
+        let opensPause = appearance == .liquidGlass &&
+            IOSWorkoutRestDock.opensPause(starting: timer, running: restTimers)
         restTimers[rowKey] = timer
         IOSWorkoutRestTimerPersistence.upsert(timer)
+        if opensPause {
+            pauseRowKey = rowKey
+        }
+    }
+
+    /// End of a countdown: one success haptic as in Ember, then the timer goes.
+    /// Ignores a report for a timer that was already ended, moved or restarted.
+    private func completeRestTimer(_ timer: IOSWorkoutRestTimer) {
+        guard restTimers[timer.rowKey] == timer else { return }
+        let feedback = UINotificationFeedbackGenerator()
+        feedback.prepare()
+        feedback.notificationOccurred(.success)
+        dismissRestTimer(rowKey: timer.rowKey)
     }
 
     /// Lengthens or shortens a running countdown (Liquid Glass pause: "−15 s" / "+30 s").
@@ -993,6 +1032,9 @@ struct IOSWorkoutScreen: View {
     private func dismissRestTimer(rowKey: String) {
         let sessionID = restTimers[rowKey]?.sessionID ?? activeSession?.id
         restTimers.removeValue(forKey: rowKey)
+        if pauseRowKey == rowKey {
+            pauseRowKey = nil
+        }
         if let sessionID {
             IOSWorkoutRestTimerPersistence.remove(sessionID: sessionID, rowKey: rowKey)
         }
@@ -1053,6 +1095,13 @@ struct IOSWorkoutScreen: View {
 private struct IOSWorkoutAlert: Identifiable {
     let id = UUID()
     let message: String
+}
+
+/// The rest shown on the full-screen pause. Its identity is the exercise row, so
+/// "−15 s" / "+30 s" update the open cover instead of presenting a new one.
+private struct IOSWorkoutPausePresentation: Identifiable {
+    let timer: IOSWorkoutRestTimer
+    var id: String { timer.rowKey }
 }
 
 private struct IOSWorkoutElapsedView: View {
