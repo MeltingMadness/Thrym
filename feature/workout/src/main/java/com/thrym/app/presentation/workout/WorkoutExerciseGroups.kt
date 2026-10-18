@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -157,7 +157,7 @@ internal fun ExerciseMoveButtons(
         modifier = Modifier.size(ButtonSize.iconButton)
     ) {
         Icon(
-            imageVector = Icons.Default.KeyboardArrowUp,
+            imageVector = Icons.Default.ArrowUpward,
             contentDescription = moveUpDescription,
             modifier = Modifier.size(IconSize.md)
         )
@@ -169,7 +169,7 @@ internal fun ExerciseMoveButtons(
         modifier = Modifier.size(ButtonSize.iconButton)
     ) {
         Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
+            imageVector = Icons.Default.ArrowDownward,
             contentDescription = moveDownDescription,
             modifier = Modifier.size(IconSize.md)
         )
