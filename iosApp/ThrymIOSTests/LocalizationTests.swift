@@ -70,8 +70,22 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(try text("\(1) neue Rekorde", "de"), "1 neuer Rekord")
         XCTAssertEqual(try text("in \(1) Übungen", "de"), "in 1 Übung")
         XCTAssertEqual(try text("in \(3) Übungen", "en"), "in 3 exercises")
-        XCTAssertEqual(try text("+\(1) Wdh.", "en"), "+1 rep")
-        XCTAssertEqual(try text("+\(2) Wdh.", "de"), "+2 Wdh.")
+
+        // A reps record: the live notice names the unit, VoiceOver reads full words without
+        // a label, and the gain is a bare number in the sentence.
+        XCTAssertEqual(try text("\(12) Wdh.", "de"), "12 Wdh.")
+        XCTAssertEqual(try text("\(12) Wdh.", "en"), "12 reps")
+        XCTAssertEqual(try text("\(1) Wiederholungen", "de"), "1 Wiederholung")
+        XCTAssertEqual(try text("\(12) Wiederholungen", "en"), "12 reps")
+        XCTAssertEqual(try text("bei \("60 kg")", "en"), "at 60 kg")
+        XCTAssertEqual(
+            try text("\("12 Wiederholungen bei 60 kg"), \(2) mehr als bisher", "de"),
+            "12 Wiederholungen bei 60 kg, 2 mehr als bisher"
+        )
+        XCTAssertEqual(try text("\("12 reps at 60 kg"), \(2) mehr als bisher", "en"), "12 reps at 60 kg, 2 more than before")
+        XCTAssertEqual(try text("\("1 Wiederholung"), \(1) mehr als bisher", "de"), "1 Wiederholung, 1 mehr als bisher")
+        XCTAssertEqual(try text("\("12 Wiederholungen"), zum ersten Mal", "de"), "12 Wiederholungen, zum ersten Mal")
+        XCTAssertEqual(try text("\("12 reps"), zum ersten Mal", "en"), "12 reps, first time")
 
         // The live title pluralizes the count and keeps the exercise name.
         XCTAssertEqual(try text("\(1) neue Rekorde · \("Bench press")", "en"), "1 new PR · Bench press")

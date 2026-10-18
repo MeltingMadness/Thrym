@@ -154,6 +154,67 @@ final class WorkoutRecordsTests: XCTestCase {
         )
     }
 
+    func testRepsRecordsShowTheBareNumberOnTheBoard() {
+        // The "WDH." label names the unit, so value and gain carry none.
+        XCTAssertEqual(iosRecordValueText(type: "MAX_REPS", value: 12, unitSystem: "METRIC", locale: german), "12")
+        XCTAssertEqual(iosRecordDeltaText(type: "MAX_REPS", delta: 2, unitSystem: "METRIC", locale: german), "+2")
+        XCTAssertEqual(iosRecordDeltaText(type: "MAX_REPS", delta: 2, unitSystem: "IMPERIAL", locale: english), "+2")
+        XCTAssertEqual(iosRecordDeltaText(type: "MAX_REPS", delta: 2, unitSystem: "METRIC", signed: false, locale: german), "2")
+        XCTAssertEqual(iosRecordLabel("MAX_REPS"), String(localized: "Wdh."))
+    }
+
+    func testRepsNoticeNamesTheUnitInsteadOfALabel() throws {
+        let line = IOSWorkoutRecordLine(type: "MAX_REPS", value: 12, previous: 10, set: ILWorkoutSet(id: 3, reps: 12, weightKg: 60))
+
+        let notice = try XCTUnwrap(IOSWorkoutRecords.notice(sessionID: 2, exerciseName: "Klimmzüge", lines: [line], unitSystem: "METRIC"))
+
+        XCTAssertEqual(notice.title, String(localized: "\(1) neue Rekorde · \("Klimmzüge")"))
+        XCTAssertEqual(notice.detail, "\(String(localized: "\(12) Wdh.")) (+2)")
+    }
+
+    func testRepsRowReadsInFullWordsWithoutALabel() {
+        let weighted = IOSWorkoutRecordLine(type: "MAX_REPS", value: 12, previous: 10, set: ILWorkoutSet(id: 3, reps: 12, weightKg: 60))
+        let repsAtWeight = String(localized: "\(12) Wiederholungen") + " " + String(localized: "bei \(iosRecordWeightText(60, unitSystem: "METRIC"))")
+        XCTAssertEqual(
+            iosRecordAccessibilityText(weighted, unitSystem: "METRIC"),
+            String(localized: "\(repsAtWeight), \(2) mehr als bisher")
+        )
+
+        let bodyweight = IOSWorkoutRecordLine(type: "MAX_REPS", value: 1, previous: 0, set: ILWorkoutSet(id: 4, reps: 1, weightKg: 0))
+        XCTAssertEqual(
+            iosRecordAccessibilityText(bodyweight, unitSystem: "METRIC"),
+            String(localized: "\(String(localized: "\(1) Wiederholungen")), \(1) mehr als bisher")
+        )
+
+        let firstTime = IOSWorkoutRecordLine(type: "MAX_REPS", value: 12, previous: nil, set: ILWorkoutSet(id: 5, reps: 12, weightKg: 0))
+        XCTAssertEqual(
+            iosRecordAccessibilityText(firstTime, unitSystem: "METRIC"),
+            String(localized: "\(String(localized: "\(12) Wiederholungen")), zum ersten Mal")
+        )
+
+        // Other types keep their label and the gain with its unit.
+        let weight = IOSWorkoutRecordLine(type: "MAX_WEIGHT", value: 100, previous: 97.5, set: ILWorkoutSet(id: 1, reps: 5, weightKg: 100))
+        let weightValue = iosRecordWeightText(100, unitSystem: "METRIC") + " × 5"
+        XCTAssertEqual(
+            iosRecordAccessibilityText(weight, unitSystem: "METRIC"),
+            String(localized: "\(iosRecordLabel("MAX_WEIGHT")) \(weightValue), \(iosRecordWeightText(2.5, unitSystem: "METRIC")) mehr als bisher")
+        )
+    }
+
+    func testNoticeCountsItsTimeFromWhenItAppeared() {
+        let shownAt = Date(timeIntervalSinceReferenceDate: 1_000)
+        let line = IOSWorkoutRecordLine(type: "MAX_WEIGHT", value: 85, previous: 80, set: nil)
+        guard let notice = IOSWorkoutRecords.notice(sessionID: 2, exerciseName: "Bank eng", lines: [line], unitSystem: "METRIC", shownAt: shownAt) else {
+            return XCTFail("A beaten best shows a notice")
+        }
+
+        XCTAssertEqual(notice.shownAt, shownAt)
+        XCTAssertEqual(notice.remainingDuration(at: shownAt), IOSWorkoutRecordNotice.duration)
+        // The pause cover opened 1.5 s later: only the rest of the time is left.
+        XCTAssertEqual(notice.remainingDuration(at: shownAt.addingTimeInterval(1.5)), IOSWorkoutRecordNotice.duration - 1.5, accuracy: 1e-9)
+        XCTAssertEqual(notice.remainingDuration(at: shownAt.addingTimeInterval(60)), 0)
+    }
+
     // MARK: - Helpers
 
     /// Session 1 is an earlier, finished workout with bench press only: a warm-up of 90 kg and

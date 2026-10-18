@@ -401,6 +401,22 @@
         }
       }
     },
+    "%@, %lld mehr als bisher": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, %lld mehr als bisher"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, %lld more than before"
+          }
+        }
+      }
+    },
     "%@, heute": {
       "localizations": {
         "de": {
@@ -445,6 +461,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@, trained"
+          }
+        }
+      }
+    },
+    "%@, zum ersten Mal": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, zum ersten Mal"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, first time"
           }
         }
       }
@@ -2037,46 +2069,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "+ Warm-up set"
-          }
-        }
-      }
-    },
-    "+%lld Wdh.": {
-      "localizations": {
-        "de": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "+%lld Wdh."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "+%lld Wdh."
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "+%lld rep"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "+%lld reps"
-                }
-              }
-            }
           }
         }
       }

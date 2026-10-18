@@ -41,10 +41,21 @@ struct IOSWorkoutRecordSummary: Equatable {
 /// Live record notice during the workout: "1 neuer Rekord · Bankdrücken" and
 /// "Gewicht 102,5 kg (+2,5 kg)". It belongs to the workout `sessionID`.
 struct IOSWorkoutRecordNotice: Equatable, Identifiable {
+    /// How long the notice stays, counted from `shownAt`.
+    static let duration: TimeInterval = 4
+
     let id: UUID
     let sessionID: Int64
     let title: String
     let detail: String
+    /// When the notice appeared. Every place that shows it hides it once `duration` has passed
+    /// since then, so moving into or out of the pause cover does not restart the time.
+    let shownAt: Date
+
+    /// Time left until the notice hides, never negative.
+    func remainingDuration(at date: Date) -> TimeInterval {
+        max(0, Self.duration - date.timeIntervalSince(shownAt))
+    }
 }
 
 /// Swift side of the shared record rules (`SessionRecords` in `:shared`). Android and iOS derive
@@ -122,25 +133,31 @@ enum IOSWorkoutRecords {
     }
 
     /// The notice for live records: their number and the exercise, then the first record in type
-    /// order with its gain. Nil without records.
+    /// order with its gain, "Gewicht 102,5 kg (+2,5 kg)". Reps carry their unit instead of a
+    /// label, "12 Wdh. (+2)". Nil without records.
     static func notice(
         sessionID: Int64,
         exerciseName: String,
         lines: [IOSWorkoutRecordLine],
-        unitSystem: String
+        unitSystem: String,
+        shownAt: Date = Date()
     ) -> IOSWorkoutRecordNotice? {
         guard let first = lines.first else { return nil }
         let gain = first.previous.map {
             "(\(iosRecordDeltaText(type: first.type, delta: first.value - $0, unitSystem: unitSystem)))"
         }
-        let detail = [iosRecordLabel(first.type), iosRecordValueText(type: first.type, value: first.value, unitSystem: unitSystem), gain]
+        let value = first.type == "MAX_REPS"
+            ? [iosRecordRepsText(first.value)]
+            : [iosRecordLabel(first.type), iosRecordValueText(type: first.type, value: first.value, unitSystem: unitSystem)]
+        let detail = (value + [gain])
             .compactMap { $0 }
             .joined(separator: " ")
         return IOSWorkoutRecordNotice(
             id: UUID(),
             sessionID: sessionID,
             title: String(localized: "\(lines.count) neue Rekorde · \(exerciseName)"),
-            detail: detail
+            detail: detail,
+            shownAt: shownAt
         )
     }
 
@@ -171,22 +188,29 @@ func iosRecordLabel(_ type: String) -> String {
     }
 }
 
-/// Record value: "100 kg", "116,7 kg", "12 Wdh.", "4.320 kg".
+/// Record value on the board: "100 kg", "116,7 kg", "4.320 kg"; reps as the bare number "12",
+/// since the label names them.
 func iosRecordValueText(type: String, value: Double, unitSystem: String, locale: Locale = .current) -> String {
     switch type {
-    case "MAX_REPS": return String(localized: "\(iosRecordReps(value)) Wdh.")
+    case "MAX_REPS": return iosRecordNumber(Double(iosRecordReps(value)), fractionDigits: 0, locale: locale)
     case "MAX_VOLUME": return iosRecordVolumeText(value, unitSystem: unitSystem, locale: locale)
     default: return iosRecordWeightText(value, unitSystem: unitSystem, locale: locale)
     }
 }
 
-/// Gain over the earlier best: "+2,5 kg", "+2 Wdh.", "+310 kg". Without `signed` the plus goes,
-/// for sentences such as "2,5 kg mehr als bisher".
+/// Reps with their unit for the live notice: "12 Wdh.", "12 reps".
+func iosRecordRepsText(_ value: Double) -> String {
+    String(localized: "\(iosRecordReps(value)) Wdh.")
+}
+
+/// Gain over the earlier best: "+2,5 kg", "+310 kg"; reps without a unit, "+2". Without
+/// `signed` the plus goes, for sentences such as "2,5 kg mehr als bisher".
 func iosRecordDeltaText(type: String, delta: Double, unitSystem: String, signed: Bool = true, locale: Locale = .current) -> String {
     switch type {
     case "MAX_REPS":
         let reps = iosRecordReps(delta)
-        return signed ? String(localized: "+\(reps) Wdh.") : String(localized: "\(reps) Wdh.")
+        let sign = signed && reps > 0 ? "+" : ""
+        return sign + iosRecordNumber(Double(reps), fractionDigits: 0, locale: locale)
     case "MAX_VOLUME": return iosRecordVolumeText(delta, unitSystem: unitSystem, signed: signed, locale: locale)
     default: return iosRecordWeightText(delta, unitSystem: unitSystem, signed: signed, locale: locale)
     }
@@ -208,8 +232,16 @@ func iosRecordContext(_ line: IOSWorkoutRecordLine, unitSystem: String, locale: 
 }
 
 /// One record row as VoiceOver reads it: "Gewicht 100 kg × 5, 2,5 kg mehr als bisher" or
-/// "…, zum ersten Mal". The gain is spelled out, so color is never the only signal.
+/// "…, zum ersten Mal". Reps read in full words without a label: "12 Wiederholungen bei
+/// 60 kg, 2 mehr als bisher". The gain is spelled out, so color is never the only signal.
 func iosRecordAccessibilityText(_ line: IOSWorkoutRecordLine, unitSystem: String) -> String {
+    if line.type == "MAX_REPS" {
+        let reps = [ilRepCountText(iosRecordReps(line.value)), iosRecordContext(line, unitSystem: unitSystem)]
+            .compactMap { $0 }
+            .joined(separator: " ")
+        guard let previous = line.previous else { return String(localized: "\(reps), zum ersten Mal") }
+        return String(localized: "\(reps), \(iosRecordReps(line.value - previous)) mehr als bisher")
+    }
     let label = iosRecordLabel(line.type)
     let value = [iosRecordValueText(type: line.type, value: line.value, unitSystem: unitSystem), iosRecordContext(line, unitSystem: unitSystem)]
         .compactMap { $0 }

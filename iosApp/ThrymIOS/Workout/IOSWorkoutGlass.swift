@@ -442,7 +442,7 @@ struct IOSWorkoutGlassRestDockStack: View {
 /// Pause as a full-screen lens: the glass empties with the remaining time,
 /// −15 s / +30 s, what comes next and "Pause überspringen". "Zum Training"
 /// returns to the workout while the timer keeps running in the dock.
-struct IOSWorkoutGlassPauseScreen: View {
+struct IOSWorkoutGlassPauseScreen<Notice: View>: View {
     let timer: IOSWorkoutRestTimer
     let exerciseName: String
     let nextSetNumber: Int
@@ -451,6 +451,9 @@ struct IOSWorkoutGlassPauseScreen: View {
     let onPlus: () -> Void
     let onSkip: () -> Void
     let onClose: () -> Void
+    /// Shown directly below the top row, such as a live record notice. It takes its own
+    /// space and moves the pause down, so it never covers "Zum Training" or the actions.
+    @ViewBuilder let notice: Notice
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -481,6 +484,7 @@ struct IOSWorkoutGlassPauseScreen: View {
                         .liquidGlass(in: Capsule())
                         .buttonStyle(.plain)
                 }
+                notice
                 Spacer(minLength: 0)
                 ZStack {
                     Canvas { canvas, size in

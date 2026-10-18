@@ -174,12 +174,6 @@ struct IOSWorkoutScreen: View {
                     }
                 }
             }
-            .task(id: recordNotice?.id) {
-                guard let id = recordNotice?.id else { return }
-                do { try await Task.sleep(for: .seconds(4)) } catch { return }
-                guard recordNotice?.id == id else { return }
-                withAnimation(noticeAnimation) { recordNotice = nil }
-            }
             .task(id: undoToken) {
                 guard let token = undoToken else { return }
                 do { try await Task.sleep(for: .seconds(8)) } catch { return }
@@ -475,14 +469,14 @@ struct IOSWorkoutScreen: View {
                     dismissRestTimer(rowKey: timer.rowKey)
                 },
                 onClose: { pauseRowKey = nil }
-            )
-            .background { restCompletionWatchers }
-            // A record set before the rest opens the pause right away; show it there too.
-            .overlay(alignment: .top) {
+            ) {
+                // A record set before the rest opens the pause right away; show it there too,
+                // below the top row, so "Zum Training" and the actions stay free.
                 if let recordNotice, recordNotice.sessionID == activeSession?.id {
-                    recordBanner(recordNotice)
+                    recordBanner(recordNotice, cornerRadius: 22)
                 }
             }
+            .background { restCompletionWatchers }
         }
         .onChange(of: Set(restTimers.keys)) { _, keys in
             // The shown rest ended: close instead of moving on to another exercise.
@@ -899,12 +893,18 @@ struct IOSWorkoutScreen: View {
         }
         store.errorMessage = nil
         if let session, let data = store.data {
-            if let recordsBefore {
-                announceRecords(exerciseID: set.exerciseId, sessionID: session.id, before: recordsBefore, data: data)
+            var announcements: [String] = []
+            if let recordsBefore,
+               let notice = showRecordNotice(exerciseID: set.exerciseId, sessionID: session.id, before: recordsBefore, data: data) {
+                announcements.append("\(notice.title). \(notice.detail)")
             }
-            if !wasDone, exerciseRows(session: session, data: data).allPlannedSetsDone {
+            let rows = exerciseRows(session: session, data: data)
+            if !wasDone, rows.allPlannedSetsDone {
                 finishScrollRequest &+= 1
+                // The finish card appears because of this save: say so once.
+                announcements.append(String(localized: "Alle \(rows.plannedSetCount) geplanten Sätze geschafft"))
             }
+            announce(announcements)
         }
 
         // Android keeps one timer per exercise key. A warmup or the final planned
@@ -933,9 +933,14 @@ struct IOSWorkoutScreen: View {
     }
 
     /// Live record notice after a log or an edit that beat an earlier best of another workout:
-    /// the banner (also over the pause), one success haptic and a VoiceOver announcement. The
-    /// first workout of an exercise, ties and lowered edits stay quiet.
-    private func announceRecords(exerciseID: Int64, sessionID: Int64, before: [RecordSetInput], data: ILTrainingData) {
+    /// the banner (also in the pause) and one success haptic; the caller announces it. The
+    /// first workout of an exercise, ties and lowered edits stay quiet and return nil.
+    private func showRecordNotice(
+        exerciseID: Int64,
+        sessionID: Int64,
+        before: [RecordSetInput],
+        data: ILTrainingData
+    ) -> IOSWorkoutRecordNotice? {
         let lines = IOSWorkoutRecords.liveImprovements(
             sessionID: sessionID,
             before: before,
@@ -947,12 +952,21 @@ struct IOSWorkoutScreen: View {
             exerciseName: data.exercises.first { $0.id == exerciseID }?.displayName ?? String(localized: "Übung"),
             lines: lines,
             unitSystem: settings.state.unitSystem
-        ) else { return }
+        ) else { return nil }
         withAnimation(noticeAnimation) { recordNotice = notice }
         let feedback = UINotificationFeedbackGenerator()
         feedback.prepare()
         feedback.notificationOccurred(.success)
-        let announcement = "\(notice.title). \(notice.detail)"
+        return notice
+    }
+
+    /// One VoiceOver announcement for everything a save brought. High priority: the save is
+    /// often followed by a focus change (the set editor closes, the pause opens), which would
+    /// cut a default announcement off.
+    private func announce(_ parts: [String]) {
+        guard !parts.isEmpty else { return }
+        var announcement = AttributedString(parts.joined(separator: ". "))
+        announcement.accessibilitySpeechAnnouncementPriority = .high
         AccessibilityNotification.Announcement(announcement).post()
     }
 
@@ -960,11 +974,17 @@ struct IOSWorkoutScreen: View {
         reduceMotion || theme.reducedMotion ? nil : .snappy
     }
 
-    private func recordBanner(_ notice: IOSWorkoutRecordNotice) -> some View {
-        IOSWorkoutRecordBanner(notice: notice) {
-            withAnimation(noticeAnimation) { recordNotice = nil }
+    private func recordBanner(_ notice: IOSWorkoutRecordNotice, cornerRadius: CGFloat = 0) -> some View {
+        IOSWorkoutRecordBanner(notice: notice, cornerRadius: cornerRadius) {
+            dismissRecordNotice(id: notice.id)
         }
         .transition(reduceMotion || theme.reducedMotion ? .identity : .move(edge: .top).combined(with: .opacity))
+    }
+
+    /// Hides the notice on a tap or when its time is up, unless a newer one replaced it.
+    private func dismissRecordNotice(id: UUID) {
+        guard recordNotice?.id == id else { return }
+        withAnimation(noticeAnimation) { recordNotice = nil }
     }
 
     private func deleteSet(_ set: ILWorkoutSet) {
