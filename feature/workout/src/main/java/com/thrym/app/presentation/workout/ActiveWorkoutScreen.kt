@@ -46,11 +46,14 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -80,6 +83,16 @@ import com.thrym.app.presentation.theme.thrymDimens
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
+@Composable
+private fun RestDockRow.glassPauseInfo(exercises: List<ExerciseWithSets>): GlassPauseInfo {
+    val exercise = exercises.find { it.key == exerciseKey }
+    return GlassPauseInfo(
+        timer = timer,
+        exerciseName = exercise?.exercise?.localizedName().orEmpty(),
+        nextSetNumber = (exercise?.sets?.count { it.reps > 0 } ?: 0) + 1
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
@@ -104,6 +117,13 @@ fun ActiveWorkoutScreen(
     val activeSession = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
     val liquidGlass = isLiquidGlass()
     var pauseOpen by rememberSaveable { mutableStateOf(false) }
+    var pauseRowKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var seenRestStarts by rememberSaveable { mutableStateOf(listOf<Long>()) }
+    var restStartsInitialized by remember { mutableStateOf(false) }
+    var dockHeight by remember { mutableStateOf(0.dp) }
+    var listHeight by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
+    val currentRestTimers by rememberUpdatedState(state.restTimers)
 
     val exerciseGroups = remember(state.exercisesWithSets) {
         buildExerciseRenderGroups(state.exercisesWithSets)
@@ -334,14 +354,16 @@ fun ActiveWorkoutScreen(
 
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .onSizeChanged { size -> listHeight = with(density) { size.height.toDp() } },
                     verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
                     contentPadding = PaddingValues(
                         start = dims.spacingMd,
                         end = dims.spacingMd,
                         top = dims.spacingMd,
                         bottom = if (liquidGlass && state.restTimers.isNotEmpty()) {
-                            dims.spacingMd + GlassDockReservedHeight
+                            dims.spacingMd + dockHeight
                         } else {
                             dims.spacingMd
                         }
@@ -423,43 +445,72 @@ fun ActiveWorkoutScreen(
                     }
                 }
             }
-            // Liquid Glass: the most recent rest timer shows as a dock and, when it starts,
-            // as the full-screen pause. Closing the pause keeps the timer running in the dock.
-            val latestRest = state.restTimers.entries.maxByOrNull { it.value.startTime }
-            if (liquidGlass && latestRest != null) {
-                val (restKey, restTimer) = latestRest
-                val restRow = state.exercisesWithSets.find { it.key == restKey }
-                val pauseInfo = GlassPauseInfo(
-                    timer = restTimer,
-                    exerciseName = restRow?.exercise?.localizedName().orEmpty(),
-                    nextSetNumber = (restRow?.sets?.count { it.reps > 0 } ?: 0) + 1
-                )
-                var pauseShownFor by rememberSaveable(restKey.stableListKey()) { mutableStateOf<Long?>(null) }
-                LaunchedEffect(restTimer.startTime) {
-                    if (restTimer.durationSeconds > 0 && pauseShownFor != restTimer.startTime.toEpochMilli()) {
-                        pauseShownFor = restTimer.startTime.toEpochMilli()
-                        pauseOpen = true
-                    }
+            val timerStarts = state.restTimers.map { (key, timer) ->
+                key.stableListKey() to timer.startTime.toEpochMilli()
+            }.sortedBy { it.first }
+            LaunchedEffect(timerStarts, liquidGlass) {
+                if (!liquidGlass) {
+                    pauseOpen = false
+                    pauseRowKey = null
                 }
-                GlassRestDock(
-                    info = pauseInfo,
+                // A restored ViewModel can briefly expose an empty timer map before its saved
+                // timers load. Keep the saved starts through that first empty snapshot.
+                if (!restStartsInitialized && timerStarts.isEmpty() && seenRestStarts.isNotEmpty()) {
+                    restStartsInitialized = true
+                    return@LaunchedEffect
+                }
+                restStartsInitialized = true
+                // Two timer changes within one frame arrive as one snapshot. If B starts just before
+                // A ends, B can open as if it had started alone; the window is a single frame.
+                val decision = decideRestDockStart(seenRestStarts, state.restTimers)
+                seenRestStarts = decision.seenStarts
+                if (resolvePinnedRestRow(pauseRowKey, state.restTimers, System.currentTimeMillis()) == null) {
+                    pauseOpen = false
+                    pauseRowKey = null
+                }
+                if (liquidGlass) decision.openKey?.let { key ->
+                    pauseRowKey = key.stableListKey()
+                    pauseOpen = true
+                }
+            }
+            val nowMillis = System.currentTimeMillis()
+            val dockRows = if (liquidGlass) buildRestDockRows(state.restTimers, nowMillis) else emptyList()
+            val pinnedRow = resolvePinnedRestRow(pauseRowKey, state.restTimers, nowMillis)
+            if (liquidGlass && dockRows.isNotEmpty()) {
+                GlassRestDockStack(
+                    rows = dockRows.map { it.stableKey to it.glassPauseInfo(state.exercisesWithSets) },
                     pauseLabel = stringResource(WorkoutR.string.workout_glass_pause),
                     skipLabel = stringResource(WorkoutR.string.workout_glass_pause_skip_short),
                     openLabel = stringResource(WorkoutR.string.workout_glass_pause_open),
-                    onOpen = { pauseOpen = true },
-                    onSkip = { viewModel.dismissRestTimer(restKey) },
+                    onOpen = { stableKey ->
+                        val row = dockRows.firstOrNull { it.stableKey == stableKey }
+                        if (row != null && currentRestTimers[row.exerciseKey]?.startTime == row.timer.startTime) {
+                            pauseRowKey = stableKey
+                            pauseOpen = true
+                        }
+                    },
+                    onSkip = { stableKey ->
+                        val row = dockRows.firstOrNull { it.stableKey == stableKey }
+                        if (row != null && currentRestTimers[row.exerciseKey]?.startTime == row.timer.startTime) {
+                            viewModel.dismissRestTimer(row.exerciseKey)
+                        }
+                    },
+                    visibleRows = visibleRestDockRows(listHeight.value, dims.spacingMd.value),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
+                        .onSizeChanged { size -> dockHeight = with(density) { size.height.toDp() } }
                         .padding(horizontal = dims.spacingMd, vertical = dims.spacingMd)
                 )
-                if (pauseOpen) {
+                if (pauseOpen && pinnedRow != null) {
+                    val pinnedKey = pinnedRow.exerciseKey
+                    val pinnedStart = pinnedRow.timer.startTime
                     val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
                     val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
                     val loggedSetCount = state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }
                     val context = LocalContext.current
                     val resources = LocalResources.current
                     GlassPauseScreen(
-                        info = pauseInfo,
+                        info = pinnedRow.glassPauseInfo(state.exercisesWithSets),
                         progressText = if (plannedSetCount > 0) {
                             pluralStringResource(
                                 R.plurals.workout_header_progress_planned,
@@ -491,17 +542,26 @@ fun ActiveWorkoutScreen(
                                 )
                             }
                         ),
-                        onMinus = { viewModel.adjustRestTimer(restKey, -15) },
-                        onPlus = { viewModel.adjustRestTimer(restKey, 30) },
+                        onMinus = {
+                            if (currentRestTimers[pinnedKey]?.startTime == pinnedStart) {
+                                viewModel.adjustRestTimer(pinnedKey, -15)
+                            }
+                        },
+                        onPlus = {
+                            if (currentRestTimers[pinnedKey]?.startTime == pinnedStart) {
+                                viewModel.adjustRestTimer(pinnedKey, 30)
+                            }
+                        },
                         onSkip = {
-                            pauseOpen = false
-                            viewModel.dismissRestTimer(restKey)
+                            if (currentRestTimers[pinnedKey]?.startTime == pinnedStart) {
+                                pauseOpen = false
+                                pauseRowKey = null
+                                viewModel.dismissRestTimer(pinnedKey)
+                            }
                         },
                         onClose = { pauseOpen = false }
                     )
                 }
-            } else if (pauseOpen) {
-                pauseOpen = false
             }
             SnackbarHost(
                 hostState = recordSnackbarHostState,
