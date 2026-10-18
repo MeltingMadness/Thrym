@@ -3,6 +3,7 @@ package com.thrym.shared.store
 import com.thrym.shared.backup.BackupExercise
 import com.thrym.shared.backup.BackupMetaPlanItem
 import com.thrym.shared.backup.BackupMetaTrainingPlan
+import com.thrym.shared.backup.BackupPersonalRecord
 import com.thrym.shared.backup.BackupPlanExercise
 import com.thrym.shared.backup.BackupProgressionConfig
 import com.thrym.shared.backup.BackupTrainingPlan
@@ -21,6 +22,7 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class SharedStateStoreTest {
 
@@ -718,6 +720,73 @@ class SharedStateStoreTest {
         store.saveTrainingPlan(plan, listOf(changed))
         assertFailsWith<IllegalStateException> { store.applyPerformedSetTargets(sessionId) }
         assertEquals(70.0, store.snapshot().planExercises.single().targetWeightKg)
+    }
+
+    @Test
+    fun duplicatePersonalRecordIdsAreRepairedWhileLoading() = runTest {
+        val seeded = newStore(MemoryPersistence())
+        val poisoned = seeded.snapshot().copy(
+            personalRecords = listOf(
+                BackupPersonalRecord(id = 6L, exerciseId = exercise.id, type = "MAX_WEIGHT", value = 80.0, achievedAt = 1_000L),
+                BackupPersonalRecord(id = 6L, exerciseId = exercise.id, type = "MAX_REPS", value = 8.0, achievedAt = 1_000L),
+                BackupPersonalRecord(id = 9L, exerciseId = exercise.id, type = "MAX_E1RM", value = 100.0, achievedAt = 1_000L),
+                BackupPersonalRecord(id = 9L, exerciseId = exercise.id, type = "MAX_VOLUME", value = 640.0, achievedAt = 1_000L),
+            ),
+        )
+        val persistence = MemoryPersistence(testJson.encodeToString(poisoned))
+
+        val store = newStore(persistence)
+
+        val records = store.snapshot().personalRecords
+        assertEquals(4, records.size)
+        assertEquals(4, records.map { it.id }.toSet().size)
+        assertEquals(listOf(80.0, 8.0, 100.0, 640.0), records.map { it.value })
+        assertEquals(1, persistence.writeCount)
+        // The repaired document is writable again, so a workout can be started and finished.
+        val sessionId = store.startWorkout(name = "Session")
+        assertTrue(sessionId > 0L)
+    }
+
+    @Test
+    fun rebuildingRecordsAcrossExercisesKeepsIdsUnique() = runTest {
+        var now = 1_000L
+        val second = exercise.copy(id = 2L, name = "Kurzhantelrudern")
+        val store = SharedStateStore(
+            persistence = MemoryPersistence(),
+            seedExercises = listOf(exercise, second),
+            nowEpochMillis = { now },
+        )
+        val sessionId = store.startWorkout(name = "Gym")
+        listOf(exercise.id to 100.0, second.id to 60.0).forEachIndexed { index, (exerciseId, weight) ->
+            store.addSet(
+                BackupWorkoutSet(
+                    id = 0L,
+                    sessionId = sessionId,
+                    exerciseId = exerciseId,
+                    setNumber = 1,
+                    reps = 5,
+                    weightKg = weight,
+                    setType = NORMAL_SET_TYPE,
+                    completedAt = now + index,
+                ),
+            )
+        }
+        now = 2_000L
+        store.finishWorkout(sessionId)
+
+        val records = store.snapshot().personalRecords
+        assertEquals(8, records.size)
+        assertEquals(8, records.map { it.id }.toSet().size)
+
+        store.deleteSession(sessionId)
+        val afterDelete = store.snapshot().personalRecords
+        assertEquals(afterDelete.size, afterDelete.map { it.id }.toSet().size)
+    }
+
+    private val testJson = Json {
+        encodeDefaults = true
+        ignoreUnknownKeys = false
+        explicitNulls = true
     }
 
     private fun newStore(

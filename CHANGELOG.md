@@ -13,6 +13,7 @@
 - F-Droid-Metadaten unter `fastlane/metadata/android/`.
 - Persönliche Skripte, Notizen, Mockups und Screenshots aus dem Repository entfernt.
 - Technische Basis aktualisiert (Kotlin 2.4, Compose 1.12, compileSdk 37, Vico 3). Android-Einstellungen: Abschnittstitel werden nach der App-Sprache großgeschrieben statt nach der Gerätesprache.
+- Rekorde: kollidierende Personal-Record-IDs blockieren das Speichern nicht mehr. Ein Zustand, den eine frühere Version mit doppelten IDs hinterlassen hat, wird beim Laden einmalig repariert; neue Rekorde bekommen nie eine bereits vergebene ID. Betroffen war vor allem das Beenden eines Trainings („Invalid workout state: Backup contains duplicate personal record id“).
 
 ## 1.4.0 (Android versionCode 9 / iOS Build 4) – Polish und Parität · 26.09.2026
 

@@ -74,29 +74,48 @@ private object SharedBackupPayloadCodec {
     }
 
     fun decodeAndUpgrade(serialized: String): BackupPayloadV1 {
-        val decoded = runCatching {
-            json.decodeFromString<BackupPayloadV1>(serialized)
-        }.getOrElse { error ->
-            throw IllegalArgumentException("Malformed workout state", error)
-        }
+        val decoded = decodeUnvalidated(serialized)
         validateOrThrow(decoded)
-        val upgraded = canonicalize(
-            decoded.copy(
-                schemaVersion = CURRENT_BACKUP_SCHEMA_VERSION,
-                appVersion = "",
-                exportedAtEpochMillis = 0L,
-                planExercises = decoded.planExercises.map { it.copy(progression = it.progression.forCurrentPlan()) },
-                workoutSets = decoded.workoutSets.map { set ->
-                    set.copy(
-                        setType = set.resolvedSetType(),
-                        isWarmup = null,
-                    )
-                },
-            ),
-        )
+        val upgraded = upgrade(decoded)
         validateOrThrow(upgraded)
         return upgraded
     }
+
+    /**
+     * Durable-store load path: repairs duplicate personal record ids before validating.
+     *
+     * A state document that once received a duplicate record id fails validation forever, so the
+     * app could load it in older builds but never write it again. The import paths keep using
+     * [decodeAndUpgrade], which stays strict.
+     */
+    fun decodeAndUpgradeRepairingDuplicatePersonalRecordIds(serialized: String): BackupPayloadV1 {
+        val repaired = PersonalRecordIdRepair.repair(decodeUnvalidated(serialized))
+        validateOrThrow(repaired)
+        val upgraded = upgrade(repaired)
+        validateOrThrow(upgraded)
+        return upgraded
+    }
+
+    private fun decodeUnvalidated(serialized: String): BackupPayloadV1 = runCatching {
+        json.decodeFromString<BackupPayloadV1>(serialized)
+    }.getOrElse { error ->
+        throw IllegalArgumentException("Malformed workout state", error)
+    }
+
+    private fun upgrade(decoded: BackupPayloadV1): BackupPayloadV1 = canonicalize(
+        decoded.copy(
+            schemaVersion = CURRENT_BACKUP_SCHEMA_VERSION,
+            appVersion = "",
+            exportedAtEpochMillis = 0L,
+            planExercises = decoded.planExercises.map { it.copy(progression = it.progression.forCurrentPlan()) },
+            workoutSets = decoded.workoutSets.map { set ->
+                set.copy(
+                    setType = set.resolvedSetType(),
+                    isWarmup = null,
+                )
+            },
+        ),
+    )
 
     fun canonicalize(payload: BackupPayloadV1): BackupPayloadV1 = payload.copy(
         formatVersion = 1,
@@ -1166,7 +1185,10 @@ class SharedStateStore(
         val recordValue = value?.takeIf { it.isFinite() && it > 0.0 } ?: return
         val timestamp = achievedAt ?: return
         val old = oldRecords[exerciseId to type]
-        val id = old?.id ?: nextUnusedId(usedIds)
+        // Reusing the previous id keeps identity stable for observers, but only while that id is
+        // actually free. Handing out a taken id produces a duplicate, and the validator rejects
+        // the whole payload, which leaves the user unable to save anything.
+        val id = old?.id?.takeIf { it !in usedIds } ?: nextUnusedId(usedIds)
         usedIds += id
         records += BackupPersonalRecord(
             id = id,
@@ -1194,12 +1216,27 @@ class SharedStateStore(
             persistence.writeAtomically(encodeCanonical(empty))
             return empty
         }
-        val upgraded = decodeAndUpgradeForPreview(persisted)
+        val upgraded = loadPersistedState(persisted)
         val upgradedSerialized = encodeCanonical(upgraded)
         if (upgradedSerialized != persisted) {
             persistence.writeAtomically(upgradedSerialized)
         }
         return upgraded
+    }
+
+    /**
+     * Loads the stored document, falling back to the duplicate-record-id repair.
+     *
+     * A document that older builds wrote with duplicate record ids is loadable but not writable,
+     * so the user is locked out of saving anything. The repair rescues exactly that state; every
+     * other validation error is reported unchanged.
+     */
+    private fun loadPersistedState(persisted: String): BackupPayloadV1 = try {
+        decodeAndUpgradeForPreview(persisted)
+    } catch (error: IllegalArgumentException) {
+        runCatching {
+            decodeAndUpgradeRepairingDuplicatePersonalRecordIds(persisted)
+        }.getOrElse { throw error }
     }
 
     private fun emptyPayload(exercises: List<BackupExercise>): BackupPayloadV1 = BackupPayloadV1(
