@@ -85,6 +85,9 @@ import com.thrym.shared.workout.SessionOrderMove
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
+/** Screen position of a moved block: its list item [offset] when it sat at [fromIndex]. */
+private data class MoveAnchor(val key: String, val fromIndex: Int, val offset: Int)
+
 @Composable
 private fun RestDockRow.glassPauseInfo(exercises: List<ExerciseWithSets>): GlassPauseInfo {
     val exercise = exercises.find { it.key == exerciseKey }
@@ -260,6 +263,19 @@ fun ActiveWorkoutScreen(
                         ?: (exerciseWithSets.planTarget == null || groupIndex == focusGroupIndex)
                 }
                 val listState = rememberLazyListState()
+                // The list holds its first visible block in place when the data changes. A block
+                // moved past that one would jump away from the finger, and a quick second tap
+                // would hit another control. So the moved block goes back to where it sat.
+                val moveAnchor = remember { arrayOfNulls<MoveAnchor>(1) }
+                moveAnchor[0]?.let { anchor ->
+                    val index = exerciseGroups.indexOfFirst { it.key == anchor.key }
+                    if (index < 0) {
+                        moveAnchor[0] = null
+                    } else if (index != anchor.fromIndex) {
+                        moveAnchor[0] = anchor.copy(fromIndex = index)
+                        listState.requestScrollToItem(index, -anchor.offset)
+                    }
+                }
                 val previousFocusGroupKey = remember { arrayOfNulls<String>(1) }
                 // Keyed by the focus block, not its index: moving another block above it shifts
                 // the index but must not scroll the list. The list also stays put when a move
@@ -287,6 +303,13 @@ fun ActiveWorkoutScreen(
                             }
                             .map { it.key.stableListKey() }
                         expansionOverrides = expansionOverrides + pinned.associateWith { true }
+                        // A block that is the first visible one already stays put, and keeps
+                        // the slide animation that a requested scroll would reset.
+                        val visibleItems = listState.layoutInfo.visibleItemsInfo
+                        moveAnchor[0] = visibleItems
+                            .firstOrNull { it.key == group.key }
+                            ?.takeIf { it.index != visibleItems.first().index }
+                            ?.let { MoveAnchor(group.key, groupIndex, it.offset) }
                         viewModel.moveExercise(group.exercises.first().key, direction)
                     }
                     ExerciseMoveControls(
