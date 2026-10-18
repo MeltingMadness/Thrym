@@ -94,6 +94,11 @@ internal fun ActiveSetCockpitCard(
     intentionFailed: Boolean = false,
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
+    /**
+     * Bodyweight exercise: the weight field holds the added load. It is labelled as such and
+     * starts at 0 (bodyweight only) when no other value is known, so the set can be logged at once.
+     */
+    addedLoad: Boolean = false,
     locked: Boolean = false,
     completedSubmissions: Set<Long> = emptySet(),
     plateCalculatorEnabled: Boolean,
@@ -120,8 +125,9 @@ internal fun ActiveSetCockpitCard(
     LaunchedEffect(defaultIntention) {
         if (!intentionDirty) currentIntention = defaultIntention
     }
-    var weightInput by remember(setNumber, defaultWeight) {
-        mutableStateOf(TextFieldValue(defaultWeight, TextRange(defaultWeight.length)))
+    val initialWeight = if (addedLoad && defaultWeight.isBlank()) "0" else defaultWeight
+    var weightInput by remember(setNumber, initialWeight) {
+        mutableStateOf(TextFieldValue(initialWeight, TextRange(initialWeight.length)))
     }
     var repsInput by remember(setNumber, defaultReps) {
         mutableStateOf(TextFieldValue(defaultReps, TextRange(defaultReps.length)))
@@ -246,7 +252,7 @@ internal fun ActiveSetCockpitCard(
             if (liquidGlass) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     GlassStepper(
-                        label = stringResource(WorkoutR.string.workout_glass_weight),
+                        label = stringResource(if (addedLoad) R.string.weight_added_load else WorkoutR.string.workout_glass_weight),
                         value = weightInput,
                         onValueChange = { weightInput = it },
                         placeholder = weightPlaceholder,
@@ -307,7 +313,7 @@ internal fun ActiveSetCockpitCard(
             } else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 androidx.compose.material3.OutlinedTextField(
                     value = weightInput, onValueChange = { weightInput = it },
-                    label = { Text(weightSuffix) }, singleLine = true,
+                    label = { Text(if (addedLoad) stringResource(R.string.weight_added_load_field_label, weightSuffix) else weightSuffix) }, singleLine = true,
                     modifier = Modifier.weight(1f), enabled = !locked,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next)
                 )
@@ -604,6 +610,15 @@ internal fun ActiveSetCockpitCard(
                             enteredReps,
                             setNumber,
                             stringResource(R.string.weight_bodyweight),
+                            enteredReps
+                        )
+                    } else if (addedLoad) {
+                        val wStr = WeightFormatting.formatNumber(enteredWeight, maxFractionDigits = 2)
+                        pluralStringResource(
+                            R.plurals.workout_log_set_button_bodyweight,
+                            enteredReps,
+                            setNumber,
+                            stringResource(R.string.weight_bodyweight_plus_load, "$wStr $weightSuffix"),
                             enteredReps
                         )
                     } else {

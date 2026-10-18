@@ -77,7 +77,10 @@ struct IOSWorkoutExerciseCard: View {
             if row.target != nil, let displayTarget = row.displayTarget {
                 HStack(spacing: 12) {
                     Label("Ziel \(displayTarget.sets) × \(displayTarget.reps)", systemImage: "target")
-                    Text("@ \(iosWorkoutDisplayWeight(kilograms: displayTarget.weightKg, unitSystem: unitSystem))")
+                    // No weight target reads as bodyweight, as on Android: the weight is left out.
+                    if displayTarget.weightKg > 0 {
+                        Text("@ \(iosSetLoadText(weightKg: displayTarget.weightKg, unitSystem: unitSystem, addedLoad: row.exercise.tracksAddedLoad))")
+                    }
                     Spacer()
                     Text("\(row.completedNormalSets)/\(displayTarget.sets)")
                         .font(.geist(.subheadline, weight: .semibold).monospacedDigit())
@@ -91,10 +94,10 @@ struct IOSWorkoutExerciseCard: View {
             }
 
             if let previousWeight = row.previousWorkWeightKg {
-                Label("Letztes passendes Training: \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))", systemImage: "clock.arrow.circlepath")
+                Label("Letztes passendes Training: \(iosSetLoadText(weightKg: previousWeight, unitSystem: unitSystem, addedLoad: row.exercise.tracksAddedLoad))", systemImage: "clock.arrow.circlepath")
                     .font(.geist(.caption))
                     .foregroundStyle(palette.information)
-                    .accessibilityLabel("Letztes passendes Gewicht \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))")
+                    .accessibilityLabel("Letztes passendes Gewicht \(iosSetLoadText(weightKg: previousWeight, unitSystem: unitSystem, addedLoad: row.exercise.tracksAddedLoad))")
             }
 
             if let recommendation = row.nextSetRecommendation {
@@ -117,6 +120,7 @@ struct IOSWorkoutExerciseCard: View {
                         IOSWorkoutSetRow(
                             set: set,
                             unitSystem: unitSystem,
+                            addedLoad: row.exercise.tracksAddedLoad,
                             intensitySystem: effectiveIntensitySystem,
                             onEdit: { onEditSet(set) },
                             onDelete: { onDeleteSet(set) }
@@ -228,6 +232,8 @@ private struct IOSWorkoutCardSurface: ViewModifier {
 private struct IOSWorkoutSetRow: View {
     let set: ILWorkoutSet
     let unitSystem: String
+    /// Bodyweight exercise: the weight is the added load ("Körpergewicht + 10 kg").
+    let addedLoad: Bool
     let intensitySystem: String
     let onEdit: () -> Void
     let onDelete: () -> Void
@@ -245,7 +251,7 @@ private struct IOSWorkoutSetRow: View {
                 .frame(width: 58, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))
+                Text(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem, addedLoad: addedLoad))
                     .font(.geist(.body, weight: .medium))
                 if let intensity = iosWorkoutFormatIntensity(storedRPE: set.rpe, intensitySystem: intensitySystem) {
                     Text("\(intensitySystem.uppercased()) \(intensity)")
@@ -271,7 +277,7 @@ private struct IOSWorkoutSetRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Satz \(set.setNumber), \(resolvedIOSWorkoutSetType(set).displayName)")
-        .accessibilityValue("\(set.reps) Wiederholungen, \(iosWorkoutDisplayWeight(kilograms: set.weightKg, unitSystem: unitSystem))")
+        .accessibilityValue("\(set.reps) Wiederholungen, \(iosSetLoadText(weightKg: set.weightKg, unitSystem: unitSystem, addedLoad: addedLoad))")
         .contextMenu {
             Button("Bearbeiten", systemImage: "pencil") { onEdit() }
             Button("Löschen", systemImage: "trash", role: .destructive) { onDelete() }
@@ -352,7 +358,7 @@ private struct IOSWorkoutInlineSetEntry: View {
             HStack(spacing: 10) {
                 let stepText = IOSNumber.format(weightStep)
                 IOSWorkoutGlassStepper(
-                    label: String(localized: "Gewicht"),
+                    label: row.exercise.tracksAddedLoad ? String(localized: "Zusatzgewicht") : String(localized: "Gewicht"),
                     text: $weight,
                     unit: IOSWeight.label(unitSystem),
                     keyboard: .decimalPad,
@@ -419,7 +425,9 @@ private struct IOSWorkoutInlineSetEntry: View {
             Text("Satz \(row.nextSetNumber)").font(.geist(.headline))
             Text(source).font(.geist(.caption)).thrymAccentText()
             HStack(spacing: 12) {
-                field(String(localized: "Gewicht (\(IOSWeight.label(unitSystem)))"), text: $weight, keyboard: .decimalPad)
+                field(row.exercise.tracksAddedLoad
+                      ? String(localized: "Zusatz (\(IOSWeight.label(unitSystem)))")
+                      : String(localized: "Gewicht (\(IOSWeight.label(unitSystem)))"), text: $weight, keyboard: .decimalPad)
                 field(String(localized: "Wiederholungen"), text: $reps, keyboard: .numberPad)
             }
             DisclosureGroup("RPE / RIR · Satztyp · Absicht") {

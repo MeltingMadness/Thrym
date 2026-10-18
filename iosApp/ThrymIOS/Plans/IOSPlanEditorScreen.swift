@@ -48,6 +48,7 @@ struct IOSPlanEditorScreen: View {
                             IOSPlanExerciseRow(
                                 row: row,
                                 exerciseName: exerciseName(for: row.wrappedValue.exerciseID),
+                                addedLoad: data?.exercises.first(where: { $0.id == row.wrappedValue.exerciseID })?.tracksAddedLoad == true,
                                 unitSystem: unitSystem,
                                 index: rows.firstIndex(where: { $0.id == row.wrappedValue.id }) ?? 0,
                                 isFirst: row.wrappedValue.id == rows.first?.id,
@@ -216,7 +217,7 @@ struct IOSPlanEditorScreen: View {
             }
             guard let sets = IOSNumber.parseInt(row.targetSets), sets > 0,
                   let reps = IOSNumber.parseInt(row.targetReps), reps > 0,
-                  let displayWeight = IOSNumber.parse(row.targetWeight), displayWeight >= 0 else {
+                  let displayWeight = row.targetWeightValue, displayWeight >= 0 else {
                 errorMessage = String(localized: "Sätze, Wiederholungen und Gewicht müssen gültige Zielwerte sein.")
                 return
             }
@@ -271,6 +272,8 @@ struct IOSPlanEditorScreen: View {
 private struct IOSPlanExerciseRow: View {
     @Binding var row: IOSPlanExerciseDraft
     let exerciseName: String
+    /// Bodyweight exercise: the weight target is the added load.
+    let addedLoad: Bool
     let unitSystem: String
     let index: Int
     let isFirst: Bool
@@ -336,7 +339,11 @@ private struct IOSPlanExerciseRow: View {
             HStack(spacing: 8) {
                 IOSCompactField(title: String(localized: "Sätze"), text: $row.targetSets, keyboard: .numberPad)
                 IOSCompactField(title: String(localized: "Reps"), text: $row.targetReps, keyboard: .numberPad)
-                IOSCompactField(title: IOSWeight.label(unitSystem), text: $row.targetWeight, keyboard: .decimalPad)
+                IOSCompactField(
+                    title: addedLoad ? String(localized: "Zusatz (\(IOSWeight.label(unitSystem)))") : IOSWeight.label(unitSystem),
+                    text: $row.targetWeight,
+                    keyboard: .decimalPad
+                )
             }
 
             } else {

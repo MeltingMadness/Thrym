@@ -96,6 +96,14 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(try text("Alle \(9) geplanten Sätze geschafft", "en"), "All 9 planned sets done")
     }
 
+    func testBodyweightAddedLoadIsTranslated() throws {
+        XCTAssertEqual(try text("Körpergewicht + \("10 kg")", "en"), "Bodyweight + 10 kg")
+        XCTAssertEqual(try text("Körpergewicht + \("10 kg")", "de"), "Körpergewicht + 10 kg")
+        XCTAssertEqual(try text("Zusatzgewicht", "en"), "Added weight")
+        XCTAssertEqual(try text("Zusatz (\("kg"))", "en"), "Added (kg)")
+        XCTAssertEqual(try text("Zusatz (\("kg"))", "de"), "Zusatz (kg)")
+    }
+
     func testPercentChangesFollowTheLocale() {
         XCTAssertEqual(ilPercentChangeText(5, locale: Locale(identifier: "en_US")), "+5.0%")
         XCTAssertEqual(ilPercentChangeText(-12.34, locale: Locale(identifier: "en_US")), "-12.3%")

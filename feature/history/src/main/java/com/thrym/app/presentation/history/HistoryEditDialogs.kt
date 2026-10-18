@@ -90,6 +90,8 @@ internal fun parseHistorySetInput(
 @Composable
 internal fun HistorySetEditDialog(
     set: WorkoutSet,
+    /** Bodyweight exercise: the weight field holds the added load. */
+    addedLoad: Boolean = false,
     intention: SetIntention?,
     intentionsLoaded: Boolean,
     unitSystem: UnitSystem,
@@ -150,7 +152,14 @@ internal fun HistorySetEditDialog(
                 OutlinedTextField(
                     value = weightText,
                     onValueChange = { weightText = it },
-                    label = { Text(stringResource(R.string.workout_detail_weight_label, WeightFormatting.unitLabel(unitSystem))) },
+                    label = {
+                        Text(
+                            stringResource(
+                                if (addedLoad) R.string.weight_added_load_field_label else R.string.workout_detail_weight_label,
+                                WeightFormatting.unitLabel(unitSystem)
+                            )
+                        )
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()

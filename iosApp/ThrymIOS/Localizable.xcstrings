@@ -8558,6 +8558,22 @@
         }
       }
     },
+    "Körpergewicht + %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Körpergewicht + %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bodyweight + %@"
+          }
+        }
+      }
+    },
     "Lange Pause: neue Reihe": {
       "localizations": {
         "de": {
@@ -16450,6 +16466,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Summary"
+          }
+        }
+      }
+    },
+    "Zusatz (%@)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zusatz (%@)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added (%@)"
+          }
+        }
+      }
+    },
+    "Zusatzgewicht": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zusatzgewicht"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added weight"
           }
         }
       }

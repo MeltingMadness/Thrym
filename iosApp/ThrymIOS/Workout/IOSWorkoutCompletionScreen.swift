@@ -125,7 +125,7 @@ struct IOSWorkoutCompletionScreen: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(row.exercise.displayName).font(.geist(.headline, weight: .heavy))
                         ForEach(row.sets.filter { $0.reps > 0 }) { set in
-                            Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))")
+                            Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem, addedLoad: row.exercise.tracksAddedLoad))")
                                 .font(.geist(.subheadline))
                                 .monospacedDigit()
                                 .thrymSecondaryText()
@@ -217,7 +217,7 @@ struct IOSWorkoutCompletionScreen: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(row.exercise.displayName).font(.geist(.headline))
                         ForEach(row.sets.filter { $0.reps > 0 }) { set in
-                            Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))").font(.geist(.subheadline)).monospacedDigit()
+                            Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem, addedLoad: row.exercise.tracksAddedLoad))").font(.geist(.subheadline)).monospacedDigit()
                         }
                     }.padding().frame(maxWidth: .infinity, alignment: .leading)
                         .background(theme.palette(for: colorScheme).surface, in: RoundedRectangle(cornerRadius: 14))

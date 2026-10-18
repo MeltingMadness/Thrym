@@ -1,6 +1,7 @@
 package com.thrym.app.presentation.plans
 
 import com.thrym.feature.plans.R as UxR
+import com.thrym.app.presentation.common.tracksAddedLoad
 import com.thrym.app.presentation.common.ThrymTopBar
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
@@ -433,7 +434,7 @@ private fun PlanExerciseCard(
                     label = {
                         Text(
                             stringResource(
-                                id = R.string.plan_editor_weight_label,
+                                id = if (item.exercise.tracksAddedLoad) R.string.weight_added_load_field_label else R.string.plan_editor_weight_label,
                                 WeightFormatting.unitLabel(item.targetWeightInputUnit)
                             )
                         )

@@ -132,7 +132,12 @@
     <string name="workout_exercise_done">Done</string>
     <string name="workout_value_source_last_set">Values from your last set · editable</string>
     <string name="workout_value_source_plan">Values from your plan · editable</string>
+    <string name="workout_value_source_last_workout">Weight from your last workout · editable</string>
     <string name="weight_bodyweight">Bodyweight</string>
+    <!-- Bodyweight exercises store the added load: 10 kg reads "Bodyweight + 10 kg". -->
+    <string name="weight_bodyweight_plus_load">Bodyweight + %1$s</string>
+    <string name="weight_added_load">Added weight</string>
+    <string name="weight_added_load_field_label">Added (%1$s)</string>
     <string name="workout_edit_set_action">Edit set</string>
     <string name="workout_set_details_show">RPE / RIR · set type · intention · plates</string>
     <string name="workout_set_details_hide">Hide details</string>

@@ -37,6 +37,8 @@ import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.model.WorkoutSession
 import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
+import com.thrym.app.presentation.common.tracksAddedLoad
+import com.thrym.app.presentation.common.setLoadText
 import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.common.localizedName
@@ -155,7 +157,7 @@ internal fun GlassWorkoutCompletion(
                                 R.plurals.workout_summary_set_line,
                                 set.reps,
                                 set.setNumber,
-                                if (set.weightKg == 0.0) stringResource(R.string.weight_bodyweight) else formatTargetWeight(set.weightKg, unitSystem),
+                                setLoadText(set.weightKg, unitSystem, row.exercise.tracksAddedLoad),
                                 set.reps
                             ),
                             style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),

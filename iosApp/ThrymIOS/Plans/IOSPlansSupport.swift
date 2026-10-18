@@ -149,6 +149,12 @@ struct IOSPlanExerciseDraft: Identifiable, Equatable {
         progression = IOSProgressionDraft(record: record.progression, unitSystem: unitSystem)
     }
 
+    /// Target weight in the input unit. An empty field means no weight (0), as on Android, so a
+    /// bodyweight exercise can stay without load and get one later.
+    var targetWeightValue: Double? {
+        targetWeight.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : IOSNumber.parse(targetWeight)
+    }
+
     init(exerciseID: Int64, unitSystem: String) {
         id = UUID()
         persistedID = 0

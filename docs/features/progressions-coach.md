@@ -55,6 +55,8 @@ Bei **RPE/RIR** gilt die Prüfreihenfolge:
 
 **Nachvollziehbarkeit:** Android und iOS zeigen die gewerteten Arbeitssätze, enthaltene Versagen-Sätze und die Zahl ausgelassener Aufwärm-, Drop-, Backoff- und Zusatzsätze. Bei gemischten Lasten wird die gemeinsame Mindestlast erklärt; bei Erfolgsbestätigung oder Wiederholung erscheint der passende Erfolgs- bzw. Fehlversuchszähler.
 
+**Eigengewichtsübungen** (Kategorie `EIGENGEWICHT`): Das gespeicherte Gewicht ist die Zusatzlast, 0 kg heißt reines Körpergewicht. Der Coach rechnet damit wie mit jeder anderen Last. Die doppelte Progression steigert zuerst die Wiederholungen bis `maxReps` und schlägt erst dann + Schrittweite als Zusatzlast vor (etwa Klimmzüge mit 8–12 Wdh.: 3 × 8 → … → 3 × 12, danach 3 × 8 mit + 2,5 kg). Linear, Gesamtwiederholungen und RPE/RIR schlagen nach einem Erfolg sofort + Schrittweite vor, auch von 0 kg aus. Der Standard bleibt das manuelle Schema, das nichts vorschlägt.
+
 ## Fehlversuche und Backoff
 
 - Ein einzelner Fehlversuch ergibt „Ziel wiederholen“ (`REPEAT_TARGET`).

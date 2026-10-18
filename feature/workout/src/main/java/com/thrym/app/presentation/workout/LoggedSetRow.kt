@@ -45,6 +45,7 @@ import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.HapticFeedbackHelper
 import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.setLoadText
 import com.thrym.shared.readinessdata.SetIntention
 import androidx.compose.material3.Surface
 import com.thrym.app.presentation.theme.AthleticNumber
@@ -68,6 +69,8 @@ internal fun LoggedSetRow(
     intentionFailed: Boolean = false,
     intensitySystem: com.thrym.app.domain.model.IntensitySystem,
     unitSystem: UnitSystem,
+    /** Bodyweight exercise: the weight is the added load ("Bodyweight + 10 kg"). */
+    addedLoad: Boolean = false,
     plateCalculatorEnabled: Boolean,
     availablePlates: List<Double>,
     barbellWeightKg: Double,
@@ -113,6 +116,7 @@ internal fun LoggedSetRow(
             intentionFailed = intentionFailed,
             intensitySystem = intensitySystem,
             unitSystem = unitSystem,
+            addedLoad = addedLoad,
             locked = isUpdating,
             plateCalculatorEnabled = plateCalculatorEnabled,
             availablePlates = availablePlates,
@@ -173,8 +177,8 @@ internal fun LoggedSetRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = if (set.weightKg == 0.0) {
-                                stringResource(UxR.string.workout_bodyweight_set_value, stringResource(R.string.weight_bodyweight), set.reps, pluralStringResource(R.plurals.common_reps_unit, set.reps))
+                            text = if (set.weightKg == 0.0 || addedLoad) {
+                                stringResource(UxR.string.workout_bodyweight_set_value, setLoadText(set.weightKg, unitSystem, addedLoad), set.reps, pluralStringResource(R.plurals.common_reps_unit, set.reps))
                             } else {
                                 stringResource(UxR.string.workout_weighted_set_value, weightText, WeightFormatting.unitLabel(unitSystem), set.reps, pluralStringResource(R.plurals.common_reps_unit, set.reps))
                             },

@@ -71,9 +71,25 @@ func iosWorkoutDisplayWeight(
     return "\(iosWorkoutDecimal(value)) \(unit)"
 }
 
+extension ILExercise {
+    /// Bodyweight exercises store the added load as the set weight: 0 kg is a plain
+    /// bodyweight set, 10 kg is bodyweight plus 10 kg. Same rule as Android's `tracksAddedLoad`.
+    var tracksAddedLoad: Bool {
+        category.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EIGENGEWICHT"
+    }
+}
+
+/// Load of a set or target: "82,5 kg"; 0 kg reads as bodyweight. With `addedLoad` (a
+/// bodyweight exercise) any other weight reads "Körpergewicht + 10 kg", like on Android.
+func iosSetLoadText(weightKg: Double, unitSystem: String, addedLoad: Bool = false) -> String {
+    if weightKg == 0 { return String(localized: "Körpergewicht") }
+    let weight = iosWorkoutDisplayWeight(kilograms: weightKg, unitSystem: unitSystem)
+    return addedLoad ? String(localized: "Körpergewicht + \(weight)") : weight
+}
+
 /// Logged set as "82,5 kg × 8 Wdh"; 0 kg reads as bodyweight, like on Android.
-func iosSetValueText(weightKg: Double, reps: Int, unitSystem: String) -> String {
-    let weight = weightKg == 0 ? String(localized: "Körpergewicht") : iosWorkoutDisplayWeight(kilograms: weightKg, unitSystem: unitSystem)
+func iosSetValueText(weightKg: Double, reps: Int, unitSystem: String, addedLoad: Bool = false) -> String {
+    let weight = iosSetLoadText(weightKg: weightKg, unitSystem: unitSystem, addedLoad: addedLoad)
     return String(localized: "\(weight) × \(reps) Wdh")
 }
 
