@@ -20,6 +20,7 @@
 - Technische Basis aktualisiert (Kotlin 2.4, Compose 1.12, compileSdk 37, Vico 3). Android-Einstellungen: Abschnittstitel werden nach der App-Sprache großgeschrieben statt nach der Gerätesprache.
 - Android-Workout: Fehlt eine Übung in der Auswahl, lässt sie sich direkt im laufenden Training als eigene Übung anlegen und hinzufügen. Schlägt das Anlegen fehl (etwa bei einem schon vergebenen Namen), steht der Fehler jetzt im Dialog statt verdeckt hinter der Auswahl; das gilt auch für den Planeditor.
 - iOS-Rekorde: Das beste e1RM in Statistik und Verlauf zählt eine einzelne Wiederholung jetzt als ihr Gewicht wie Android und die Rekordtafel. Bisher wurde 100 kg × 1 als 103,3 kg gespeichert. Solche Werte korrigiert die App einmal beim nächsten Start, alte IronLog-Backups beim Import.
+- Android-Rekorde: Der Import eines alten IronLog-iOS-Backups korrigiert jetzt auch auf Android das beste e1RM einer einzelnen Wiederholung, das iOS rein nach Epley gespeichert hatte (100 kg × 1 als 103,3 kg). Es zählt wie überall das Gewicht selbst. Bisher übernahm Android den alten Wert unverändert.
 - iOS-Rekorde: Das Beenden eines Trainings mit mehreren Übungen konnte mit „Invalid workout state: Backup contains duplicate personal record id“ scheitern, weil ein neuer Rekord die ID eines bestehenden bekam. Neue Rekorde bekommen jetzt immer eine freie ID, bestehende behalten ihre. Gespeicherte Daten waren nicht betroffen.
 
 ## 1.4.0 (Android versionCode 9 / iOS Build 4) – Polish und Parität · 26.09.2026
