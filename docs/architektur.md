@@ -82,7 +82,7 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 - Ein Rekord braucht einen Zuwachs von mindestens einem Schritt (0,1 kg, 1 Wdh, 1 kg Volumen). Gleichstand zählt nicht. Eine Übung ohne früheren Arbeitssatz hat keine Rekorde, sondern „erste Bestwerte“.
 - `summarize` liefert die Tafel des Abschlusses, `liveImprovements` die Meldung nach einem Log oder einer Änderung. Live braucht eine Bestmarke aus einem früheren Training und meldet nie Volumen; der Zuwachs bezieht sich in beiden Fällen auf den Bestwert vor dem Training.
 - Android liest die Sätze über `StatisticsRepository.getSetsForExerciseList` (live vor und nach der Änderung, unter dem Mutation-Mutex), iOS aus dem Trainingsgraphen (`IOSWorkoutRecords.swift`).
-- Bekannte Abweichung: Der iOS-Store berechnet den gespeicherten e1RM-Rekord für Einzelwiederholungen noch rein nach Epley (`SharedStateStore`), die Tafel wie Android mit Gewicht = e1RM.
+- Die gespeicherten e1RM-Bestwerte folgen derselben Regel: Android über `WorkoutCalculations.calculateE1RM`, der iOS-Store (`SharedStateStore`) über `SessionRecords.estimatedOneRepMaxKg`. Ältere iOS-Builds speicherten eine Einzelwiederholung rein nach Epley (100 kg × 1 als 103,3 kg). Beim Laden des iOS-Stands und beim Import setzt der Store einen gespeicherten e1RM, der genau diesem alten Bestwert der Sätze entspricht, auf die heutige Regel; alle anderen Rekorde bleiben, wie sie sind. Das läuft bei jedem Dekodieren, braucht keine Markierung und ändert das Backup-Format nicht. Android übernimmt Rekorde beim Import unverändert: Ein altes iOS-Backup behält dort den alten Wert, bis die Übung wieder einen Satz bekommt oder bearbeitet wird.
 
 ## Backup
 
