@@ -22,6 +22,8 @@ struct IOSDashboardScreen: View {
     /// `watchLocalDayChange()` and the scene re-activation check, so "heute" can
     /// never silently mean yesterday.
     @State private var dayGuard = ILLocalDayGuard()
+    @AppStorage(IOSCompanion.choiceKey) private var companionChoice = "AUTO"
+    @AppStorage(IOSCompanion.hiddenDayKey) private var companionHiddenDay = -1
 
     private var todayKey: String { dayGuard.currentDate }
 
@@ -133,6 +135,26 @@ struct IOSDashboardScreen: View {
         }
     }
 
+    /// The companion, on some days only; never during a running workout. The rules come from
+    /// the shared core.
+    @ViewBuilder
+    private var companionCard: some View {
+        let today = IOSCompanion.epochDay()
+        if store.data?.activeSession == nil,
+           let appearance = IOSCompanion.homeAppearance(
+               choice: companionChoice,
+               epochDay: today,
+               sessions: store.data?.workoutSessions ?? [],
+               hiddenDay: Int64(companionHiddenDay)
+           ) {
+            IOSCompanionCard(
+                character: appearance.character,
+                line: appearance.line,
+                onHide: { companionHiddenDay = Int(today) }
+            )
+        }
+    }
+
     @ViewBuilder
     private func dashboardContent(_ analytics: ILTrainingAnalytics) -> some View {
         let unitSystem = settings.state.unitSystem
@@ -149,6 +171,8 @@ struct IOSDashboardScreen: View {
         LazyVStack(alignment: .leading, spacing: 16) {
             if liquidGlass {
                 IOSDashboardGlassHeader(greeting: greetingTitle, onOpenStatistics: { showingStatistics = true })
+
+                companionCard
 
                 IOSDashboardGlassCommandCenter(
                     activeSession: store.data?.activeSession,
@@ -176,6 +200,8 @@ struct IOSDashboardScreen: View {
                 )
             } else {
                 greeting
+
+                companionCard
 
                 IOSDashboardCommandCenter(
                     activeSession: store.data?.activeSession,

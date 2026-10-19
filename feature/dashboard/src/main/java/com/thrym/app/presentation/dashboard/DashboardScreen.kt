@@ -68,6 +68,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.time.LocalDateTime
 import com.thrym.core.designsystem.R
 import com.thrym.app.domain.model.DeloadMode
@@ -88,6 +89,8 @@ import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.rememberDateTimeFormatter
 import com.thrym.feature.dashboard.R as DashboardR
 import org.koin.androidx.compose.koinViewModel
+import com.thrym.app.presentation.companion.CompanionCard
+import com.thrym.shared.companion.CompanionRules
 
 /** Abstand, in dem eine sichtbare Dashboard-Seite den Kalendertag prüft. */
 private const val DAY_ROLLOVER_CHECK_INTERVAL_MS = 60_000L
@@ -99,9 +102,11 @@ fun DashboardScreen(
     onContinueWorkout: (Long, Long?, Long?) -> Unit,
     onOpenProgressionReview: () -> Unit,
     onOpenSettings: () -> Unit,
-    viewModel: DashboardViewModel = koinViewModel()
+    viewModel: DashboardViewModel = koinViewModel(),
+    companionViewModel: DashboardCompanionViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val companionState by companionViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val dims = thrymDimens
     val liquidGlass = isLiquidGlass()
@@ -159,6 +164,21 @@ fun DashboardScreen(
             return@ThrymScreenScaffold
         }
 
+        val today = LocalDate.now()
+        // Not during a running workout: the home screen is then only the way back to it.
+        val companionAppearance = if (companionState.loaded && state.activeSession == null) {
+            CompanionRules.homeAppearance(
+                character = companionState.character,
+                epochDay = today.toEpochDay(),
+                daysSinceLastWorkout = state.lastWorkout?.let {
+                    ChronoUnit.DAYS.between(it.startTime.toLocalDate(), today)
+                },
+                hiddenEpochDay = companionState.hiddenEpochDay
+            )
+        } else {
+            null
+        }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -170,11 +190,21 @@ fun DashboardScreen(
                 if (liquidGlass) {
                     GlassGreetingHeader(
                         greeting = stringResource(id = greetingRes()),
-                        today = LocalDate.now(),
+                        today = today,
                         onOpenSettings = onOpenSettings
                     )
                 } else {
                     GreetingHeader()
+                }
+            }
+
+            companionAppearance?.let { appearance ->
+                item(key = "companion") {
+                    CompanionCard(
+                        character = appearance.character,
+                        line = appearance.line,
+                        onHide = { companionViewModel.hideForDay(today.toEpochDay()) }
+                    )
                 }
             }
 

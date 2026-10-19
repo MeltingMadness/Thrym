@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="companion_name_odin">Odin</string>
+    <string name="companion_name_valkyrie">Walküre</string>
+    <string name="companion_hide_today">Für heute ausblenden</string>
+    <string name="companion_says">%1$s sagt: %2$s</string>
+    <string name="companion_line_onboarding_welcome_odin">Heil dir! Ich bin Odin und begleite dich durch die ersten Schritte.</string>
+    <string name="companion_line_onboarding_welcome_valkyrie">Heil dir! Ich bin deine Walküre und begleite dich durch die ersten Schritte.</string>
+    <string name="companion_line_onboarding_units">Kilo oder Pfund? Die Hantel ist mit beidem gleich schwer.</string>
+    <string name="companion_line_onboarding_start">Auf in die Halle! Ich schaue ab und zu vorbei. In den Einstellungen kannst du mich tauschen oder ausschalten.</string>
+    <string name="companion_line_first_steps_welcome">Willkommen in der Halle! Starte dein erstes Training, wann immer du bereit bist.</string>
+    <string name="companion_line_trained_today_rest">Gut gekämpft heute. Auch Erholung gehört zum Training.</string>
+    <string name="companion_line_trained_today_sleep">Das Tagwerk ist getan. Auch Thor braucht seinen Schlaf.</string>
+    <string name="companion_line_welcome_back_one_set">Schön, dich wiederzusehen! Jedes Comeback beginnt mit einem einzigen Satz.</string>
+    <string name="companion_line_everyday_yggdrasil">Beständig schlägt schnell. Auch Yggdrasil wuchs Ring um Ring.</string>
+    <string name="companion_line_everyday_warmup">Gutes Aufwärmen ist die halbe Schlacht.</string>
+    <string name="companion_line_everyday_technique">Erst saubere Technik. Das schwere Gewicht kommt von allein.</string>
+    <string name="companion_line_everyday_recovery">Schlaf und gutes Essen machen auch stark.</string>
+    <string name="companion_line_everyday_small_plates">Kleine Scheiben zählen. Fortschritt ist Fortschritt.</string>
+</resources>

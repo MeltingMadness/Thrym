@@ -13,7 +13,7 @@ core/
   common/               Logik ohne UI: Formatierung, AppLogger (einzige Android-API: android.util.Log),
                         Progressions-Engine, Deload-Erkennung, Scheibenrechner, Muskelvolumen
   database/             Room: Entities, DAOs, Migrationen, exportierte Schemas (core/database/schemas/)
-  designsystem/         Theme, Design-Tokens, gemeinsame Compose-Komponenten, gemeinsame UI-Texte
+  designsystem/         Theme, Design-Tokens, gemeinsame Compose-Komponenten (auch der Begleiter), gemeinsame UI-Texte
                         (values/ Englisch, values-de/ Deutsch), Fonts
 data/                   Repository-Implementierungen, DataStore-Einstellungen, Backup,
                         Erinnerungen (WorkManager), Incident-Reports
@@ -98,9 +98,11 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 
 `AppPreferences` (in `core:model`) wird per DataStore gespeichert. Standardwerte: metrisch, Wochenstart Montag, dunkles Design in der Darstellung Liquid Glass, Farbschema Amber, RPE als Intensitätssystem, getrennte Gewichtshistorie zwischen Einzel- und Meta-Plänen, automatischer Pausen-Timer aus (Standarddauer 120 s), Scheibenrechner an (Scheiben 25 bis 1,25 kg, Stange 20 kg), kein Deload-Modus, Backup-Erinnerung aus.
 
+Die Wahl des Begleiters (Odin, Walküre, aus) liegt nicht in `AppPreferences`, sondern wie der Onboarding-Status in einem eigenen DataStore `companion` (`CompanionRepository`), auf iOS in `UserDefaults` unter `thrym.companion.*`. Details: [`features/begleiter.md`](features/begleiter.md).
+
 ## Kotlin Multiplatform (`:shared`)
 
-Enthält den plattformneutralen Kern (`com.thrym.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise, Reihenfolge und Rekorde im laufenden Training (`workout`) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
+Enthält den plattformneutralen Kern (`com.thrym.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise, Reihenfolge und Rekorde im laufenden Training (`workout`), Pixel und Regeln des Begleiters (`companion`) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
 
 Android nutzt daraus vor allem Backup-Format und Validator, Readiness, Progression (über `PortableProgressionAdapter`), Satzvorgaben, Scheibenrechner und die Einstellungs-Controller. Die Android-Datenhaltung bleibt Room. Die iOS-App bindet `:shared` als statisches Framework `Shared` ein, speichert den Trainingsgraphen aus `store` als JSON-Datei unter `Application Support/Thrym/training-state.json` und greift über `IosTrainingFeature` und `IosSettingsFeature` (`shared/src/iosMain`) auf den Kern zu, siehe [`ios-feature-parity.md`](ios-feature-parity.md). Einstellungen liegen auf iOS in `UserDefaults`.
 

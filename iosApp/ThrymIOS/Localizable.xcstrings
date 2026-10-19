@@ -119,6 +119,22 @@
         }
       }
     },
+    "%@ sagt: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sagt: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ says: %@"
+          }
+        }
+      }
+    },
     "%@ starten": {
       "localizations": {
         "de": {
@@ -3150,6 +3166,22 @@
         }
       }
     },
+    "Auf in die Halle! Ich schaue ab und zu vorbei. In den Einstellungen kannst du mich tauschen oder ausschalten.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf in die Halle! Ich schaue ab und zu vorbei. In den Einstellungen kannst du mich tauschen oder ausschalten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To the hall! I'll drop by now and then. You can swap me or switch me off in the settings."
+          }
+        }
+      }
+    },
     "Aufheben": {
       "localizations": {
         "de": {
@@ -3386,6 +3418,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Analysis unavailable"
+          }
+        }
+      }
+    },
+    "Automatisch": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisch"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic"
           }
         }
       }
@@ -3710,6 +3758,22 @@
         }
       }
     },
+    "Begleiter": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Begleiter"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Companion"
+          }
+        }
+      }
+    },
     "Beine": {
       "localizations": {
         "de": {
@@ -3834,6 +3898,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Best e1RM"
+          }
+        }
+      }
+    },
+    "Beständig schlägt schnell. Auch Yggdrasil wuchs Ring um Ring.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beständig schlägt schnell. Auch Yggdrasil wuchs Ring um Ring."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steady beats fast. Even Yggdrasil grew one ring at a time."
           }
         }
       }
@@ -4460,6 +4540,22 @@
         }
       }
     },
+    "Das Tagwerk ist getan. Auch Thor braucht seinen Schlaf.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Tagwerk ist getan. Auch Thor braucht seinen Schlaf."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's work is done. Even Thor needs his sleep."
+          }
+        }
+      }
+    },
     "Das Training ist gespeichert. Was soll für das nächste Training gelten?": {
       "localizations": {
         "de": {
@@ -4646,6 +4742,22 @@
         }
       },
       "shouldTranslate": false
+    },
+    "Dein Begleiter führt dich durch den Start und schaut ab und zu auf der Startseite vorbei. Automatisch wählt Odin.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Begleiter führt dich durch den Start und schaut ab und zu auf der Startseite vorbei. Automatisch wählt Odin."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your companion walks you through the start and drops by on the home screen now and then. Automatic picks Odin."
+          }
+        }
+      }
     },
     "Dein Log für Krafttraining.": {
       "localizations": {
@@ -6325,6 +6437,22 @@
         }
       }
     },
+    "Erst saubere Technik. Das schwere Gewicht kommt von allein.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erst saubere Technik. Das schwere Gewicht kommt von allein."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean technique first. The heavy weight will come."
+          }
+        }
+      }
+    },
     "Erste Bestwerte": {
       "localizations": {
         "de": {
@@ -7094,6 +7222,22 @@
         }
       }
     },
+    "Für heute ausblenden": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für heute ausblenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide for today"
+          }
+        }
+      }
+    },
     "GESCHÄTZTES 1RM": {
       "localizations": {
         "de": {
@@ -7658,6 +7802,22 @@
         }
       }
     },
+    "Gut gekämpft heute. Auch Erholung gehört zum Training.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gut gekämpft heute. Auch Erholung gehört zum Training."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Well fought today. Rest is part of the training too."
+          }
+        }
+      }
+    },
     "Guten Abend": {
       "localizations": {
         "de": {
@@ -7706,6 +7866,22 @@
         }
       }
     },
+    "Gutes Aufwärmen ist die halbe Schlacht.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gutes Aufwärmen ist die halbe Schlacht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A good warm-up is half the battle."
+          }
+        }
+      }
+    },
     "Hantel und Platten": {
       "localizations": {
         "de": {
@@ -7734,6 +7910,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Barbell"
+          }
+        }
+      }
+    },
+    "Heil dir! Ich bin Odin und begleite dich durch die ersten Schritte.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heil dir! Ich bin Odin und begleite dich durch die ersten Schritte."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hail! I'm Odin, and I'll walk you through the first steps."
+          }
+        }
+      }
+    },
+    "Heil dir! Ich bin deine Walküre und begleite dich durch die ersten Schritte.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heil dir! Ich bin deine Walküre und begleite dich durch die ersten Schritte."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hail! I'm your valkyrie, and I'll walk you through the first steps."
           }
         }
       }
@@ -8622,6 +8830,22 @@
         }
       }
     },
+    "Kilo oder Pfund? Die Hantel ist mit beidem gleich schwer.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kilo oder Pfund? Die Hantel ist mit beidem gleich schwer."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kilos or pounds? The bar weighs the same either way."
+          }
+        }
+      }
+    },
     "Kilogramm": {
       "localizations": {
         "de": {
@@ -8634,6 +8858,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kilograms"
+          }
+        }
+      }
+    },
+    "Kleine Scheiben zählen. Fortschritt ist Fortschritt.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kleine Scheiben zählen. Fortschritt ist Fortschritt."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small plates count. Progress is progress."
           }
         }
       }
@@ -10878,6 +11118,22 @@
       },
       "shouldTranslate": false
     },
+    "Odin": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odin"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odin"
+          }
+        }
+      }
+    },
     "Offene Übungen und Sätze bleiben im Plan.": {
       "localizations": {
         "de": {
@@ -12761,6 +13017,22 @@
         }
       }
     },
+    "Schlaf und gutes Essen machen auch stark.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schlaf und gutes Essen machen auch stark."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep and good food make you strong, too."
+          }
+        }
+      }
+    },
     "Schlaf unter dem Schwellenwert": {
       "localizations": {
         "de": {
@@ -12869,6 +13141,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shoulders"
+          }
+        }
+      }
+    },
+    "Schön, dich wiederzusehen! Jedes Comeback beginnt mit einem einzigen Satz.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schön, dich wiederzusehen! Jedes Comeback beginnt mit einem einzigen Satz."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Good to see you again! Every comeback starts with a single set."
           }
         }
       }
@@ -15378,6 +15666,22 @@
         }
       }
     },
+    "Walküre": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walküre"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valkyrie"
+          }
+        }
+      }
+    },
     "Warmup": {
       "localizations": {
         "de": {
@@ -15968,6 +16272,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Welcome to %@"
+          }
+        }
+      }
+    },
+    "Willkommen in der Halle! Starte dein erstes Training, wann immer du bereit bist.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Willkommen in der Halle! Starte dein erstes Training, wann immer du bereit bist."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to the hall! Start your first workout whenever you're ready."
           }
         }
       }

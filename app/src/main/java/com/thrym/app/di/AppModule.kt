@@ -11,6 +11,7 @@ import com.thrym.app.data.db.RoomTransactionRunner
 import com.thrym.app.data.db.TransactionRunner
 import com.thrym.app.data.local.ThrymDatabase
 import com.thrym.app.data.preferences.AppPreferencesRepositoryImpl
+import com.thrym.app.data.preferences.CompanionRepositoryImpl
 import com.thrym.app.data.preferences.OnboardingRepositoryImpl
 import com.thrym.app.data.reminder.ReminderSchedulerImpl
 import com.thrym.app.data.repository.BackupRepositoryImpl
@@ -30,6 +31,7 @@ import com.thrym.app.domain.repository.DeloadRepository
 import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.domain.repository.IncidentReportRepository
 import com.thrym.app.domain.repository.MetaTrainingPlanRepository
+import com.thrym.app.domain.repository.CompanionRepository
 import com.thrym.app.domain.repository.OnboardingRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.repository.ReadinessProjectionSource
@@ -43,6 +45,7 @@ import com.thrym.app.domain.util.BuildInfo
 import com.thrym.app.presentation.common.BuiltInExerciseNames
 import com.thrym.app.presentation.common.ResourcesUiStrings
 import com.thrym.app.presentation.common.uiLocale
+import com.thrym.app.presentation.dashboard.DashboardCompanionViewModel
 import com.thrym.app.presentation.dashboard.DashboardViewModel
 import com.thrym.app.presentation.exercises.ExerciseLibraryViewModel
 import com.thrym.app.presentation.history.WorkoutDetailViewModel
@@ -54,6 +57,7 @@ import com.thrym.app.presentation.plans.MetaPlanListViewModel
 import com.thrym.app.presentation.plans.PlanEditorViewModel
 import com.thrym.app.presentation.plans.TrainingPlanListViewModel
 import com.thrym.app.presentation.progression.ProgressionReviewViewModel
+import com.thrym.app.presentation.settings.CompanionSettingsViewModel
 import com.thrym.app.presentation.settings.SettingsViewModel
 import com.thrym.app.presentation.statistics.ExerciseStatsViewModel
 import com.thrym.app.presentation.workout.ActiveWorkoutViewModel
@@ -130,6 +134,7 @@ val appModule = module {
     single<MetaTrainingPlanRepository> { MetaTrainingPlanRepositoryImpl(get()) }
     single<AppPreferencesRepository> { AppPreferencesRepositoryImpl(androidContext(), get()) }
     single<OnboardingRepository> { OnboardingRepositoryImpl(androidContext()) }
+    single<CompanionRepository> { CompanionRepositoryImpl(androidContext()) }
     single {
         val workoutRepository = get<WorkoutRepository>()
         val trainingPlanRepository = get<TrainingPlanRepository>()
@@ -169,10 +174,12 @@ val appModule = module {
     // ViewModels WITHOUT SavedStateHandle — viewModelOf() for consistency
     viewModelOf(::ExerciseLibraryViewModel)
     viewModelOf(::DashboardViewModel)
+    viewModelOf(::DashboardCompanionViewModel)
     viewModelOf(::WorkoutHistoryViewModel)
     viewModelOf(::TrainingPlanListViewModel)
     viewModelOf(::MetaPlanListViewModel)
     viewModelOf(::MetaPlanEditorViewModel)
     viewModelOf(::SettingsViewModel)
     viewModelOf(::OnboardingViewModel)
+    viewModelOf(::CompanionSettingsViewModel)
 }

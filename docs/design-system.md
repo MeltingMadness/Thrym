@@ -105,6 +105,10 @@ Gilt für Android und iOS gleich:
 
 **Scheibenfarben:** `PlateColors` in `theme/Color.kt` folgt der üblichen Kodierung (25 kg rot, 20 kg blau, 15 kg gelb, 10 kg grün, 5 kg weiß, kleinere Scheiben grau/silber).
 
+## Begleiter (`presentation/companion`)
+
+`CompanionSprite` zeichnet Odin oder die Walküre als 32 × 32 Pixel große 16-Bit-Figur aus `CompanionSprites` (`:shared`), mit ganzzahliger Skalierung und ohne Glättung. `CompanionCard` setzt die Figur neben eine Sprechblase (`ThrymSurfaceCard`, Ton `ELEVATED`), optional mit X zum Ausblenden. Die Figur hat ihre eigene feste Palette und folgt nicht dem Farbschema, damit sie in jedem Schema gleich aussieht. iOS: `IOSCompanionSprite` und `IOSCompanionCard` mit `ThrymCard`. Details in [`features/begleiter.md`](features/begleiter.md).
+
 ## App-Hülle
 
 - XML-Themes in `app/src/main/res/values/themes.xml`: `Theme.Thrym` für die App, `Theme.Thrym.Splash` für den Start.
