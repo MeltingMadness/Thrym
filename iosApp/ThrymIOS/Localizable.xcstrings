@@ -6770,6 +6770,22 @@
         }
       }
     },
+    "Freiwillig. Wird nur genutzt, damit Kraftvergleiche für dein Geschlecht und Alter fair sind. Bleibt auf diesem Gerät und ist nicht Teil des Backups.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Freiwillig. Wird nur genutzt, damit Kraftvergleiche für dein Geschlecht und Alter fair sind. Bleibt auf diesem Gerät und ist nicht Teil des Backups."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional. Only used to make strength comparisons fair for your sex and age. Stays on this device and is not part of backups."
+          }
+        }
+      }
+    },
     "Freiwillige Selbsteinschätzung. Ohne Angabe bleibt alles offen; es wird kein Wert vorausgefüllt.": {
       "localizations": {
         "de": {
@@ -7030,6 +7046,22 @@
         }
       }
     },
+    "Geburtsjahr": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geburtsjahr"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Year of birth"
+          }
+        }
+      }
+    },
     "Gefilterte abgeschlossene Trainings": {
       "localizations": {
         "de": {
@@ -7186,6 +7218,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "All done."
+          }
+        }
+      }
+    },
+    "Geschlecht": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geschlecht"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sex"
           }
         }
       }
@@ -8170,6 +8218,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "No new target suggested; this item is for information only."
+          }
+        }
+      }
+    },
+    "Keine Angabe": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Angabe"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not specified"
           }
         }
       }
@@ -9736,6 +9800,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Muscle volume"
+          }
+        }
+      }
+    },
+    "Männlich": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Männlich"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Male"
           }
         }
       }
@@ -11439,6 +11519,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Per side"
+          }
+        }
+      }
+    },
+    "Profil": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile"
           }
         }
       }
@@ -15182,6 +15278,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reps"
+          }
+        }
+      }
+    },
+    "Weiblich": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiblich"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Female"
           }
         }
       }

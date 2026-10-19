@@ -3,6 +3,7 @@ package com.thrym.shared.settings
 import com.thrym.shared.model.AppPreferences
 import com.thrym.shared.model.DeloadMode
 import com.thrym.shared.model.IntensitySystem
+import com.thrym.shared.model.ProfileSex
 import com.thrym.shared.model.ReminderConfig
 import com.thrym.shared.model.ThemeMode
 import com.thrym.shared.model.AppearanceStyle
@@ -249,6 +250,47 @@ class SettingsPreferencesControllerTest {
             )
         )
     }
+
+    @Test
+    fun profile_defaultsToNoAnswer() {
+        val preferences = AppPreferences()
+
+        assertEquals(null, preferences.profileSex)
+        assertEquals(null, preferences.profileBirthYear)
+    }
+
+    @Test
+    fun updateProfile_persistsSexAndBirthYearAndClearsThem() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = FakeSharedReminderScheduler()
+        )
+
+        controller.updateProfileSex(ProfileSex.FEMALE)
+        controller.updateProfileBirthYear(1985)
+        advanceUntilIdle()
+
+        assertEquals(ProfileSex.FEMALE, repository.current.profileSex)
+        assertEquals(1985, repository.current.profileBirthYear)
+
+        controller.updateProfileSex(null)
+        controller.updateProfileBirthYear(null)
+        advanceUntilIdle()
+
+        assertEquals(null, repository.current.profileSex)
+        assertEquals(null, repository.current.profileBirthYear)
+    }
+
+    @Test
+    fun profileBirthYearOptions_coverAgesTenToHundredNewestFirst() {
+        val options = profileBirthYearOptions(currentYear = 2026)
+
+        assertEquals(2016, options.first())
+        assertEquals(1926, options.last())
+        assertEquals(91, options.size)
+    }
 }
 
 private class FakeSharedAppPreferencesRepository(
@@ -343,6 +385,14 @@ private class FakeSharedAppPreferencesRepository(
 
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         state.value = state.value.copy(backupReminderEnabled = enabled)
+    }
+
+    override suspend fun updateProfileSex(sex: ProfileSex?) {
+        state.value = state.value.copy(profileSex = sex)
+    }
+
+    override suspend fun updateProfileBirthYear(birthYear: Int?) {
+        state.value = state.value.copy(profileBirthYear = birthYear)
     }
 }
 

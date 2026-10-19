@@ -127,6 +127,22 @@ final class IOSSettingsViewModel: ObservableObject {
         feature.updateBackupReminderEnabled(enabled: enabled)
     }
 
+    /// An empty value clears the answer.
+    func updateProfileSex(_ value: String) {
+        feature.updateProfileSex(value: value)
+    }
+
+    /// `0` clears the answer.
+    func updateProfileBirthYear(_ year: Int) {
+        feature.updateProfileBirthYear(year: Int32(year))
+    }
+
+    /// Birth years the profile offers this year, newest first.
+    var profileBirthYearOptions: [Int] {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        return feature.profileBirthYearOptions(currentYear: Int32(currentYear)).map { $0.intValue }
+    }
+
     func updateBetaDiagnosticsOptIn(_ enabled: Bool) {
         feature.updateBetaDiagnosticsOptIn(enabled: enabled)
     }
@@ -432,6 +448,9 @@ final class IOSSettingsViewModel: ObservableObject {
         case "THURSDAY": return String(localized: "Donnerstag")
         case "FRIDAY": return String(localized: "Freitag")
         case "SATURDAY": return String(localized: "Samstag")
+        case "FEMALE": return String(localized: "Weiblich")
+        case "MALE": return String(localized: "Männlich")
+        case "": return String(localized: "Keine Angabe")
         default: return rawValue
         }
     }
@@ -520,6 +539,10 @@ struct SettingsFormState {
     var lastSuccessfulExportEpochMillis: Int64?
     var backupReminderEnabled: Bool
     var backupReminderDue: Bool
+    /// `ProfileSex` name, or empty for no answer.
+    var profileSex: String
+    /// Birth year, or `0` for no answer.
+    var profileBirthYear: Int
     var versionName: String
     var versionCode: Int
 
@@ -549,6 +572,8 @@ struct SettingsFormState {
         lastSuccessfulExportEpochMillis: Int64?,
         backupReminderEnabled: Bool,
         backupReminderDue: Bool,
+        profileSex: String = "",
+        profileBirthYear: Int = 0,
         versionName: String,
         versionCode: Int
     ) {
@@ -577,6 +602,8 @@ struct SettingsFormState {
         self.lastSuccessfulExportEpochMillis = lastSuccessfulExportEpochMillis
         self.backupReminderEnabled = backupReminderEnabled
         self.backupReminderDue = backupReminderDue
+        self.profileSex = profileSex
+        self.profileBirthYear = profileBirthYear
         self.versionName = versionName
         self.versionCode = versionCode
     }
@@ -636,6 +663,8 @@ struct SettingsFormState {
         lastSuccessfulExportEpochMillis = sharedState.lastSuccessfulExportEpochMillis?.int64Value
         backupReminderEnabled = sharedState.backupReminderEnabled
         backupReminderDue = sharedState.backupReminderDue
+        profileSex = sharedState.profileSex
+        profileBirthYear = Int(sharedState.profileBirthYear)
         versionName = sharedState.versionName
         versionCode = Int(sharedState.versionCode)
     }

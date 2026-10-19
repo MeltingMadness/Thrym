@@ -133,6 +133,14 @@ class FakeAppPreferencesRepository(
         state.value = state.value.copy(backupReminderEnabled = enabled)
     }
 
+    override suspend fun updateProfileSex(sex: com.thrym.app.domain.model.ProfileSex?) {
+        state.value = state.value.copy(profileSex = sex)
+    }
+
+    override suspend fun updateProfileBirthYear(birthYear: Int?) {
+        state.value = state.value.copy(profileBirthYear = birthYear)
+    }
+
     override suspend fun readRestTimerState(sessionId: Long): String? {
         restTimerReadGate?.await()
         return restTimerStates[sessionId]

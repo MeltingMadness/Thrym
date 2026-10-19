@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.DeloadMode
 import com.thrym.app.domain.model.IntensitySystem
+import com.thrym.app.domain.model.ProfileSex
 import com.thrym.app.domain.model.ReminderConfig
 import com.thrym.app.domain.model.ThemeMode
 import com.thrym.app.domain.model.ThemeScheme
@@ -86,7 +87,10 @@ class AppPreferencesRepositoryImpl(
             availablePlates = parseAvailablePlates(prefs.stringOrNull(AppPreferenceKeys.AVAILABLE_PLATES)),
             barbellWeightKg = prefs[AppPreferenceKeys.BARBELL_WEIGHT_KG] ?: DEFAULT_BARBELL_WEIGHT_KG,
             lastSuccessfulExportEpochMillis = prefs[AppPreferenceKeys.LAST_SUCCESSFUL_EXPORT_EPOCH_MILLIS],
-            backupReminderEnabled = prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] ?: false
+            backupReminderEnabled = prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] ?: false,
+            profileSex = prefs.stringOrNull(AppPreferenceKeys.PROFILE_SEX)
+                ?.let { runCatching { ProfileSex.valueOf(it) }.getOrNull() },
+            profileBirthYear = prefs[AppPreferenceKeys.PROFILE_BIRTH_YEAR]?.takeIf { it > 0 }
         )
     }
 
@@ -235,6 +239,26 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun updateProfileSex(sex: ProfileSex?) {
+        context.appPreferencesDataStore.edit { prefs ->
+            if (sex == null) {
+                prefs.remove(AppPreferenceKeys.PROFILE_SEX)
+            } else {
+                prefs[AppPreferenceKeys.PROFILE_SEX] = sex.name
+            }
+        }
+    }
+
+    override suspend fun updateProfileBirthYear(birthYear: Int?) {
+        context.appPreferencesDataStore.edit { prefs ->
+            if (birthYear == null || birthYear <= 0) {
+                prefs.remove(AppPreferenceKeys.PROFILE_BIRTH_YEAR)
+            } else {
+                prefs[AppPreferenceKeys.PROFILE_BIRTH_YEAR] = birthYear
+            }
         }
     }
 

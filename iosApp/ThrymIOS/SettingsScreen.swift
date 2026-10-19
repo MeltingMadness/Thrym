@@ -62,6 +62,31 @@ struct SettingsScreen: View {
                         ))
                     }
 
+                    Section {
+                        Picker("Geschlecht", selection: Binding(
+                            get: { viewModel.state.profileSex },
+                            set: viewModel.updateProfileSex
+                        )) {
+                            ForEach(["FEMALE", "MALE", ""], id: \.self) { option in
+                                Text(viewModel.label(for: option)).tag(option)
+                            }
+                        }
+
+                        Picker("Geburtsjahr", selection: Binding(
+                            get: { viewModel.state.profileBirthYear },
+                            set: viewModel.updateProfileBirthYear
+                        )) {
+                            Text("Keine Angabe").tag(0)
+                            ForEach(viewModel.profileBirthYearOptions, id: \.self) { year in
+                                Text(verbatim: String(year)).tag(year)
+                            }
+                        }
+                    } header: {
+                        Text("Profil")
+                    } footer: {
+                        Text("Freiwillig. Wird nur genutzt, damit Kraftvergleiche für dein Geschlecht und Alter fair sind. Bleibt auf diesem Gerät und ist nicht Teil des Backups.")
+                    }
+
                     Section("Training") {
                         Picker("Intensität", selection: Binding(
                             get: { viewModel.state.intensitySystem },

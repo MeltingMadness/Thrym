@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_section_profile">Profile</string>
+    <string name="settings_profile_hint">Optional. Only used to make strength comparisons fair for your sex and age. Stays on this device and is not part of backups.</string>
+    <string name="settings_profile_sex_title">Sex</string>
+    <string name="settings_profile_sex_female">Female</string>
+    <string name="settings_profile_sex_male">Male</string>
+    <string name="settings_profile_no_answer">Not specified</string>
+    <string name="settings_profile_birth_year_title">Year of birth</string>
+</resources>

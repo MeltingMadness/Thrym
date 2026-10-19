@@ -4,6 +4,7 @@ import android.content.Context
 import com.thrym.app.data.local.dao.WorkoutSessionDao
 import com.thrym.app.data.local.entity.WorkoutSessionEntity
 import com.thrym.app.domain.model.DeloadMode
+import com.thrym.app.domain.model.ProfileSex
 import com.thrym.app.domain.model.ReminderConfig
 import com.thrym.app.domain.model.ThemeMode
 import com.thrym.app.domain.model.UnitSystem
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -111,6 +113,27 @@ class AppPreferencesDataStoreTest {
         val persisted = repository.preferences.first()
         assertEquals(1_700_000_000_000L, persisted.lastSuccessfulExportEpochMillis)
         assertTrue(persisted.backupReminderEnabled)
+    }
+
+    @Test
+    fun `profile defaults to no answer, persists sex and birth year and clears both`() = runTest {
+        val repository = AppPreferencesRepositoryImpl(createContextWithTempDataStore())
+
+        val defaults = repository.preferences.first()
+        assertNull(defaults.profileSex)
+        assertNull(defaults.profileBirthYear)
+
+        repository.updateProfileSex(ProfileSex.FEMALE)
+        repository.updateProfileBirthYear(1985)
+        val persisted = repository.preferences.first()
+        assertEquals(ProfileSex.FEMALE, persisted.profileSex)
+        assertEquals(1985, persisted.profileBirthYear)
+
+        repository.updateProfileSex(null)
+        repository.updateProfileBirthYear(null)
+        val cleared = repository.preferences.first()
+        assertNull(cleared.profileSex)
+        assertNull(cleared.profileBirthYear)
     }
 
     @Test

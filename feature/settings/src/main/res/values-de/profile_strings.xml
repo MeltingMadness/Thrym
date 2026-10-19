@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_section_profile">Profil</string>
+    <string name="settings_profile_hint">Freiwillig. Wird nur genutzt, damit Kraftvergleiche für dein Geschlecht und Alter fair sind. Bleibt auf diesem Gerät und ist nicht Teil des Backups.</string>
+    <string name="settings_profile_sex_title">Geschlecht</string>
+    <string name="settings_profile_sex_female">Weiblich</string>
+    <string name="settings_profile_sex_male">Männlich</string>
+    <string name="settings_profile_no_answer">Keine Angabe</string>
+    <string name="settings_profile_birth_year_title">Geburtsjahr</string>
+</resources>
