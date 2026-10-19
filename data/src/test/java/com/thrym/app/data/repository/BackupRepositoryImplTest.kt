@@ -18,6 +18,7 @@ import com.thrym.app.data.local.dao.WorkoutSessionDao
 import com.thrym.app.data.local.dao.WorkoutSetDao
 import com.thrym.app.data.local.entity.ExerciseEntity
 import com.thrym.app.data.local.entity.MetaPlanSkipEntity
+import com.thrym.app.data.local.entity.PersonalRecordEntity
 import com.thrym.app.data.local.entity.PlanExerciseEntity
 import com.thrym.app.data.local.entity.ProgressionConfigColumns
 import com.thrym.app.data.local.entity.ProgressionSuggestionEntity
@@ -34,6 +35,7 @@ import com.thrym.shared.backup.BackupMetaPlanItem
 import com.thrym.shared.backup.BackupMetaPlanSkip
 import com.thrym.shared.backup.BackupMetaTrainingPlan
 import com.thrym.shared.backup.BackupPayloadV1
+import com.thrym.shared.backup.BackupPersonalRecord
 import com.thrym.shared.backup.BackupPlanExercise
 import com.thrym.shared.backup.BackupProgressionConfig
 import com.thrym.shared.backup.BackupProgressionSuggestion
@@ -52,6 +54,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -471,6 +474,70 @@ class BackupRepositoryImplTest {
         assertTrue("meta plans must be inserted before skips", insertMetaPlans in 0 until insertSkips)
         coVerify(exactly = 1) { harness.metaTrainingPlanDao.deleteAllMetaPlanSkips() }
         coVerify(exactly = 1) { harness.metaTrainingPlanDao.replaceAllMetaPlanSkips(any()) }
+    }
+
+    @Test
+    fun `import repairs only e1RM records that older iOS builds stored by plain Epley`() {
+        val harness = Harness()
+        harness.stubSnapshotReads()
+        harness.stubMutations()
+        val written = slot<List<PersonalRecordEntity>>()
+        coEvery { harness.personalRecordDao.replaceAll(capture(written)) } answers {
+            harness.events += "insert-records"
+        }
+        // Both exercises have 100 kg × 1 and 90 kg × 4. Older iOS builds rated the single at
+        // 100 × (1 + 1/30) = 103.3 kg. Today it counts as 100 kg, so 90 × 4 = 102 kg is the best.
+        val base = validPayload()
+        val squat = base.exercises.single().copy(id = 2L, name = "Kniebeuge", primaryMuscleGroup = "BEINE")
+        val sets = listOf(1L, 2L).flatMap { exerciseId ->
+            listOf(1 to 100.0, 4 to 90.0).mapIndexed { index, (reps, weightKg) ->
+                BackupWorkoutSet(
+                    id = exerciseId * 10L + index,
+                    sessionId = 10L,
+                    exerciseId = exerciseId,
+                    setNumber = index + 1,
+                    reps = reps,
+                    weightKg = weightKg,
+                    isWarmup = false,
+                    completedAt = 1200L + index * 300L
+                )
+            }
+        }
+        val legacyE1rm = PersonalRecordEntity(
+            id = 30L,
+            exerciseId = 1L,
+            type = "MAX_E1RM",
+            value = 100.0 * (1.0 + 1.0 / 30.0),
+            achievedAt = 1200L
+        )
+        val maxWeight = PersonalRecordEntity(id = 31L, exerciseId = 1L, type = "MAX_WEIGHT", value = 100.0, achievedAt = 1200L)
+        // Not a value of the old rule, e.g. from a set deleted later: it stays as it is.
+        val otherE1rm = PersonalRecordEntity(id = 32L, exerciseId = 2L, type = "MAX_E1RM", value = 110.0, achievedAt = 1200L)
+        val payload = base.copy(
+            exercises = base.exercises + squat,
+            workoutSets = sets,
+            personalRecords = listOf(legacyE1rm, maxWeight, otherE1rm).map {
+                BackupPersonalRecord(
+                    id = it.id,
+                    exerciseId = it.exerciseId,
+                    type = it.type,
+                    value = it.value,
+                    achievedAt = it.achievedAt
+                )
+            }
+        )
+        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), payload).encodeToByteArray()
+
+        runBlocking { harness.repository.importBackup(URI, harness.documentIo.bytes.sha256Hex()) }
+
+        val records = written.captured.associateBy { it.id }
+        assertEquals(setOf(30L, 31L, 32L), records.keys)
+        val repaired = records.getValue(30L)
+        assertEquals(102.0, repaired.value, 1e-9)
+        assertEquals(1500L, repaired.achievedAt)
+        assertEquals(legacyE1rm.copy(value = repaired.value, achievedAt = 1500L), repaired)
+        assertEquals(maxWeight, records.getValue(31L))
+        assertEquals(otherE1rm, records.getValue(32L))
     }
 
     @Test

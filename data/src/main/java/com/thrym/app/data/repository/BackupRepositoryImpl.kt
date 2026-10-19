@@ -54,6 +54,7 @@ import com.thrym.app.domain.util.BuildInfo
 import com.thrym.shared.backup.forCurrentPlan
 import com.thrym.shared.backup.CURRENT_BACKUP_SCHEMA_VERSION
 import com.thrym.shared.backup.SUPPORTED_BACKUP_SET_TYPES
+import com.thrym.shared.backup.repairLegacySingleRepE1rm
 import com.thrym.shared.readinessdata.ReadinessData
 import com.thrym.shared.readinessdata.ReadinessDataCodec
 import com.thrym.shared.readinessdata.ReadinessDataValidationException
@@ -180,7 +181,9 @@ class BackupRepositoryImpl(
 
         val payload = decodePayload(bytes)
         validateOrThrow(payload)
-        val importData = payload.toImportData()
+        // Older IronLog iOS builds stored a single rep's e1RM by plain Epley (100 kg × 1 as
+        // 103.3 kg). The shared repair sets such a record to the current rule, like iOS does.
+        val importData = payload.repairLegacySingleRepE1rm().toImportData()
 
         // Verified snapshot of the exact state we are about to delete. If this
         // fails, no transaction has started and therefore zero rows are deleted.
