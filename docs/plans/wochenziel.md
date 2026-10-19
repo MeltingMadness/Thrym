@@ -25,9 +25,9 @@ Dieselbe Regel wie der heutige Wochenzähler: eine **abgeschlossene** Einheit (`
 
 ### Wochenziel
 
-- Einstellung „Wochenziel“: **Aus** oder **1 bis 7** Trainings pro Woche.
-- Standard für neue und bestehende Installationen: **3**. Das ist der häufigste Rhythmus in Kraftplänen und entspricht den Standard-Erinnerungstagen (Mo/Mi/Fr).
-- „Aus“ blendet Ziel, Serie und alle Hinweise darauf vollständig aus. Der heutige Zähler „N Trainings diese Woche“ bleibt dann wie bisher.
+- Einstellung „Wochenziel“: **2 bis 7** Trainings pro Woche, frei wählbar (Entscheidung Martin, 19.10.2026). Ein Ziel von 1 gibt es nicht, weil eine Serie mit einem Training pro Woche kaum Gewohnheit aufbaut.
+- Standard für neue und bestehende Installationen: **3**, von Anfang an eingeschaltet. Das ist der häufigste Rhythmus in Kraftplänen und entspricht den Standard-Erinnerungstagen (Mo/Mi/Fr).
+- Zusätzlich ein Schalter, der Ziel und Serie ausblendet, für Leute, die nur das Logbuch wollen. Der heutige Zähler „N Trainings diese Woche“ bleibt dann wie bisher.
 
 ### Wann eine Woche „gehalten“ ist
 
@@ -101,7 +101,7 @@ enum class WeekOutcome { MET, DELOAD, JOKER, MISSED, CURRENT }
 
 - Die Zeitzonenumrechnung `startTime` → `LocalDate` bleibt im Adapter, wie bei der Readiness.
 - `WeekOutcome` ist nur Laufzeit-Modell, wird nie gespeichert.
-- Einstellung in `AppPreferences`: `weeklyGoalHistory: List<WeeklyGoalChange>` mit Standard `[(beliebiges frühes Datum, 3)]`. „Aus“ wird als Eintrag mit `goal = 0` gespeichert, damit ein Wiedereinschalten die alte Historie nicht verliert. Plus `SettingsPreferencesController.updateWeeklyGoal(goal: Int)`.
+- Einstellungen in `AppPreferences`: `weeklyGoalEnabled: Boolean = true` und `weeklyGoalHistory: List<WeeklyGoalChange>` mit Standard `[(beliebiges frühes Datum, 3)]`. Ausschalten lässt die Historie stehen, damit ein Wiedereinschalten nichts verliert. Werte außerhalb 2–7 (etwa aus einem späteren Format) werden beim Lesen auf 2–7 begrenzt. Plus `SettingsPreferencesController.updateWeeklyGoal(goal: Int)` und `updateWeeklyGoalEnabled(enabled: Boolean)`.
 
 ### Android
 
@@ -133,7 +133,7 @@ enum class WeekOutcome { MET, DELOAD, JOKER, MISSED, CURRENT }
 
 ### Einstellungen
 
-- „Wochenziel“: Aus, 1–7. Kurzer Hilfetext: „Zählt abgeschlossene Trainings pro Woche. Deload-Wochen unterbrechen die Serie nicht.“
+- „Wochenziel“: Schalter an/aus und Auswahl 2–7. Kurzer Hilfetext: „Zählt abgeschlossene Trainings pro Woche. Deload-Wochen unterbrechen die Serie nicht.“
 
 ### Barrierefreiheit
 
@@ -150,7 +150,7 @@ enum class WeekOutcome { MET, DELOAD, JOKER, MISSED, CURRENT }
 | `weekly_goal_remaining` (plural) | Noch %d Training bis zum Wochenziel / Noch %d Trainings … | %d more workout to reach your weekly goal / %d more workouts … |
 | `weekly_goal_jokers` (plural) | %d Joker / %d Joker | %d streak freeze / %d streak freezes |
 | `settings_weekly_goal` | Wochenziel | Weekly goal |
-| `settings_weekly_goal_off` | Aus | Off |
+| `settings_weekly_goal_show` | Wochenziel anzeigen | Show weekly goal |
 
 Englisch „streak freeze“ statt „joker“, weil der Begriff dort etabliert ist. Alle Texte auf iOS identisch im Katalog.
 
@@ -163,7 +163,7 @@ Englisch „streak freeze“ statt „joker“, weil der Begriff dort etabliert 
 - Deload-Woche mit 1 Training hält die Serie; `isDeload == null` zählt nicht als Deload.
 - Joker: nach 4 gehaltenen Wochen 1 Joker, Höchstwert 2, Joker-Wochen verdienen keinen Joker, zwei verpasste Wochen ohne Joker brechen.
 - Zieländerung gilt ab der laufenden Woche; frühere Wochen behalten ihr Ziel.
-- Ziel aus (`0`): kein Status.
+- Ziel ausgeschaltet: kein Status. Ziel außerhalb 2–7 wird begrenzt.
 - Wochenstart Sonntag vs. Montag, Jahreswechsel, Sommerzeit (über lokale Daten, nicht Millis).
 - Mehrere Trainings am selben Tag zählen einzeln.
 - Leere Historie.
@@ -192,8 +192,10 @@ Schritte 2 und 3 können parallel laufen, sobald 1 gemergt ist.
 - Verlaufsansicht aller Wochen (Kalender-Heatmap). Das Modell liefert `weeks` schon dafür.
 - Trophäen stehen in `trophaeen.md`; Heimdalls Wacht dort baut auf diesem Plan auf. Rückblick und Wiedereinstieg bekommen eigene Pläne.
 
-## Offene Fragen an Martin
+## Entscheidungen
 
-1. Standard für bestehende Nutzer: **an mit Ziel 3** (Vorschlag) oder aus, bis man es einschaltet?
-2. Joker-Regel **1 pro 4 Wochen, max. 2** (Vorschlag) passt, oder großzügiger/strenger?
-3. Soll eine Deload-Woche schon mit **1 Training** zählen (Vorschlag), oder mit dem halben Ziel?
+- 19.10.2026, Martin: Ziel frei einstellbar von 2 bis 7, Standard 3 und von Anfang an eingeschaltet.
+
+## Offene Fragen
+
+- Joker-Regel (1 pro 4 Wochen, max. 2) und Deload-Woche ab 1 Training bleiben als Vorschlag stehen, bis Martin etwas anderes sagt.
