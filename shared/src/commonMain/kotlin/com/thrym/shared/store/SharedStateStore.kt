@@ -21,6 +21,7 @@ import com.thrym.shared.readinessdata.ReadinessData
 import com.thrym.shared.readinessdata.ReadinessDataValidator
 import com.thrym.shared.readinessdata.SetIntention
 import com.thrym.shared.readinessdata.SetIntentionRecord
+import com.thrym.shared.workout.SessionRecords
 import kotlinx.datetime.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.math.abs
 import kotlin.time.Clock
 
 private const val MAX_WEIGHT_RECORD_TYPE = "MAX_WEIGHT"
@@ -59,6 +61,34 @@ private fun resolveMetaRotation(
 private fun Long.incrementIfSafe(): Long =
     if (this == Long.MAX_VALUE) Long.MAX_VALUE else this + 1L
 
+/** The sets the stored personal records count: no warm-ups, reps and weight not negative. */
+private fun BackupWorkoutSet.countsForPersonalRecords(): Boolean =
+    resolvedSetType() != WARMUP_SET_TYPE && reps >= 0 && weightKg.isFinite() && weightKg >= 0.0
+
+/**
+ * The best e1RM of [sets] and the set that reached it; on a tie the later set. [estimate] is the
+ * rule of Android and the records board, where a single rep counts as the weight itself.
+ */
+private fun bestE1rmOf(
+    sets: List<BackupWorkoutSet>,
+    estimate: (weightKg: Double, reps: Int) -> Double = SessionRecords::estimatedOneRepMaxKg,
+): Pair<Double, BackupWorkoutSet>? = sets
+    .mapNotNull { set ->
+        val value = estimate(set.weightKg, set.reps)
+        value.takeIf(Double::isFinite)?.let { value to set }
+    }
+    .maxWithOrNull(
+        compareBy<Pair<Double, BackupWorkoutSet>> { it.first }
+            .thenBy { it.second.completedAt }
+            .thenBy { it.second.id },
+    )
+
+/** Plain Epley, which older iOS builds stored MAX_E1RM with: 100 kg × 1 gave 103.3 kg. */
+private fun legacyEpleyKg(weightKg: Double, reps: Int): Double =
+    weightKg * (1.0 + reps.toDouble() / 30.0)
+
+private const val LEGACY_E1RM_EPSILON = 1e-9
+
 /**
  * Canonical backup decoding shared by the durable store and the staged iOS import preview.
  *
@@ -81,21 +111,51 @@ private object SharedBackupPayloadCodec {
         }
         validateOrThrow(decoded)
         val upgraded = canonicalize(
-            decoded.copy(
-                schemaVersion = CURRENT_BACKUP_SCHEMA_VERSION,
-                appVersion = "",
-                exportedAtEpochMillis = 0L,
-                planExercises = decoded.planExercises.map { it.copy(progression = it.progression.forCurrentPlan()) },
-                workoutSets = decoded.workoutSets.map { set ->
-                    set.copy(
-                        setType = set.resolvedSetType(),
-                        isWarmup = null,
-                    )
-                },
+            repairLegacySingleRepE1rm(
+                decoded.copy(
+                    schemaVersion = CURRENT_BACKUP_SCHEMA_VERSION,
+                    appVersion = "",
+                    exportedAtEpochMillis = 0L,
+                    planExercises = decoded.planExercises.map { it.copy(progression = it.progression.forCurrentPlan()) },
+                    workoutSets = decoded.workoutSets.map { set ->
+                        set.copy(
+                            setType = set.resolvedSetType(),
+                            isWarmup = null,
+                        )
+                    },
+                ),
             ),
         )
         validateOrThrow(upgraded)
         return upgraded
+    }
+
+    /**
+     * Older iOS builds stored MAX_E1RM with plain Epley, so a single rep of 100 kg was a best of
+     * 103.3 kg. Android and the records board count a single rep as the weight itself. A stored
+     * e1RM that is exactly the old best of the exercise's sets, and above the best by the current
+     * rule, is set to the current rule. Every other record stays as the backup has it.
+     *
+     * The step is idempotent, so it needs no marker: the local state is repaired and written once
+     * on the next launch, an IronLog backup when it is imported.
+     */
+    private fun repairLegacySingleRepE1rm(payload: BackupPayloadV1): BackupPayloadV1 {
+        if (payload.personalRecords.none { it.type == MAX_E1RM_RECORD_TYPE }) return payload
+        val setsByExercise = payload.workoutSets
+            .filter { it.countsForPersonalRecords() }
+            .groupBy { it.exerciseId }
+        var repaired = false
+        val records = payload.personalRecords.map { record ->
+            if (record.type != MAX_E1RM_RECORD_TYPE) return@map record
+            val sets = setsByExercise[record.exerciseId] ?: return@map record
+            val legacy = bestE1rmOf(sets, ::legacyEpleyKg) ?: return@map record
+            val current = bestE1rmOf(sets) ?: return@map record
+            val isLegacyValue = abs(record.value - legacy.first) <= LEGACY_E1RM_EPSILON
+            if (!isLegacyValue || current.first >= legacy.first - LEGACY_E1RM_EPSILON) return@map record
+            repaired = true
+            record.copy(value = current.first, achievedAt = current.second.completedAt)
+        }
+        return if (repaired) payload.copy(personalRecords = records) else payload
     }
 
     fun canonicalize(payload: BackupPayloadV1): BackupPayloadV1 = payload.copy(
@@ -1040,7 +1100,8 @@ class SharedStateStore(
     /**
      * Rebuilds the Android-compatible PR set for affected exercises from the remaining graph.
      * Warmup sets are ignored. Weight, reps and E1RM consider live and completed work sets;
-     * volume considers only completed sessions. Existing record IDs are retained where possible
+     * E1RM follows [SessionRecords.estimatedOneRepMaxKg], so a single rep counts as its weight.
+     * Volume considers only completed sessions. Existing record IDs are retained where possible
      * so a delete/update does not create needless identity churn in observers.
      */
     private fun rebuildPersonalRecords(
@@ -1065,8 +1126,7 @@ class SharedStateStore(
         val setsByExercise = state.workoutSets
             .asSequence()
             .filter { it.exerciseId in affectedExerciseIds }
-            .filter { it.resolvedSetType() != WARMUP_SET_TYPE }
-            .filter { it.reps >= 0 && it.weightKg.isFinite() && it.weightKg >= 0.0 }
+            .filter { it.countsForPersonalRecords() }
             .groupBy { it.exerciseId }
         val rebuilt = mutableListOf<BackupPersonalRecord>()
 
@@ -1104,16 +1164,7 @@ class SharedStateStore(
                 achievedAt = bestReps?.completedAt,
             )
 
-            val bestE1rm = sets
-                .mapNotNull { set ->
-                    val value = set.weightKg * (1.0 + set.reps.toDouble() / 30.0)
-                    value.takeIf(Double::isFinite)?.let { value to set }
-                }
-                .maxWithOrNull(
-                    compareBy<Pair<Double, BackupWorkoutSet>> { it.first }
-                        .thenBy { it.second.completedAt }
-                        .thenBy { it.second.id },
-                )
+            val bestE1rm = bestE1rmOf(sets)
             appendRecord(
                 records = rebuilt,
                 oldRecords = oldRecords,

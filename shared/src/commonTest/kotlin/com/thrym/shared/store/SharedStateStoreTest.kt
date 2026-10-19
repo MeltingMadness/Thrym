@@ -838,6 +838,157 @@ class SharedStateStoreTest {
         assertEquals(1L, record.id)
     }
 
+    @Test
+    fun singleRepSetCountsItsWeightAsE1rm() = runTest {
+        val store = newStore(MemoryPersistence())
+        val sessionId = store.startWorkout(name = "Heavy")
+        store.addSet(
+            BackupWorkoutSet(
+                id = 0L,
+                sessionId = sessionId,
+                exerciseId = exercise.id,
+                setNumber = 1,
+                reps = 1,
+                weightKg = 100.0,
+                setType = NORMAL_SET_TYPE,
+                completedAt = 1_000L,
+            ),
+        )
+
+        val single = store.snapshot().personalRecords.single { it.type == "MAX_E1RM" }
+        assertEquals(100.0, single.value)
+        assertEquals(1_000L, single.achievedAt)
+
+        // 90 kg × 4 is an e1RM of 102 kg. Plain Epley would rate the single at 103.3 kg and keep it.
+        store.addSet(
+            BackupWorkoutSet(
+                id = 0L,
+                sessionId = sessionId,
+                exerciseId = exercise.id,
+                setNumber = 2,
+                reps = 4,
+                weightKg = 90.0,
+                setType = NORMAL_SET_TYPE,
+                completedAt = 1_500L,
+            ),
+        )
+
+        val best = store.snapshot().personalRecords.single { it.type == "MAX_E1RM" }
+        assertEquals(102.0, best.value, 1e-9)
+        assertEquals(1_500L, best.achievedAt)
+        assertEquals(single.id, best.id)
+    }
+
+    @Test
+    fun launchRepairsTheSingleRepE1rmOfOlderIosBuildsOnce() = runTest {
+        val persistence = MemoryPersistence()
+        val legacy = withSingleRepHistory(
+            newStore(persistence).snapshot(),
+            e1rmKgByExercise = mapOf(exercise.id to LEGACY_SINGLE_REP_E1RM_KG),
+        )
+        persistence.value = payloadJson(legacy)
+
+        val store = newStore(persistence)
+
+        val e1rm = store.snapshot().personalRecords.single { it.type == "MAX_E1RM" }
+        val legacyE1rm = legacy.personalRecords.single { it.type == "MAX_E1RM" }
+        assertEquals(legacyE1rm.id, e1rm.id)
+        assertEquals(102.0, e1rm.value, 1e-9)
+        assertEquals(1_500L, e1rm.achievedAt)
+        assertEquals(
+            legacy.personalRecords.filterNot { it.type == "MAX_E1RM" },
+            store.snapshot().personalRecords.filterNot { it.type == "MAX_E1RM" },
+        )
+
+        // The repaired state is on disk, so the next launch neither changes nor writes anything.
+        val writes = persistence.writeCount
+        assertEquals(store.snapshot(), newStore(persistence).snapshot())
+        assertEquals(writes, persistence.writeCount)
+    }
+
+    @Test
+    fun importRepairsOnlyE1rmRecordsOfTheOldRule() = runTest {
+        val second = exercise.copy(id = 2L, name = "Kniebeuge")
+        val store = SharedStateStore(
+            persistence = MemoryPersistence(),
+            seedExercises = listOf(exercise, second),
+            nowEpochMillis = { 1_000L },
+        )
+        // The second exercise keeps an e1RM that its sets do not explain, e.g. from a set Android
+        // deleted later. Only a value of the old iOS rule is repaired.
+        val backup = payloadJson(
+            withSingleRepHistory(
+                store.snapshot(),
+                e1rmKgByExercise = mapOf(exercise.id to LEGACY_SINGLE_REP_E1RM_KG, second.id to 110.0),
+            ),
+        )
+
+        store.importJson(backup)
+
+        val e1rm = store.snapshot().personalRecords
+            .filter { it.type == "MAX_E1RM" }
+            .associateBy { it.exerciseId }
+        assertEquals(102.0, e1rm.getValue(exercise.id).value, 1e-9)
+        assertEquals(110.0, e1rm.getValue(second.id).value)
+        assertEquals(1_000L, e1rm.getValue(second.id).achievedAt)
+        assertEquals(SharedStateStore.decodeAndUpgradeForPreview(backup), store.snapshot())
+    }
+
+    /**
+     * One finished session with 100 kg × 1 and 90 kg × 4 for each exercise, and its records as an
+     * older iOS build stored them, with the given e1RM achieved by the single.
+     */
+    private fun withSingleRepHistory(
+        base: BackupPayloadV1,
+        e1rmKgByExercise: Map<Long, Double>,
+    ): BackupPayloadV1 {
+        val exerciseIds = e1rmKgByExercise.keys.sorted()
+        val sets = exerciseIds.flatMapIndexed { index, exerciseId ->
+            listOf(1 to 100.0, 4 to 90.0).mapIndexed { setIndex, (reps, weightKg) ->
+                BackupWorkoutSet(
+                    id = index * 2L + setIndex + 1L,
+                    sessionId = 1L,
+                    exerciseId = exerciseId,
+                    setNumber = setIndex + 1,
+                    reps = reps,
+                    weightKg = weightKg,
+                    setType = NORMAL_SET_TYPE,
+                    completedAt = 1_000L + setIndex * 500L,
+                )
+            }
+        }
+        val records = exerciseIds.flatMapIndexed { index, exerciseId ->
+            listOf(
+                Triple("MAX_WEIGHT", 100.0, 1_000L),
+                Triple("MAX_REPS", 4.0, 1_500L),
+                Triple("MAX_E1RM", e1rmKgByExercise.getValue(exerciseId), 1_000L),
+                Triple("MAX_VOLUME", 460.0, 1_500L),
+            ).mapIndexed { typeIndex, (type, value, achievedAt) ->
+                BackupPersonalRecord(
+                    id = index * 4L + typeIndex + 1L,
+                    exerciseId = exerciseId,
+                    type = type,
+                    value = value,
+                    achievedAt = achievedAt,
+                )
+            }
+        }
+        return base.copy(
+            workoutSessions = listOf(
+                BackupWorkoutSession(
+                    id = 1L,
+                    startTime = 500L,
+                    endTime = 2_000L,
+                    durationSeconds = 1L,
+                    name = "Heavy",
+                    notes = "",
+                ),
+            ),
+            workoutSets = sets,
+            personalRecords = records,
+        )
+    }
+
     private fun newStore(
         persistence: MemoryPersistence,
         now: () -> Long = { 1_000L },
@@ -858,6 +1009,11 @@ class SharedStateStoreTest {
         backoffPercent = 10.0,
         ruleRevision = 1,
     )
+
+    private companion object {
+        /** 100 kg × 1 by plain Epley, the value older iOS builds stored. */
+        const val LEGACY_SINGLE_REP_E1RM_KG = 100.0 * (1.0 + 1.0 / 30.0)
+    }
 
     private class MemoryPersistence(
         var value: String? = null,
