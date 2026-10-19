@@ -874,4 +874,12 @@ private class FakePreferencesRepository : AppPreferencesRepository {
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         state.value = state.value.copy(backupReminderEnabled = enabled)
     }
+
+    override suspend fun updateProfileSex(sex: com.thrym.app.domain.model.ProfileSex?) {
+        state.value = state.value.copy(profileSex = sex)
+    }
+
+    override suspend fun updateProfileBirthYear(birthYear: Int?) {
+        state.value = state.value.copy(profileBirthYear = birthYear)
+    }
 }

@@ -326,6 +326,17 @@ fun SettingsScreen(
             }
 
             item {
+                PreferenceCard(title = stringResource(SettingsR.string.settings_section_profile)) {
+                    ProfileSettingsContent(
+                        sex = state.preferences.profileSex,
+                        birthYear = state.preferences.profileBirthYear,
+                        onSexChange = viewModel::updateProfileSex,
+                        onBirthYearChange = viewModel::updateProfileBirthYear
+                    )
+                }
+            }
+
+            item {
                 PreferenceCard(title = stringResource(id = R.string.settings_section_preferences)) {
                     ToggleRow(
                         title = stringResource(id = R.string.settings_unit_system_title),

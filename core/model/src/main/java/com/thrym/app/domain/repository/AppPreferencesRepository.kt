@@ -3,6 +3,7 @@ package com.thrym.app.domain.repository
 import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.DeloadMode
 import com.thrym.app.domain.model.IntensitySystem
+import com.thrym.app.domain.model.ProfileSex
 import com.thrym.app.domain.model.ReminderConfig
 import com.thrym.app.domain.model.ThemeMode
 import com.thrym.app.domain.model.ThemeScheme
@@ -34,6 +35,8 @@ interface AppPreferencesRepository {
     suspend fun updateBarbellWeightKg(weightKg: Double)
     suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?)
     suspend fun updateBackupReminderEnabled(enabled: Boolean)
+    suspend fun updateProfileSex(sex: ProfileSex?)
+    suspend fun updateProfileBirthYear(birthYear: Int?)
 
     /**
      * Persists the active workout rest timers for one session.

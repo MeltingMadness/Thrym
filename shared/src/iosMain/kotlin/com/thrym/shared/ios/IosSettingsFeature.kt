@@ -12,6 +12,7 @@ import com.thrym.shared.model.BackupBlob
 import com.thrym.shared.model.BuildInfo
 import com.thrym.shared.model.IncidentAttachment
 import com.thrym.shared.model.IntensitySystem
+import com.thrym.shared.model.ProfileSex
 import com.thrym.shared.model.ReminderConfig
 import com.thrym.shared.model.ThemeMode
 import com.thrym.shared.model.AppearanceStyle
@@ -154,6 +155,19 @@ class IosSettingsFeature {
     fun updateAvailablePlates(plates: List<Double>) = controller.updateAvailablePlates(plates)
     fun updateBarbellWeightKg(weightKg: Double) = controller.updateBarbellWeightKg(weightKg)
     fun updateBackupReminderEnabled(enabled: Boolean) = controller.updateBackupReminderEnabled(enabled)
+
+    /** An empty or unknown value clears the answer. */
+    fun updateProfileSex(value: String) {
+        controller.updateProfileSex(ProfileSex.entries.firstOrNull { it.name == value })
+    }
+
+    /** `0` clears the answer, so Swift does not need an optional Kotlin integer. */
+    fun updateProfileBirthYear(year: Int) {
+        controller.updateProfileBirthYear(year.takeIf { it > 0 })
+    }
+
+    fun profileBirthYearOptions(currentYear: Int): List<Int> =
+        com.thrym.shared.settings.profileBirthYearOptions(currentYear)
 
     /**
      * Records a completed external export after the platform document writer confirms success.
@@ -391,6 +405,10 @@ class IosSettingsState(
     val lastSuccessfulExportEpochMillis: Long?,
     val backupReminderEnabled: Boolean,
     val backupReminderDue: Boolean,
+    /** `ProfileSex` name, or an empty string for no answer. */
+    val profileSex: String,
+    /** Birth year, or `0` for no answer. */
+    val profileBirthYear: Int,
     val versionName: String,
     val versionCode: Int,
 )
@@ -444,6 +462,9 @@ internal class IosAppPreferencesRepository(
         persist { it.copy(lastSuccessfulExportEpochMillis = timestampMillis) }
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) =
         persist { it.copy(backupReminderEnabled = enabled) }
+    override suspend fun updateProfileSex(sex: ProfileSex?) = persist { it.copy(profileSex = sex) }
+    override suspend fun updateProfileBirthYear(birthYear: Int?) =
+        persist { it.copy(profileBirthYear = birthYear?.takeIf { year -> year > 0 }) }
 
     private fun persist(transform: (AppPreferences) -> AppPreferences) {
         val updated = transform(mutablePreferences.value)
@@ -512,6 +533,9 @@ internal class IosAppPreferencesRepository(
                 Keys.backupReminderEnabled,
                 defaults.backupReminderEnabled
             ),
+            profileSex = userDefaults.stringForKey(Keys.profileSex)
+                ?.let { value -> ProfileSex.entries.firstOrNull { it.name == value } },
+            profileBirthYear = userDefaults.intOrDefault(Keys.profileBirthYear, 0).takeIf { it > 0 },
         )
     }
 
@@ -574,6 +598,12 @@ internal class IosAppPreferencesRepository(
             userDefaults.setInteger(timestamp, Keys.lastSuccessfulExportEpochMillis)
         } ?: userDefaults.removeObjectForKey(Keys.lastSuccessfulExportEpochMillis)
         userDefaults.setBool(preferences.backupReminderEnabled, Keys.backupReminderEnabled)
+        preferences.profileSex?.let { sex ->
+            userDefaults.setObject(sex.name, Keys.profileSex)
+        } ?: userDefaults.removeObjectForKey(Keys.profileSex)
+        preferences.profileBirthYear?.let { year ->
+            userDefaults.setInteger(year.toLong(), Keys.profileBirthYear)
+        } ?: userDefaults.removeObjectForKey(Keys.profileBirthYear)
     }
 
     private object Keys {
@@ -601,6 +631,8 @@ internal class IosAppPreferencesRepository(
         const val barbellWeightKg = "settings.barbellWeightKg"
         const val lastSuccessfulExportEpochMillis = "settings.lastSuccessfulExportEpochMillis"
         const val backupReminderEnabled = "settings.backupReminderEnabled"
+        const val profileSex = "settings.profileSex"
+        const val profileBirthYear = "settings.profileBirthYear"
     }
 
     private fun loadAvailablePlates(defaults: List<Double>): List<Double> {
@@ -855,6 +887,8 @@ private fun SettingsPreferencesState.toIosState(buildInfo: BuildInfo): IosSettin
         lastSuccessfulExportEpochMillis = preferences.lastSuccessfulExportEpochMillis,
         nowEpochMillis = currentEpochMillis(),
     ),
+    profileSex = preferences.profileSex?.name.orEmpty(),
+    profileBirthYear = preferences.profileBirthYear ?: 0,
     versionName = buildInfo.versionName,
     versionCode = buildInfo.versionCode,
 )

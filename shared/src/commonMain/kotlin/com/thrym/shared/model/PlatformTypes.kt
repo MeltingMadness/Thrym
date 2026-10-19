@@ -68,6 +68,16 @@ enum class DeloadMode {
     REDUCE_INTENSITY_BY_15_PERCENT,
 }
 
+/**
+ * Sex from the optional profile, used only to scale strength comparisons. `null` in
+ * [AppPreferences.profileSex] means the user gave no answer. Persisted by name.
+ */
+@Serializable
+enum class ProfileSex {
+    FEMALE,
+    MALE
+}
+
 @Serializable
 data class ReminderConfig(
     val enabled: Boolean = false,
@@ -104,7 +114,11 @@ data class AppPreferences(
     /** Epoch millis of the most recent completed export to a user-selected document. */
     val lastSuccessfulExportEpochMillis: Long? = null,
     /** Opt-in for the local Settings reminder when the external export is stale. */
-    val backupReminderEnabled: Boolean = false
+    val backupReminderEnabled: Boolean = false,
+    /** Optional profile: sex for fair strength comparisons. `null` means no answer. */
+    val profileSex: ProfileSex? = null,
+    /** Optional profile: birth year rather than age, so it stays valid. `null` means no answer. */
+    val profileBirthYear: Int? = null
 )
 
 @Serializable

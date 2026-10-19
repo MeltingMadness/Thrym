@@ -34,6 +34,12 @@ enum class ThemeScheme {
     PULSE
 }
 
+/** Sex from the optional profile, used only to scale strength comparisons. Persisted by name. */
+enum class ProfileSex {
+    FEMALE,
+    MALE
+}
+
 data class ReminderConfig(
     val enabled: Boolean = false,
     val hour: Int = 19,
@@ -68,5 +74,9 @@ data class AppPreferences(
     /** Epoch millis of the most recent completed export to a user-selected document. */
     val lastSuccessfulExportEpochMillis: Long? = null,
     /** Opt-in for the local Settings reminder when the external export is stale. */
-    val backupReminderEnabled: Boolean = false
+    val backupReminderEnabled: Boolean = false,
+    /** Optional profile: sex for fair strength comparisons. `null` means no answer. */
+    val profileSex: ProfileSex? = null,
+    /** Optional profile: birth year rather than age, so it stays valid. `null` means no answer. */
+    val profileBirthYear: Int? = null
 )

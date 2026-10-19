@@ -11,6 +11,7 @@ import com.thrym.app.data.backup.BackupSchemaTooNewException
 import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.IncidentReport
 import com.thrym.app.domain.model.IntensitySystem
+import com.thrym.app.domain.model.ProfileSex
 import com.thrym.app.domain.model.ReminderConfig
 import com.thrym.app.domain.model.ThemeMode
 import com.thrym.app.domain.model.ThemeScheme
@@ -190,6 +191,14 @@ class SettingsViewModel(
 
     fun updateBackupReminderEnabled(enabled: Boolean) {
         preferencesController.updateBackupReminderEnabled(enabled)
+    }
+
+    fun updateProfileSex(sex: ProfileSex?) {
+        preferencesController.updateProfileSex(sex?.toShared())
+    }
+
+    fun updateProfileBirthYear(birthYear: Int?) {
+        preferencesController.updateProfileBirthYear(birthYear)
     }
 
 

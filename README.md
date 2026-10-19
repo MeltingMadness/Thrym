@@ -27,7 +27,7 @@ Thrym was previously called **IronLog**. See [Migrating from IronLog](#migrating
 | **Progression coach** | After the workout: suggestions for new targets, which are applied to the plan only after you confirm them |
 | **History** | All workouts (paged) with search and filters by time period and plan, a detail view to correct or delete single sets and add a workout note, swipe to delete |
 | **Exercises** | Exercise library with search and muscle filter, training figures per exercise (sessions, last trained), custom exercises, archiving, statistics per exercise (records, estimated 1RM, progress chart) |
-| **Settings** | Units (kg/lb), first day of the week, appearance (Liquid Glass or Ember style, 7 color schemes, light/dark/system, Dynamic Color), reduced motion, RPE/RIR/off, rest timer, plates and bar weight, workout reminders, backup export/import with an optional reminder, internal safety backup, incident report |
+| **Settings** | Optional profile (sex and year of birth, for fair strength comparisons), units (kg/lb), first day of the week, appearance (Liquid Glass or Ember style, 7 color schemes, light/dark/system, Dynamic Color), reduced motion, RPE/RIR/off, rest timer, plates and bar weight, workout reminders, backup export/import with an optional reminder, internal safety backup, incident report |
 
 The table describes the Android app, which is the functional reference. The iOS app covers the same areas. Its current state and what has been verified on iOS are tracked in [`docs/ios-feature-parity.md`](docs/ios-feature-parity.md) (German). Some features depend on the platform, for example Dynamic Color, which needs Android 12 or later.
 
@@ -37,6 +37,7 @@ The table describes the Android app, which is the functional reference. The iOS 
 - **No internet permission on Android.** The app does not request `android.permission.INTERNET`. The merged manifest does contain `ACCESS_NETWORK_STATE`, which WorkManager (used for reminders) adds. That permission only lets the app check whether a connection exists. It cannot send or receive any data.
 - **No automatic Android cloud backup.** Android's system backup and device-to-device transfer are turned off for Thrym's data. On iOS, the app's data is included in your regular device backup (iCloud or computer) if you have one turned on, like any other app's data.
 - **Backups are files you control.** A backup is a local JSON file. It is only created when you export one, and you choose where it goes (the file picker or share sheet). It contains your full training history unencrypted, so keep it somewhere safe. Before every import, the app creates an internal safety backup on the device.
+- **The profile is optional and stays on the device.** Sex and year of birth can be left unanswered. They are stored with the settings, are only used to scale strength comparisons and are not part of a backup.
 - **Incident reports are opt-in.** An incident report is a diagnostics file with the app version, device model, OS version, the current screen and the error details. It is only created when you ask for one, and it only leaves the device if you share it yourself.
 
 ## Migrating from IronLog
@@ -45,7 +46,7 @@ Thrym has new app IDs (Android `com.thrym.app`, iOS `com.thrym.ios`). It therefo
 
 1. In IronLog, open **Settings** and **export a backup**. Save the file somewhere you can find it again.
 2. Install Thrym, open **Settings → Import backup** and select the file. The import **replaces all workout data** in Thrym, so do it before you log new workouts.
-3. Set your preferences again. App settings are **not part of the backup**, for example units, first day of the week, appearance, RPE/RIR, rest timer, plates and bar weight, reminders and the backup reminder.
+3. Set your preferences again. App settings are **not part of the backup**, for example the profile, units, first day of the week, appearance, RPE/RIR, rest timer, plates and bar weight, reminders and the backup reminder.
 4. Once you have checked that everything is there, you can uninstall IronLog. The backup file holds your complete training history: keep it in a safe place or delete it.
 
 Every IronLog backup (backup format version 1, schema version up to 15) can be imported into Thrym, on both Android and iOS. A backup that is invalid or comes from a newer app version is rejected with a message, and your data is not changed.

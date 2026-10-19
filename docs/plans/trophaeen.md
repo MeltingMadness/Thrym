@@ -78,6 +78,8 @@ Beispiel: Ein 55-jähriger Mann erreicht Kniebeuge Silber bei 1,5 × 0,83 ≈ 1,
 
 ### Angaben
 
+Stand: Die Profilangaben (Geschlecht, Geburtsjahr) sind in den Einstellungen beider Plattformen umgesetzt (`AppPreferences.profileSex`, `profileBirthYear`). Die einmalige Abfrage beim ersten Öffnen der Trophäenhalle kommt mit der Trophäenhalle.
+
 - Neue Angaben in den Einstellungen unter „Profil“: **Geschlecht** (weiblich, männlich, keine Angabe) und **Geburtsjahr**. Das Geburtsjahr statt des Alters, damit es sich nicht jedes Jahr ändert.
 - Gefragt wird einmal, wenn man die Trophäenhalle zum ersten Mal öffnet, mit dem Satz „Damit die Kraft-Trophäen fair sind. Die Angaben bleiben auf deinem Gerät.“ Man kann es überspringen und später ändern.
 - **Keine Angabe** beim Geschlecht: Es gilt der Mittelwert aus beiden Tabellen. Ohne Geburtsjahr gilt Faktor 1,0.

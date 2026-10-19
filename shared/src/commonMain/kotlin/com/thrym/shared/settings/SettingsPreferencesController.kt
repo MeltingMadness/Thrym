@@ -3,6 +3,7 @@ package com.thrym.shared.settings
 import com.thrym.shared.model.AppPreferences
 import com.thrym.shared.model.DeloadMode
 import com.thrym.shared.model.IntensitySystem
+import com.thrym.shared.model.ProfileSex
 import com.thrym.shared.model.ReminderConfig
 import com.thrym.shared.model.ThemeMode
 import com.thrym.shared.model.AppearanceStyle
@@ -41,6 +42,8 @@ interface SharedAppPreferencesRepository {
     suspend fun updateBarbellWeightKg(weightKg: Double)
     suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?)
     suspend fun updateBackupReminderEnabled(enabled: Boolean)
+    suspend fun updateProfileSex(sex: ProfileSex?)
+    suspend fun updateProfileBirthYear(birthYear: Int?)
 }
 
 interface SharedReminderScheduler {
@@ -51,6 +54,14 @@ interface SharedReminderScheduler {
 data class SettingsPreferencesState(
     val preferences: AppPreferences = AppPreferences()
 )
+
+/** Youngest and oldest age the profile offers a birth year for. */
+const val PROFILE_MIN_AGE_YEARS: Int = 10
+const val PROFILE_MAX_AGE_YEARS: Int = 100
+
+/** Birth years the profile offers in [currentYear], newest first. */
+fun profileBirthYearOptions(currentYear: Int): List<Int> =
+    ((currentYear - PROFILE_MIN_AGE_YEARS) downTo (currentYear - PROFILE_MAX_AGE_YEARS)).toList()
 
 /** The export is considered stale at the seven-day boundary, not after it. */
 const val BACKUP_REMINDER_THRESHOLD_MILLIS: Long = 7L * 24L * 60L * 60L * 1_000L
@@ -177,5 +188,13 @@ class SettingsPreferencesController(
 
     fun updateBackupReminderEnabled(enabled: Boolean) {
         controllerScope.launch { appPreferencesRepository.updateBackupReminderEnabled(enabled) }
+    }
+
+    fun updateProfileSex(sex: ProfileSex?) {
+        controllerScope.launch { appPreferencesRepository.updateProfileSex(sex) }
+    }
+
+    fun updateProfileBirthYear(birthYear: Int?) {
+        controllerScope.launch { appPreferencesRepository.updateProfileBirthYear(birthYear) }
     }
 }

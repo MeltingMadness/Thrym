@@ -105,6 +105,14 @@ internal class AndroidSharedAppPreferencesRepository(
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         delegate.updateBackupReminderEnabled(enabled)
     }
+
+    override suspend fun updateProfileSex(sex: com.thrym.shared.model.ProfileSex?) {
+        delegate.updateProfileSex(sex?.toApp())
+    }
+
+    override suspend fun updateProfileBirthYear(birthYear: Int?) {
+        delegate.updateProfileBirthYear(birthYear)
+    }
 }
 
 internal class AndroidSharedReminderScheduler(
@@ -143,7 +151,9 @@ internal fun AppPreferences.toShared(): com.thrym.shared.model.AppPreferences =
         availablePlates = availablePlates,
         barbellWeightKg = barbellWeightKg,
         lastSuccessfulExportEpochMillis = lastSuccessfulExportEpochMillis,
-        backupReminderEnabled = backupReminderEnabled
+        backupReminderEnabled = backupReminderEnabled,
+        profileSex = profileSex?.toShared(),
+        profileBirthYear = profileBirthYear
     )
 
 internal fun com.thrym.shared.model.AppPreferences.toApp(): AppPreferences =
@@ -168,7 +178,9 @@ internal fun com.thrym.shared.model.AppPreferences.toApp(): AppPreferences =
         availablePlates = availablePlates,
         barbellWeightKg = barbellWeightKg,
         lastSuccessfulExportEpochMillis = lastSuccessfulExportEpochMillis,
-        backupReminderEnabled = backupReminderEnabled
+        backupReminderEnabled = backupReminderEnabled,
+        profileSex = profileSex?.toApp(),
+        profileBirthYear = profileBirthYear
     )
 
 internal fun ReminderConfig.toShared(): com.thrym.shared.model.ReminderConfig =
@@ -215,6 +227,12 @@ internal fun com.thrym.app.domain.model.AppearanceStyle.toShared(): com.thrym.sh
     com.thrym.shared.model.AppearanceStyle.valueOf(name)
 
 internal fun com.thrym.shared.model.AppearanceStyle.toApp(): com.thrym.app.domain.model.AppearanceStyle = com.thrym.app.domain.model.AppearanceStyle.valueOf(name)
+
+internal fun com.thrym.app.domain.model.ProfileSex.toShared(): com.thrym.shared.model.ProfileSex =
+    com.thrym.shared.model.ProfileSex.valueOf(name)
+
+internal fun com.thrym.shared.model.ProfileSex.toApp(): com.thrym.app.domain.model.ProfileSex =
+    com.thrym.app.domain.model.ProfileSex.valueOf(name)
 
 internal fun IntensitySystem.toShared(): com.thrym.shared.model.IntensitySystem =
     com.thrym.shared.model.IntensitySystem.valueOf(name)
