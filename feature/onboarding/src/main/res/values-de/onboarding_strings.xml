@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_skip">Überspringen</string>
+    <string name="onboarding_next">Weiter</string>
+    <string name="onboarding_back">Zurück</string>
+    <string name="onboarding_progress">Schritt %1$d von %2$d</string>
+    <string name="onboarding_welcome_title">Willkommen bei %1$s</string>
+    <string name="onboarding_welcome_subtitle">Dein Log für Krafttraining.</string>
+    <string name="onboarding_welcome_private_title">Deine Daten bleiben auf deinem Gerät</string>
+    <string name="onboarding_welcome_private_body">Kein Konto, keine Cloud. Alles funktioniert offline.</string>
+    <string name="onboarding_welcome_log_title">Sätze in Sekunden loggen</string>
+    <string name="onboarding_welcome_log_body">Gewicht, Wiederholungen und auf Wunsch RPE oder RIR.</string>
+    <string name="onboarding_welcome_progress_title">Fortschritt im Blick</string>
+    <string name="onboarding_welcome_progress_body">Rekorde, Statistiken und ein Vorschlag für dein nächstes Gewicht.</string>
+    <string name="onboarding_units_title">In welcher Einheit trainierst du?</string>
+    <string name="onboarding_units_metric">Kilogramm</string>
+    <string name="onboarding_units_imperial">Pfund</string>
+    <string name="onboarding_units_hint">Du kannst das jederzeit in den Einstellungen ändern.</string>
+    <string name="onboarding_start_title">Bereit</string>
+    <string name="onboarding_start_body">Starte ein freies Training oder lege zuerst einen Plan an.</string>
+    <string name="onboarding_start_button">Los geht\'s</string>
+    <string name="onboarding_import_title">Du kommst von IronLog?</string>
+    <string name="onboarding_import_body">Exportiere in IronLog ein Backup und importiere es hier. Deine Trainings, Pläne und Rekorde kommen mit.</string>
+    <string name="onboarding_import_button">Backup importieren</string>
+</resources>

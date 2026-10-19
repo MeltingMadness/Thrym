@@ -11,7 +11,10 @@ import com.thrym.core.designsystem.R
 
 sealed class Screen(val route: String) {
     data object Dashboard : Screen("dashboard")
+    data object Onboarding : Screen("onboarding")
     data object Settings : Screen("settings")
+    /** Settings that open the backup file picker right away (from the onboarding). */
+    data object SettingsImport : Screen("settings/import")
     data object ActiveWorkout : Screen("active_workout/{sessionId}?planId={planId}&metaPlanId={metaPlanId}") {
         fun createRoute(sessionId: Long, planId: Long = 0L, metaPlanId: Long = 0L): String {
             return if (planId > 0L || metaPlanId > 0L) {

@@ -21,6 +21,7 @@ Thrym was previously called **IronLog**. See [Migrating from IronLog](#migrating
 
 | Area | What the app does |
 |---|---|
+| **First start** | A short introduction with the weight unit (kg/lb) and a shortcut to import an IronLog backup; skipped automatically if training data already exists |
 | **Home** | Start a workout (from a plan, a meta-plan or as a free session), daily readiness check-in and training readiness, deload hint and deload mode (half the sets or −15 % weight), weekly volume per muscle group (MEV/MAV), 8-week volume trend, notice of pending progression suggestions |
 | **Active workout** | Direct logging with prefilled values (weight, reps), expandable extra fields (RPE/RIR, set type, set intention, plate calculator), set types normal/warm-up/drop/failure, rest timer, supersets, moving exercises and supersets up or down during the session, multi-select when adding exercises, live detection of personal records with the gain over your previous best, a finish button at the end of the list once every planned set is logged, finishing early with open sets, and a summary with a records board |
 | **Plans** | Training plans with targets and optional individual set targets per exercise, meta-plans (a rotation through several plans, including "skip"), a progression scheme per plan exercise |
@@ -44,7 +45,7 @@ The table describes the Android app, which is the functional reference. The iOS 
 Thrym has new app IDs (Android `com.thrym.app`, iOS `com.thrym.ios`). It therefore installs as a **new, separate app** and starts with no data, and IronLog is not updated in place. To bring your data over:
 
 1. In IronLog, open **Settings** and **export a backup**. Save the file somewhere you can find it again.
-2. Install Thrym, open **Settings → Import backup** and select the file. The import **replaces all workout data** in Thrym, so do it before you log new workouts.
+2. Install Thrym and tap **Import backup** on the last page of the introduction, or open **Settings → Import backup** later, and select the file. The import **replaces all workout data** in Thrym, so do it before you log new workouts.
 3. Set your preferences again. App settings are **not part of the backup**, for example units, first day of the week, appearance, RPE/RIR, rest timer, plates and bar weight, reminders and the backup reminder.
 4. Once you have checked that everything is there, you can uninstall IronLog. The backup file holds your complete training history: keep it in a safe place or delete it.
 
@@ -84,7 +85,7 @@ core/
   designsystem/      Theme, design tokens, shared Compose components, string resources, fonts
 data/                Repository implementations, settings (DataStore), backup, reminders, incident reports
 feature/             Android screens: dashboard, workout, plans, progression, history,
-                     exercises, statistics, settings
+                     exercises, statistics, settings, onboarding
 shared/              Kotlin Multiplatform core for Android and iOS: backup format and validator,
                      progression rules, analytics, readiness, plates, and the training store used by iOS
 iosApp/              Native SwiftUI app (ThrymIOS), its tests (ThrymIOSTests) and the project generator
@@ -103,6 +104,7 @@ The internal design and engineering documents in `docs/` are written in **German
 | [`docs/brand/README.md`](docs/brand/README.md) | Logo and app icon: source files, where they are used, brand rules |
 | [`docs/features/progressions-coach.md`](docs/features/progressions-coach.md) | Rules and flow of the progression coach |
 | [`docs/features/meta-plaene.md`](docs/features/meta-plaene.md) | Meta-plan rotation, skipping, weight history |
+| [`docs/features/onboarding.md`](docs/features/onboarding.md) | First-start introduction: steps, when it appears, implementation |
 | [`docs/readiness-data-integration.md`](docs/readiness-data-integration.md) | Daily check-in and set intention: data model and integration |
 | [`docs/ios-feature-parity.md`](docs/ios-feature-parity.md) | Feature status and acceptance of the iOS app |
 | [`iosApp/README.md`](iosApp/README.md) | Generating the iOS project, native checks |

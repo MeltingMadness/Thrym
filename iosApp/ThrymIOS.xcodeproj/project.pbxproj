@@ -70,6 +70,7 @@
 		A359F9A2E3DD08D667DECB2F /* IOSWorkoutPlateVisualizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBEFC0D1E525226E333CCE8 /* IOSWorkoutPlateVisualizer.swift */; };
 		A68322B3D55169D67795DC0A /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */; };
 		A97093544530815132F7E8B7 /* IOSWorkoutFinishCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80AEE8232159C992682399E7 /* IOSWorkoutFinishCard.swift */; };
+		AC08426108331C977550FC64 /* IOSOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AB25F0213A19405327A65A9 /* IOSOnboardingView.swift */; };
 		B25A42A3B60E8077DAB716E0 /* Readiness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD65B83BB36D7689497F892 /* Readiness.swift */; };
 		B64146B4A52DDB3852663236 /* BinaryFileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C550CDDEA21B550C78312E /* BinaryFileDocument.swift */; };
 		BA3968065D314047D901169A /* IOSSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA98C683E5E4AF013C34F55 /* IOSSettingsViewModel.swift */; };
@@ -78,6 +79,7 @@
 		C92D55D45FDFF5281B9C6786 /* Geist-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 22EB9C83245895F54F157452 /* Geist-Regular.ttf */; };
 		C93BCDFF2B67C400BF140E7D /* IOSWorkoutExerciseCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB00E307D3548D90E540F3DF /* IOSWorkoutExerciseCard.swift */; };
 		CA780A7F21BBB24698E62B1B /* IOSExerciseStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD989975A164D1C326800EAE /* IOSExerciseStatisticsScreen.swift */; };
+		CF5FD2FE5FF5913D23D26A99 /* OnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C158090446DDCF2302BD51E /* OnboardingTests.swift */; };
 		D0D50C557E77322A8F8E6567 /* Exercises.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */; };
 		D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */; };
 		D3A7429B86011C2F10380902 /* Geist-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7CF45EE706088987B53B2E57 /* Geist-Black.ttf */; };
@@ -117,6 +119,7 @@
 		24DB90074138FA27D7D5E065 /* SharedBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedBootstrap.swift; sourceTree = "<group>"; };
 		29CDDDCC6B306D44725E8C3B /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
 		2B21EECD6390D3A31BBA78E9 /* IOSHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryScreen.swift; sourceTree = "<group>"; };
+		2C158090446DDCF2302BD51E /* OnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTests.swift; sourceTree = "<group>"; };
 		2CD69523523CDDA46DF2B17A /* AnalyticsPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsPresentation.swift; sourceTree = "<group>"; };
 		2D5315BA288ECA3E76867E77 /* BinaryFileDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileDocumentTests.swift; sourceTree = "<group>"; };
 		30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
@@ -144,6 +147,7 @@
 		776FF4C0E45990C16F2728D2 /* IOSWorkoutSuperset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutSuperset.swift; sourceTree = "<group>"; };
 		7838DB869BCC15E07679638E /* BackupBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupBridgeTests.swift; sourceTree = "<group>"; };
 		7895A2550F6ED77BA59949FE /* BodyweightLoadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyweightLoadTests.swift; sourceTree = "<group>"; };
+		7AB25F0213A19405327A65A9 /* IOSOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSOnboardingView.swift; sourceTree = "<group>"; };
 		7CF45EE706088987B53B2E57 /* Geist-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Black.ttf; sourceTree = "<group>"; };
 		7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Exercises.xcstrings; sourceTree = "<group>"; };
 		80AEE8232159C992682399E7 /* IOSWorkoutFinishCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutFinishCard.swift; sourceTree = "<group>"; };
@@ -290,6 +294,7 @@
 			A39F31827FA20B6CC5BA6ACB /* Design */,
 			E2102CCEDF04CE3AD3E8872E /* History */,
 			F6AA6DE13F902674E46301CA /* Models */,
+			DAD9C187A3758055ADE1CB7A /* Onboarding */,
 			1075C18AFB168B2DFAEC5C36 /* Plans */,
 			8D5F0626C79621FB86CACCE1 /* Progression */,
 			44AB20737046B73011DC7B99 /* Statistics */,
@@ -352,6 +357,14 @@
 		);
 			sourceTree = "<group>";
 		};
+		DAD9C187A3758055ADE1CB7A /* Onboarding */ = {
+			isa = PBXGroup;
+		children = (
+			7AB25F0213A19405327A65A9 /* IOSOnboardingView.swift */,
+		);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 		E2102CCEDF04CE3AD3E8872E /* History */ = {
 			isa = PBXGroup;
 		children = (
@@ -383,6 +396,7 @@
 			5624491CC5906B319AE6AC57 /* LocalDayGuardTests.swift */,
 			312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */,
 			37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */,
+			2C158090446DDCF2302BD51E /* OnboardingTests.swift */,
 			18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */,
 			128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */,
 			3F1FC166F267E80756524FF8 /* RestDockTests.swift */,
@@ -553,6 +567,7 @@
 				B25A42A3B60E8077DAB716E0 /* Readiness.swift in Sources */, 
 				3732B63557AB5662341F6B35 /* TrainingAnalytics.swift in Sources */, 
 				0453D846071EF7D5BBCD4FDB /* TrainingData.swift in Sources */, 
+				AC08426108331C977550FC64 /* IOSOnboardingView.swift in Sources */, 
 				0C8A93AF24DBC77CF800B81F /* IOSExerciseLibraryScreen.swift in Sources */, 
 				69E5BA086F1027852CE94E3A /* IOSMetaPlanEditorScreen.swift in Sources */, 
 				07184457FB3C1EF0382A27E3 /* IOSPlanEditorScreen.swift in Sources */, 
@@ -603,6 +618,7 @@
 				D7DACE2D51AC653ECDA8F8FF /* LocalDayGuardTests.swift in Sources */, 
 				A68322B3D55169D67795DC0A /* LocalizationTests.swift in Sources */, 
 				5ACBCD167629AA8DF5847CF5 /* NumberInputFormatTests.swift in Sources */, 
+				CF5FD2FE5FF5913D23D26A99 /* OnboardingTests.swift in Sources */, 
 				D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */, 
 				3E4CE13DCF91E45C46CC3F1D /* RecoveryBridgeTests.swift in Sources */, 
 				F5EFDCBB5F7B686E21C71463 /* RestDockTests.swift in Sources */, 

@@ -11,6 +11,7 @@ import com.thrym.app.data.db.RoomTransactionRunner
 import com.thrym.app.data.db.TransactionRunner
 import com.thrym.app.data.local.ThrymDatabase
 import com.thrym.app.data.preferences.AppPreferencesRepositoryImpl
+import com.thrym.app.data.preferences.OnboardingRepositoryImpl
 import com.thrym.app.data.reminder.ReminderSchedulerImpl
 import com.thrym.app.data.repository.BackupRepositoryImpl
 import com.thrym.app.data.repository.DeloadRepositoryImpl
@@ -29,6 +30,7 @@ import com.thrym.app.domain.repository.DeloadRepository
 import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.domain.repository.IncidentReportRepository
 import com.thrym.app.domain.repository.MetaTrainingPlanRepository
+import com.thrym.app.domain.repository.OnboardingRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.repository.ReadinessProjectionSource
 import com.thrym.app.domain.repository.ReadinessRepository
@@ -45,6 +47,8 @@ import com.thrym.app.presentation.dashboard.DashboardViewModel
 import com.thrym.app.presentation.exercises.ExerciseLibraryViewModel
 import com.thrym.app.presentation.history.WorkoutDetailViewModel
 import com.thrym.app.presentation.history.WorkoutHistoryViewModel
+import com.thrym.app.presentation.onboarding.OnboardingGate
+import com.thrym.app.presentation.onboarding.OnboardingViewModel
 import com.thrym.app.presentation.plans.MetaPlanEditorViewModel
 import com.thrym.app.presentation.plans.MetaPlanListViewModel
 import com.thrym.app.presentation.plans.PlanEditorViewModel
@@ -125,6 +129,16 @@ val appModule = module {
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
     single<MetaTrainingPlanRepository> { MetaTrainingPlanRepositoryImpl(get()) }
     single<AppPreferencesRepository> { AppPreferencesRepositoryImpl(androidContext(), get()) }
+    single<OnboardingRepository> { OnboardingRepositoryImpl(androidContext()) }
+    single {
+        val workoutRepository = get<WorkoutRepository>()
+        val trainingPlanRepository = get<TrainingPlanRepository>()
+        OnboardingGate(get()) {
+            workoutRepository.getActiveSession() != null ||
+                workoutRepository.getLastCompletedSession() != null ||
+                trainingPlanRepository.getAllPlans().first().isNotEmpty()
+        }
+    }
     single<ReminderScheduler> { ReminderSchedulerImpl(androidContext()) }
     single<IncidentReportRepository> { IncidentReportRepositoryImpl(androidContext(), get()) }
     single<BackupRepository> {
@@ -160,4 +174,5 @@ val appModule = module {
     viewModelOf(::MetaPlanListViewModel)
     viewModelOf(::MetaPlanEditorViewModel)
     viewModelOf(::SettingsViewModel)
+    viewModelOf(::OnboardingViewModel)
 }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Continue</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_progress">Step %1$d of %2$d</string>
+    <string name="onboarding_welcome_title">Welcome to %1$s</string>
+    <string name="onboarding_welcome_subtitle">Your log for strength training.</string>
+    <string name="onboarding_welcome_private_title">Your data stays on your device</string>
+    <string name="onboarding_welcome_private_body">No account, no cloud. Everything works offline.</string>
+    <string name="onboarding_welcome_log_title">Log sets in seconds</string>
+    <string name="onboarding_welcome_log_body">Weight, reps and, if you like, RPE or RIR.</string>
+    <string name="onboarding_welcome_progress_title">See your progress</string>
+    <string name="onboarding_welcome_progress_body">Records, statistics and a suggestion for your next weight.</string>
+    <string name="onboarding_units_title">Which unit do you train with?</string>
+    <string name="onboarding_units_metric">Kilograms</string>
+    <string name="onboarding_units_imperial">Pounds</string>
+    <string name="onboarding_units_metric_short" translatable="false">kg</string>
+    <string name="onboarding_units_imperial_short" translatable="false">lb</string>
+    <string name="onboarding_units_hint">You can change this at any time in the settings.</string>
+    <string name="onboarding_start_title">Ready to go</string>
+    <string name="onboarding_start_body">Start a free workout or create a plan first.</string>
+    <string name="onboarding_start_button">Let\'s go</string>
+    <string name="onboarding_import_title">Coming from IronLog?</string>
+    <string name="onboarding_import_body">Export a backup in IronLog and import it here. Your workouts, plans and records come with it.</string>
+    <string name="onboarding_import_button">Import backup</string>
+</resources>

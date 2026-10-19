@@ -4,6 +4,9 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var training = IOSTrainingStore()
     @StateObject private var settings = IOSSettingsViewModel()
+    @AppStorage(IOSOnboarding.completedKey) private var onboardingCompleted = false
+    @State private var isShowingOnboarding = false
+    @State private var opensBackupImportAfterOnboarding = false
 
     var body: some View {
         TabView(selection: $training.selectedTab) {
@@ -19,10 +22,28 @@ struct RootView: View {
                 .tabItem { Label("Einstellungen", systemImage: "gearshape") }.tag(4)
         }
         .font(.geist(.body))
+        .fullScreenCover(isPresented: $isShowingOnboarding, onDismiss: openBackupImportAfterOnboarding) {
+            IOSOnboardingView(
+                unitSystem: settings.state.unitSystem,
+                onSelectUnitSystem: { settings.updateUnitSystem($0) },
+                onFinish: { finishOnboarding(importBackup: false) },
+                onImportBackup: { finishOnboarding(importBackup: true) }
+            )
+            .environment(\.thrymAppearance, appearance)
+            .thrymTheme(theme)
+            .preferredColorScheme(preferredColorScheme)
+        }
         .environment(training)
         .environmentObject(settings)
         .task {
             if training.data == nil { await training.reload() }
+            if let data = training.data {
+                if IOSOnboarding.shouldShow(completed: onboardingCompleted, data: data) {
+                    isShowingOnboarding = true
+                } else if !onboardingCompleted {
+                    onboardingCompleted = true
+                }
+            }
             // Central deload wiring for every workout start: the settings mode is authoritative,
             // and the store sends an explicit `false` while no mode is active.
             training.deloadModeActive = settings.state.deloadMode != "NONE"
@@ -50,14 +71,9 @@ struct RootView: View {
                 )
             }
         }
-        .environment(\.thrymAppearance, ThrymAppearance(rawPreference: settings.state.appearanceStyle))
-        .thrymTheme(
-            ThrymTheme(
-                schemeName: settings.state.themeScheme,
-                reducedMotion: settings.state.reducedMotion
-            )
-        )
-        .preferredColorScheme(settings.state.themeMode == "DARK" ? .dark : settings.state.themeMode == "LIGHT" ? .light : nil)
+        .environment(\.thrymAppearance, appearance)
+        .thrymTheme(theme)
+        .preferredColorScheme(preferredColorScheme)
         .safeAreaInset(edge: .top) {
             if let error = training.errorMessage, training.data != nil {
                 HStack(alignment: .top, spacing: 12) {
@@ -72,6 +88,39 @@ struct RootView: View {
                 .padding()
                 .background(.regularMaterial)
             }
+        }
+    }
+
+    private var appearance: ThrymAppearance {
+        ThrymAppearance(rawPreference: settings.state.appearanceStyle)
+    }
+
+    private var theme: ThrymTheme {
+        ThrymTheme(
+            schemeName: settings.state.themeScheme,
+            reducedMotion: settings.state.reducedMotion
+        )
+    }
+
+    private var preferredColorScheme: ColorScheme? {
+        settings.state.themeMode == "DARK" ? .dark : settings.state.themeMode == "LIGHT" ? .light : nil
+    }
+
+    private func finishOnboarding(importBackup: Bool) {
+        onboardingCompleted = true
+        opensBackupImportAfterOnboarding = importBackup
+        isShowingOnboarding = false
+    }
+
+    /// Runs once the cover is gone: the file picker can only appear after the dismissal.
+    private func openBackupImportAfterOnboarding() {
+        guard opensBackupImportAfterOnboarding else { return }
+        opensBackupImportAfterOnboarding = false
+        training.selectedTab = 4
+        Task { @MainActor in
+            // Lets the settings tab appear before its file importer is presented.
+            try? await Task.sleep(for: .milliseconds(350))
+            settings.isImportingBackup = true
         }
     }
 

@@ -20,6 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -33,6 +35,9 @@ import com.thrym.app.domain.repository.ReminderScheduler
 import com.thrym.app.presentation.navigation.BottomNavBar
 import com.thrym.app.presentation.navigation.ThrymNavHost
 import com.thrym.app.presentation.navigation.Screen
+import com.thrym.app.presentation.onboarding.OnboardingGate
+import com.thrym.app.domain.util.AppLogger
+import kotlinx.coroutines.CancellationException
 import com.thrym.app.presentation.theme.ThrymTheme
 import org.koin.compose.koinInject
 import com.thrym.app.domain.model.AppearanceStyle
@@ -74,10 +79,29 @@ class MainActivity : ComponentActivity() {
             val preferencesState by preferencesRepository.preferences.collectAsStateWithLifecycle(
                 initialValue = null
             )
-            
-            splashKeepOnScreen.value = preferencesState == null
+
+            // Decided once per activity: a fresh install starts with the onboarding, everyone
+            // else on the dashboard. Saved so a configuration change keeps the same graph.
+            val onboardingGate: OnboardingGate = koinInject()
+            var startDestination by rememberSaveable { mutableStateOf<String?>(null) }
+            LaunchedEffect(Unit) {
+                if (startDestination == null) {
+                    val showOnboarding = try {
+                        onboardingGate.shouldShow()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        AppLogger.w("MainActivity", "Onboarding-Status nicht lesbar: ${e.message}", e)
+                        false
+                    }
+                    startDestination = if (showOnboarding) Screen.Onboarding.route else Screen.Dashboard.route
+                }
+            }
+
+            splashKeepOnScreen.value = preferencesState == null || startDestination == null
 
             val preferences = preferencesState ?: return@setContent
+            val resolvedStartDestination = startDestination ?: return@setContent
 
             val isDarkTheme = when (preferences.themeMode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
@@ -137,7 +161,7 @@ class MainActivity : ComponentActivity() {
                                 .padding(innerPadding)
                                 .consumeWindowInsets(innerPadding)
                         ) {
-                            ThrymNavHost(navController)
+                            ThrymNavHost(navController, startDestination = resolvedStartDestination)
                         }
                     }
                 }
