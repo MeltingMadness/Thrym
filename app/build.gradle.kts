@@ -105,6 +105,7 @@ dependencies {
     implementation(project(":feature:statistics"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:progression"))
+    implementation(project(":feature:onboarding"))
 
     // Compose BOM
     val composeBom = platform(libs.compose.bom)

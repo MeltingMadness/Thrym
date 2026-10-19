@@ -23,6 +23,7 @@ import com.thrym.app.presentation.dashboard.DashboardScreen
 import com.thrym.app.presentation.exercises.ExerciseLibraryScreen
 import com.thrym.app.presentation.history.WorkoutDetailScreen
 import com.thrym.app.presentation.history.WorkoutHistoryScreen
+import com.thrym.app.presentation.onboarding.OnboardingScreen
 import com.thrym.app.presentation.plans.MetaPlanEditorScreen
 import com.thrym.app.presentation.plans.MetaPlanListScreen
 import com.thrym.app.presentation.plans.PlanEditorScreen
@@ -114,6 +115,16 @@ fun ThrymNavHost(
                 },
                 onOpenProgressionReview = {
                     navController.navigate(Screen.ProgressionReview.createRoute(null))
+                }
+            )
+        }
+
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(
+                onFinished = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
                 }
             )
         }

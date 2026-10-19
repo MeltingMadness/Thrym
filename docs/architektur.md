@@ -27,6 +27,7 @@ feature/
   exercises/            Übungsbibliothek
   statistics/           Statistik pro Übung
   settings/             Einstellungen, Backup, Incident-Report
+  onboarding/           Einführung beim ersten Start (inkl. Einheit)
 shared/                 Kotlin Multiplatform (Android + iOS), siehe unten
 iosApp/                 Native SwiftUI-App (ThrymIOS), Projekt per generate_project.py, siehe iosApp/README.md
 ```

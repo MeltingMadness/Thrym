@@ -3758,6 +3758,22 @@
         }
       }
     },
+    "Bereit": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bereit"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready to go"
+          }
+        }
+      }
+    },
     "Bereit für dein Training?": {
       "localizations": {
         "de": {
@@ -4631,6 +4647,22 @@
       },
       "shouldTranslate": false
     },
+    "Dein Log für Krafttraining.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Log für Krafttraining."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your log for strength training."
+          }
+        }
+      }
+    },
     "Dein Training, klar und nachvollziehbar.": {
       "localizations": {
         "de": {
@@ -4659,6 +4691,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your first saved plan is ready."
+          }
+        }
+      }
+    },
+    "Deine Daten bleiben auf deinem Gerät": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Daten bleiben auf deinem Gerät"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your data stays on your device"
           }
         }
       }
@@ -5817,6 +5865,22 @@
         }
       }
     },
+    "Du kannst das jederzeit in den Einstellungen ändern.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du kannst das jederzeit in den Einstellungen ändern."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can change this at any time in the settings."
+          }
+        }
+      }
+    },
     "Dunkel": {
       "localizations": {
         "de": {
@@ -6706,6 +6770,22 @@
       },
       "shouldTranslate": false
     },
+    "Fortschritt im Blick": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fortschritt im Blick"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See your progress"
+          }
+        }
+      }
+    },
     "Freie Session": {
       "localizations": {
         "de": {
@@ -7466,6 +7546,22 @@
         }
       }
     },
+    "Gewicht, Wiederholungen und auf Wunsch RPE oder RIR.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gewicht, Wiederholungen und auf Wunsch RPE oder RIR."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight, reps and, if you like, RPE or RIR."
+          }
+        }
+      }
+    },
     "Gewichtshistorie über Kontexte teilen": {
       "localizations": {
         "de": {
@@ -7931,6 +8027,22 @@
         }
       }
     },
+    "In welcher Einheit trainierst du?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In welcher Einheit trainierst du?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which unit do you train with?"
+          }
+        }
+      }
+    },
     "Incident-Report erstellen": {
       "localizations": {
         "de": {
@@ -8088,6 +8200,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "No deload needed"
+          }
+        }
+      }
+    },
+    "Kein Konto, keine Cloud. Alles funktioniert offline.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein Konto, keine Cloud. Alles funktioniert offline."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No account, no cloud. Everything works offline."
           }
         }
       }
@@ -8494,6 +8622,22 @@
         }
       }
     },
+    "Kilogramm": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kilogramm"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kilograms"
+          }
+        }
+      }
+    },
     "Kurzbeschreibung": {
       "localizations": {
         "de": {
@@ -8837,6 +8981,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset local training data?"
+          }
+        }
+      }
+    },
+    "Los geht's": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los geht's"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let's go"
           }
         }
       }
@@ -10991,6 +11151,22 @@
         }
       }
     },
+    "Pfund": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pfund"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pounds"
+          }
+        }
+      }
+    },
     "Plan": {
       "localizations": {
         "de": {
@@ -11849,6 +12025,22 @@
         }
       }
     },
+    "Rekorde, Statistiken und ein Vorschlag für dein nächstes Gewicht.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rekorde, Statistiken und ein Vorschlag für dein nächstes Gewicht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records, statistics and a suggestion for your next weight."
+          }
+        }
+      }
+    },
     "Rekordfilter": {
       "localizations": {
         "de": {
@@ -12649,6 +12841,22 @@
         }
       }
     },
+    "Schritt %lld von %lld": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schritt %lld von %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld of %lld"
+          }
+        }
+      }
+    },
     "Schultern": {
       "localizations": {
         "de": {
@@ -12949,6 +13157,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Home"
+          }
+        }
+      }
+    },
+    "Starte ein freies Training oder lege zuerst einen Plan an.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starte ein freies Training oder lege zuerst einen Plan an."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a free workout or create a plan first."
           }
         }
       }
@@ -13369,6 +13593,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sets"
+          }
+        }
+      }
+    },
+    "Sätze in Sekunden loggen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sätze in Sekunden loggen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log sets in seconds"
           }
         }
       }
@@ -15186,6 +15426,22 @@
         }
       }
     },
+    "Weiter": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiter"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        }
+      }
+    },
     "Weiter trainieren": {
       "localizations": {
         "de": {
@@ -15696,6 +15952,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rep target changed: new series"
+          }
+        }
+      }
+    },
+    "Willkommen bei %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Willkommen bei %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to %@"
           }
         }
       }

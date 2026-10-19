@@ -32,6 +32,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.thrym.app.data.local.ThrymDatabase
 import com.thrym.app.data.preferences.appPreferencesDataStore
+import com.thrym.app.data.preferences.onboardingDataStore
 import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.ExerciseCategory
@@ -49,15 +50,18 @@ import com.thrym.app.domain.model.WeekStart
 import com.thrym.app.domain.model.WorkoutPlanTarget
 import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.domain.repository.ExerciseRepository
+import com.thrym.app.domain.repository.OnboardingRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.presentation.common.uiLocale
 import com.thrym.app.presentation.progression.ProgressionReviewViewModel
 import com.thrym.app.presentation.theme.ThrymTheme
 import com.thrym.core.designsystem.R
+import com.thrym.feature.onboarding.R as OnboardingR
 import com.thrym.feature.workout.R as WorkoutR
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.koin.compose.KoinIsolatedContext
 import org.koin.core.context.GlobalContext
@@ -111,6 +115,8 @@ class NavigationSmokeTest {
             GlobalContext.get().get<ThrymDatabase>().clearAllTables()
             ApplicationProvider.getApplicationContext<Context>()
                 .appPreferencesDataStore.edit { it.clear() }
+            ApplicationProvider.getApplicationContext<Context>()
+                .onboardingDataStore.edit { it.clear() }
         }
     }
 
@@ -234,6 +240,46 @@ class NavigationSmokeTest {
         composeRule.waitForIdle()
         composeRule.runOnIdle {
             assertEquals(Screen.ExerciseStats.route, navController.currentBackStackEntry?.destination?.route)
+        }
+    }
+
+    @Test
+    fun onboarding_sets_unit_and_finishes_on_dashboard() {
+        lateinit var navController: NavHostController
+
+        composeRule.setContent {
+            ThrymTheme {
+                navController = rememberNavController()
+                ThrymNavHost(navController = navController, startDestination = Screen.Onboarding.route)
+            }
+        }
+
+        composeRule.onNodeWithText(text(OnboardingR.string.onboarding_next)).assertIsDisplayed().performClick()
+        waitOrDump(5_000) {
+            composeRule.onAllNodesWithText(text(OnboardingR.string.onboarding_units_imperial))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(text(OnboardingR.string.onboarding_units_imperial)).performClick()
+        waitOrDump(5_000) {
+            runBlocking {
+                GlobalContext.get().get<AppPreferencesRepository>().preferences.first().unitSystem
+            } == UnitSystem.IMPERIAL
+        }
+
+        composeRule.onNodeWithText(text(OnboardingR.string.onboarding_next)).performClick()
+        waitOrDump(5_000) {
+            composeRule.onAllNodesWithText(text(OnboardingR.string.onboarding_start_button))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(text(OnboardingR.string.onboarding_start_button)).performClick()
+
+        waitOrDump(5_000) {
+            navController.currentBackStackEntry?.destination?.route == Screen.Dashboard.route
+        }
+        composeRule.runOnIdle {
+            // The onboarding left the back stack: back from the dashboard closes the app.
+            assertTrue(navController.previousBackStackEntry == null)
+            assertTrue(runBlocking { GlobalContext.get().get<OnboardingRepository>().isCompleted() })
         }
     }
 
