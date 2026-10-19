@@ -190,7 +190,7 @@ Schritte 2 und 3 können parallel laufen, sobald 1 gemergt ist.
 
 - Benachrichtigungen „Deine Serie ist in Gefahr“. Wenn überhaupt, später, freundlich formuliert und abschaltbar.
 - Verlaufsansicht aller Wochen (Kalender-Heatmap). Das Modell liefert `weeks` schon dafür.
-- Meilensteine, Rückblick und Wiedereinstieg aus der Gamification-Recherche. Sie bekommen eigene Pläne.
+- Trophäen stehen in `trophaeen.md`; Heimdalls Wacht dort baut auf diesem Plan auf. Rückblick und Wiedereinstieg bekommen eigene Pläne.
 
 ## Offene Fragen an Martin
 
