@@ -21,7 +21,7 @@ Thrym was previously called **IronLog**. See [Migrating from IronLog](#migrating
 
 | Area | What the app does |
 |---|---|
-| **First start** | A short introduction with the weight unit (kg/lb) and a shortcut to import an IronLog backup; skipped automatically if training data already exists |
+| **First start** | A short introduction that also asks for the weight unit (kg/lb); skipped automatically if training data already exists |
 | **Home** | Start a workout (from a plan, a meta-plan or as a free session), daily readiness check-in and training readiness, deload hint and deload mode (half the sets or −15 % weight), weekly volume per muscle group (MEV/MAV), 8-week volume trend, notice of pending progression suggestions |
 | **Active workout** | Direct logging with prefilled values (weight, reps), expandable extra fields (RPE/RIR, set type, set intention, plate calculator), set types normal/warm-up/drop/failure, rest timer, supersets, moving exercises and supersets up or down during the session, multi-select when adding exercises, live detection of personal records with the gain over your previous best, a finish button at the end of the list once every planned set is logged, finishing early with open sets, and a summary with a records board |
 | **Plans** | Training plans with targets and optional individual set targets per exercise, meta-plans (a rotation through several plans, including "skip"), a progression scheme per plan exercise |
@@ -45,7 +45,7 @@ The table describes the Android app, which is the functional reference. The iOS 
 Thrym has new app IDs (Android `com.thrym.app`, iOS `com.thrym.ios`). It therefore installs as a **new, separate app** and starts with no data, and IronLog is not updated in place. To bring your data over:
 
 1. In IronLog, open **Settings** and **export a backup**. Save the file somewhere you can find it again.
-2. Install Thrym and tap **Import backup** on the last page of the introduction, or open **Settings → Import backup** later, and select the file. The import **replaces all workout data** in Thrym, so do it before you log new workouts.
+2. Install Thrym, open **Settings → Import backup** and select the file. The import **replaces all workout data** in Thrym, so do it before you log new workouts.
 3. Set your preferences again. App settings are **not part of the backup**, for example units, first day of the week, appearance, RPE/RIR, rest timer, plates and bar weight, reminders and the backup reminder.
 4. Once you have checked that everything is there, you can uninstall IronLog. The backup file holds your complete training history: keep it in a safe place or delete it.
 

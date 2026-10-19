@@ -21,7 +21,4 @@
     <string name="onboarding_start_title">Ready to go</string>
     <string name="onboarding_start_body">Start a free workout or create a plan first.</string>
     <string name="onboarding_start_button">Let\'s go</string>
-    <string name="onboarding_import_title">Coming from IronLog?</string>
-    <string name="onboarding_import_body">Export a backup in IronLog and import it here. Your workouts, plans and records come with it.</string>
-    <string name="onboarding_import_button">Import backup</string>
 </resources>

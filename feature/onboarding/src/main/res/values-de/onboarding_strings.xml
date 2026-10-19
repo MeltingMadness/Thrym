@@ -19,7 +19,4 @@
     <string name="onboarding_start_title">Bereit</string>
     <string name="onboarding_start_body">Starte ein freies Training oder lege zuerst einen Plan an.</string>
     <string name="onboarding_start_button">Los geht\'s</string>
-    <string name="onboarding_import_title">Du kommst von IronLog?</string>
-    <string name="onboarding_import_body">Exportiere in IronLog ein Backup und importiere es hier. Deine Trainings, Pläne und Rekorde kommen mit.</string>
-    <string name="onboarding_import_button">Backup importieren</string>
 </resources>

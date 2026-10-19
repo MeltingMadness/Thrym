@@ -21,13 +21,12 @@ enum IOSOnboarding {
     }
 }
 
-/// Short introduction on the first start: what Thrym is, the weight unit, and how to begin
-/// (fresh or with an IronLog backup). Every step can be skipped.
+/// Short introduction on the first start: what Thrym is, the weight unit, and how to begin.
+/// Every step can be skipped.
 struct IOSOnboardingView: View {
     let unitSystem: String
     let onSelectUnitSystem: (String) -> Void
     let onFinish: () -> Void
-    let onImportBackup: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.thrymTheme) private var theme
@@ -102,20 +101,12 @@ struct IOSOnboardingView: View {
     @ViewBuilder
     private var buttons: some View {
         if step == .start {
-            VStack(spacing: 10) {
-                Button(action: onFinish) {
-                    Text("Los geht's")
-                        .font(.geist(.headline))
-                        .frame(maxWidth: .infinity, minHeight: 34)
-                }
-                .buttonStyle(.borderedProminent).thrymButtonText()
-
-                Button(action: onImportBackup) {
-                    Label("Backup importieren", systemImage: "arrow.down.doc")
-                        .frame(maxWidth: .infinity, minHeight: 30)
-                }
-                .buttonStyle(.bordered)
+            Button(action: onFinish) {
+                Text("Los geht's")
+                    .font(.geist(.headline))
+                    .frame(maxWidth: .infinity, minHeight: 34)
             }
+            .buttonStyle(.borderedProminent).thrymButtonText()
         } else {
             Button {
                 step = steps[min(stepIndex + 1, steps.count - 1)]
@@ -193,14 +184,6 @@ struct IOSOnboardingView: View {
         Text("Starte ein freies Training oder lege zuerst einen Plan an.")
             .font(.geist(.body))
             .thrymSecondaryText()
-
-        ThrymCard(
-            title: String(localized: "Du kommst von IronLog?"),
-            subtitle: String(localized: "Exportiere in IronLog ein Backup und importiere es hier. Deine Trainings, Pläne und Rekorde kommen mit."),
-            tone: .muted
-        ) {
-            EmptyView()
-        }
     }
 
     // MARK: - Pieces

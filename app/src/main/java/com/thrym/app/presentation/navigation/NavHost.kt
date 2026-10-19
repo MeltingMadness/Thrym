@@ -125,12 +125,6 @@ fun ThrymNavHost(
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
                     }
-                },
-                onImportBackup = {
-                    navController.navigate(Screen.Dashboard.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
-                    }
-                    navController.navigate(Screen.SettingsImport.route)
                 }
             )
         }
@@ -138,13 +132,6 @@ fun ThrymNavHost(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.SettingsImport.route) {
-            SettingsScreen(
-                onBack = { navController.popBackStack() },
-                startImport = true
             )
         }
 

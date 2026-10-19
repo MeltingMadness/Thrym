@@ -51,7 +51,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,14 +90,11 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-private val BACKUP_IMPORT_MIME_TYPES = arrayOf("application/json", "text/plain")
-
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("StringFormatInvalid", "LocalContextGetResourceValueCall")
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
-    startImport: Boolean = false,
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -125,15 +121,6 @@ fun SettingsScreen(
     ) { uri ->
         if (uri != null) {
             viewModel.onImportUriPicked(uri)
-        }
-    }
-
-    // Opened from the onboarding: show the file picker once, not again after a recreation.
-    var importStarted by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(startImport) {
-        if (startImport && !importStarted) {
-            importStarted = true
-            importLauncher.launch(BACKUP_IMPORT_MIME_TYPES)
         }
     }
 
@@ -650,7 +637,7 @@ fun SettingsScreen(
                             Text(stringResource(id = R.string.settings_backup_export))
                         }
                         Button(
-                            onClick = { importLauncher.launch(BACKUP_IMPORT_MIME_TYPES) },
+                            onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
                             modifier = Modifier.weight(1f),
                             enabled = !state.isBusy
                         ) {

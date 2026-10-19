@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -32,12 +31,10 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -67,13 +64,12 @@ import org.koin.androidx.compose.koinViewModel
 import com.thrym.core.designsystem.R as DesignR
 
 /**
- * Short introduction on the first start: what Thrym is, the weight unit, and how to begin
- * (fresh or with an IronLog backup). Every step can be skipped.
+ * Short introduction on the first start: what Thrym is, the weight unit, and how to begin.
+ * Every step can be skipped.
  */
 @Composable
 fun OnboardingScreen(
     onFinished: () -> Unit,
-    onImportBackup: () -> Unit,
     viewModel: OnboardingViewModel = koinViewModel()
 ) {
     val stepIndex by viewModel.stepIndex.collectAsStateWithLifecycle()
@@ -168,22 +164,6 @@ fun OnboardingScreen(
                     style = MaterialTheme.typography.titleMedium
                 )
             }
-            Spacer(modifier = Modifier.height(dims.spacingSm))
-            OutlinedButton(
-                onClick = { viewModel.finish(onImportBackup) },
-                colors = ThrymInteractiveColors.outlinedButton(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Restore,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(dims.spacingSm))
-                Text(stringResource(R.string.onboarding_import_button))
-            }
         } else {
             Button(
                 onClick = viewModel::next,
@@ -267,7 +247,6 @@ private fun UnitsStep(selected: UnitSystem, onSelect: (UnitSystem) -> Unit) {
 
 @Composable
 private fun StartStep() {
-    val dims = thrymDimens
     StepIcon(Icons.Default.PlayArrow)
     StepTitle(stringResource(R.string.onboarding_start_title))
     Text(
@@ -275,26 +254,6 @@ private fun StartStep() {
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
-    ThrymSurfaceCard(
-        modifier = Modifier.fillMaxWidth(),
-        tone = ThrymSurfaceTone.MUTED
-    ) {
-        Column(
-            modifier = Modifier.padding(dims.spacingLg),
-            verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
-        ) {
-            Text(
-                text = stringResource(R.string.onboarding_import_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(R.string.onboarding_import_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
 }
 
 @Composable

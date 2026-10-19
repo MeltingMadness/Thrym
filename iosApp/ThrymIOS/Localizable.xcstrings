@@ -5881,22 +5881,6 @@
         }
       }
     },
-    "Du kommst von IronLog?": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Du kommst von IronLog?"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Coming from IronLog?"
-          }
-        }
-      }
-    },
     "Dunkel": {
       "localizations": {
         "de": {
@@ -6563,22 +6547,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Export failed"
-          }
-        }
-      }
-    },
-    "Exportiere in IronLog ein Backup und importiere es hier. Deine Trainings, Pläne und Rekorde kommen mit.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportiere in IronLog ein Backup und importiere es hier. Deine Trainings, Pläne und Rekorde kommen mit."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Export a backup in IronLog and import it here. Your workouts, plans and records come with it."
           }
         }
       }
