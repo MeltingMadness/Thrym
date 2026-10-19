@@ -34,9 +34,11 @@ private const val LEGACY_E1RM_EPSILON = 1e-9
 /**
  * Older IronLog iOS builds stored MAX_E1RM with plain Epley, so a single rep of 100 kg was a best
  * of 103.3 kg. Android and the records board count a single rep as the weight itself. A stored
- * e1RM that is exactly the old best of the exercise's sets, and above the best by the current
- * rule, gets the value and time of the current best; its id stays. Every other record stays as
- * the payload has it.
+ * e1RM that is exactly the old best of the exercise's sets gets the value and time of the current
+ * best when the old best lies above it. It also gets them when a set of several reps ties the old
+ * best (85 kg × 1 and 77.5 kg × 4 both give 87.8 kg) but the record is still dated on the single,
+ * which the old rule preferred as the later set. The id stays. Every other record stays as the
+ * payload has it.
  *
  * The step is idempotent, so it needs no marker. The iOS store runs it whenever it decodes a
  * payload, Android's backup import before it writes the records. Returns this payload unchanged
@@ -54,9 +56,14 @@ fun BackupPayloadV1.repairLegacySingleRepE1rm(): BackupPayloadV1 {
         val legacy = bestE1rmOf(sets, ::legacyEpleyKg) ?: return@map record
         val current = bestE1rmOf(sets) ?: return@map record
         val isLegacyValue = abs(record.value - legacy.first) <= LEGACY_E1RM_EPSILON
-        if (!isLegacyValue || current.first >= legacy.first - LEGACY_E1RM_EPSILON) return@map record
+        if (!isLegacyValue) return@map record
+        val aboveCurrentBest = current.first < legacy.first - LEGACY_E1RM_EPSILON
+        val datedOnOldSingle = legacy.second.reps == 1 && record.achievedAt == legacy.second.completedAt
+        if (!aboveCurrentBest && !datedOnOldSingle) return@map record
+        val fixed = record.copy(value = current.first, achievedAt = current.second.completedAt)
+        if (fixed == record) return@map record
         repaired = true
-        record.copy(value = current.first, achievedAt = current.second.completedAt)
+        fixed
     }
     return if (repaired) copy(personalRecords = records) else this
 }
