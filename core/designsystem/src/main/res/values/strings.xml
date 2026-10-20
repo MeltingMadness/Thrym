@@ -212,7 +212,6 @@
     <string name="plans_progression_review_cd">Progression suggestions</string>
     <string name="plans_section_meta">Meta plans</string>
     <string name="plans_section_plans">Plans</string>
-    <string name="plans_meta_manage">Manage</string>
 
     <string name="plan_editor_title_edit">Edit plan</string>
     <string name="plan_editor_title_new">New plan</string>
@@ -412,7 +411,6 @@
     <string name="plan_selection_meta_last_done_today">Today</string>
     <string name="plan_selection_meta_last_done_yesterday">Yesterday</string>
     <string name="plan_selection_meta_last_done_never">Not done yet</string>
-    <string name="meta_plans_title">Meta plans</string>
     <string name="meta_plans_add_cd">Create meta plan</string>
     <string name="meta_plans_edit_cd">Edit meta plan</string>
     <string name="meta_plans_empty_title">No meta plans</string>

@@ -25,7 +25,6 @@ import com.thrym.app.presentation.history.WorkoutDetailScreen
 import com.thrym.app.presentation.history.WorkoutHistoryScreen
 import com.thrym.app.presentation.onboarding.OnboardingScreen
 import com.thrym.app.presentation.plans.MetaPlanEditorScreen
-import com.thrym.app.presentation.plans.MetaPlanListScreen
 import com.thrym.app.presentation.plans.PlanEditorScreen
 import com.thrym.app.presentation.plans.TrainingPlanListScreen
 import com.thrym.app.presentation.progression.ProgressionReviewScreen
@@ -223,8 +222,11 @@ fun ThrymNavHost(
                 onStartWorkout = { sessionId, planId ->
                     navController.navigate(Screen.ActiveWorkout.createRoute(sessionId, planId))
                 },
-                onOpenMetaPlans = {
-                    navController.navigate(Screen.MetaPlanList.route)
+                onCreateMetaPlan = {
+                    navController.navigate(Screen.MetaPlanEditorNew.route)
+                },
+                onEditMetaPlan = { metaPlanId ->
+                    navController.navigate(Screen.MetaPlanEditor.createRoute(metaPlanId))
                 },
                 onOpenProgressionReview = {
                     navController.navigate(Screen.ProgressionReview.createRoute(null))
@@ -244,16 +246,6 @@ fun ThrymNavHost(
         ) {
             PlanEditorScreen(
                 onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.MetaPlanList.route) {
-            MetaPlanListScreen(
-                onBack = { navController.popBackStack() },
-                onCreateMetaPlan = { navController.navigate(Screen.MetaPlanEditorNew.route) },
-                onEditMetaPlan = { metaPlanId ->
-                    navController.navigate(Screen.MetaPlanEditor.createRoute(metaPlanId))
-                }
             )
         }
 
