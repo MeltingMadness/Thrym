@@ -6041,6 +6041,22 @@
         }
       }
     },
+    "Ein Rekord! Der kommt in die Saga.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Rekord! Der kommt in die Saga."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A record! That one goes into the saga."
+          }
+        }
+      }
+    },
     "Ein Teilplan ist nicht mehr verfügbar. Entferne ihn und wähle einen gültigen Plan.": {
       "localizations": {
         "de": {
@@ -10295,6 +10311,22 @@
         }
       }
     },
+    "Neue Bestleistung! Davon werden die Skalden singen.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neue Bestleistung! Davon werden die Skalden singen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A new personal best! The skalds will sing of this."
+          }
+        }
+      }
+    },
     "Neue Rekorde": {
       "localizations": {
         "de": {
@@ -14200,6 +14232,22 @@
         }
       }
     },
+    "Training geschafft. Gut gekämpft!": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training geschafft. Gut gekämpft!"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workout done. Well fought!"
+          }
+        }
+      }
+    },
     "Training gespeichert": {
       "localizations": {
         "de": {
@@ -15886,6 +15934,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unarchive"
+          }
+        }
+      }
+    },
+    "Wieder ein Training in der Halle. Weiter so!": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wieder ein Training in der Halle. Weiter so!"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another workout in the hall. Keep it up!"
           }
         }
       }

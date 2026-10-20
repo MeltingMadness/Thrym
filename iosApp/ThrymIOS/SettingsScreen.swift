@@ -114,12 +114,9 @@ struct SettingsScreen: View {
                             }
                         }
                         if let character = IOSCompanion.characterName(choice: companionChoice) {
-                            HStack {
-                                Spacer()
-                                IOSCompanionSprite(character: character, size: 72)
-                                    .accessibilityHidden(true)
-                                Spacer()
-                            }
+                            // A new identity restarts the stage, so the chosen companion greets with a cheer.
+                            IOSCompanionStage(character: character, height: 96, entrance: "CHEER")
+                                .id(character)
                         }
                     } header: {
                         Text("Begleiter")

@@ -44,7 +44,8 @@ final class CompanionTests: XCTestCase {
         let lines = [
             "ONBOARDING_WELCOME", "ONBOARDING_UNITS", "ONBOARDING_START", "FIRST_STEPS_WELCOME",
             "TRAINED_TODAY_REST", "TRAINED_TODAY_SLEEP", "WELCOME_BACK_ONE_SET", "EVERYDAY_YGGDRASIL",
-            "EVERYDAY_WARMUP", "EVERYDAY_TECHNIQUE", "EVERYDAY_RECOVERY", "EVERYDAY_SMALL_PLATES"
+            "EVERYDAY_WARMUP", "EVERYDAY_TECHNIQUE", "EVERYDAY_RECOVERY", "EVERYDAY_SMALL_PLATES",
+            "WORKOUT_DONE_FOUGHT", "WORKOUT_DONE_HALL", "RECORD_SKALDS", "RECORD_SAGA"
         ]
         for line in lines {
             XCTAssertFalse(IOSCompanion.lineText(line, character: "ODIN").isEmpty, line)
@@ -55,13 +56,23 @@ final class CompanionTests: XCTestCase {
         )
     }
 
+    func testCompletionCelebratesRecords() {
+        XCTAssertEqual(IOSCompanion.completion(sessionID: 7, recordCount: 2).animation, "CELEBRATE")
+        XCTAssertEqual(IOSCompanion.completion(sessionID: 7, recordCount: 0).animation, "CHEER")
+        XCTAssertTrue(["RECORD_SKALDS", "RECORD_SAGA"].contains(IOSCompanion.completion(sessionID: 7, recordCount: 1).line))
+    }
+
     @MainActor
-    func testSpriteFramesBecome32PixelImages() {
+    func testEveryAnimationFrameBecomesAn80PixelImage() {
         for character in ["ODIN", "VALKYRIE"] {
-            for pose in ["IDLE", "BLINK", "CHEER"] {
-                let image = IOSCompanion.image(character: character, pose: pose)
-                XCTAssertEqual(image?.width, 32, "\(character) \(pose)")
-                XCTAssertEqual(image?.height, 32, "\(character) \(pose)")
+            for animation in ["IDLE", "WALK", "ATTACK", "CHEER", "CELEBRATE"] {
+                let count = IOSCompanion.durations(animation).count
+                XCTAssertGreaterThan(count, 0, animation)
+                for index in 0..<count {
+                    let image = IOSCompanion.image(character: character, animation: animation, index: index)
+                    XCTAssertEqual(image?.width, 80, "\(character) \(animation) \(index)")
+                    XCTAssertEqual(image?.height, 80, "\(character) \(animation) \(index)")
+                }
             }
         }
     }

@@ -17,11 +17,16 @@ enum class CompanionChoice {
     OFF
 }
 
-/** The frames of the pixel art. [BLINK] is part of the idle loop, [CHEER] answers a tap or a win. */
-enum class CompanionPose {
+/**
+ * The animations of the pixel art. [IDLE] and [WALK] loop; [ATTACK] is a spear thrust for
+ * practice, [CHEER] is joy about a finished workout, [CELEBRATE] a jump for records and wins.
+ */
+enum class CompanionAnimation {
     IDLE,
-    BLINK,
-    CHEER
+    WALK,
+    ATTACK,
+    CHEER,
+    CELEBRATE
 }
 
 /** Why the companion speaks on the home screen. Every moment has its own lines. */
@@ -56,7 +61,11 @@ enum class CompanionLine {
     EVERYDAY_WARMUP,
     EVERYDAY_TECHNIQUE,
     EVERYDAY_RECOVERY,
-    EVERYDAY_SMALL_PLATES
+    EVERYDAY_SMALL_PLATES,
+    WORKOUT_DONE_FOUGHT,
+    WORKOUT_DONE_HALL,
+    RECORD_SKALDS,
+    RECORD_SAGA
 }
 
 /** One appearance on the home screen. */
@@ -155,6 +164,23 @@ object CompanionRules {
         // A second hash, so the line does not follow the appearance roll.
         return lines[dayHash(epochDay xor LINE_SALT) % lines.size]
     }
+
+    /**
+     * What the companion says on the summary after a workout: a record line when the workout set
+     * at least one record, otherwise a line about the finished workout. [sessionId] picks the line,
+     * so it stays the same when the screen is shown again.
+     */
+    fun completionLine(sessionId: Long, recordCount: Int): CompanionLine {
+        val lines = if (recordCount > 0) RECORD_LINES else WORKOUT_DONE_LINES
+        return lines[dayHash(sessionId xor LINE_SALT) % lines.size]
+    }
+
+    /** [CompanionAnimation.CELEBRATE] for records, [CompanionAnimation.CHEER] for a finished workout. */
+    fun completionAnimation(recordCount: Int): CompanionAnimation =
+        if (recordCount > 0) CompanionAnimation.CELEBRATE else CompanionAnimation.CHEER
+
+    private val RECORD_LINES = listOf(CompanionLine.RECORD_SKALDS, CompanionLine.RECORD_SAGA)
+    private val WORKOUT_DONE_LINES = listOf(CompanionLine.WORKOUT_DONE_FOUGHT, CompanionLine.WORKOUT_DONE_HALL)
 
     /** All lines of [moment], for tests and previews. */
     fun lines(moment: CompanionMoment): List<CompanionLine> = linesByMoment.getValue(moment)

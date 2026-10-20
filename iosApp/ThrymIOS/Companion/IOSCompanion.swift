@@ -99,17 +99,36 @@ enum IOSCompanion {
             return String(localized: "Schlaf und gutes Essen machen auch stark.")
         case "EVERYDAY_SMALL_PLATES":
             return String(localized: "Kleine Scheiben zählen. Fortschritt ist Fortschritt.")
+        case "WORKOUT_DONE_FOUGHT":
+            return String(localized: "Training geschafft. Gut gekämpft!")
+        case "WORKOUT_DONE_HALL":
+            return String(localized: "Wieder ein Training in der Halle. Weiter so!")
+        case "RECORD_SKALDS":
+            return String(localized: "Neue Bestleistung! Davon werden die Skalden singen.")
+        case "RECORD_SAGA":
+            return String(localized: "Ein Rekord! Der kommt in die Saga.")
         default:
             return ""
         }
     }
 
-    /// Bitmap of one frame, built once per character and pose.
+    /// Line and animation for the workout summary: a celebration for records, a cheer otherwise.
+    static func completion(sessionID: Int64, recordCount: Int) -> (animation: String, line: String) {
+        let result = IosCompanion.shared.completion(sessionId: sessionID, recordCount: Int32(recordCount))
+        return (result.animationName, result.lineName)
+    }
+
+    /// Frame durations of an animation in milliseconds.
+    static func durations(_ animation: String) -> [UInt64] {
+        IosCompanion.shared.durationsMs(animationName: animation).map { UInt64(max(0, $0.int64Value)) }
+    }
+
+    /// Bitmap of one frame, built once per character, animation and frame.
     @MainActor
-    static func image(character: String, pose: String) -> CGImage? {
-        let key = "\(character).\(pose)"
+    static func image(character: String, animation: String, index: Int) -> CGImage? {
+        let key = "\(character).\(animation).\(index)"
         if let cached = imageCache[key] { return cached }
-        let frame = IosCompanion.shared.frame(characterName: character, poseName: pose)
+        let frame = IosCompanion.shared.frame(characterName: character, animationName: animation, index: Int32(index))
         let width = Int(frame.width)
         let height = Int(frame.height)
         var bytes = [UInt8](repeating: 0, count: width * height * 4)
@@ -141,95 +160,188 @@ enum IOSCompanion {
     @MainActor private static var imageCache: [String: CGImage] = [:]
 }
 
-/// The companion as 16-bit pixel art. It breathes and blinks; `cheering` shows the happy pose
-/// with a little hop. With reduced motion it stands still and only changes its pose.
-struct IOSCompanionSprite: View {
+/// A strip in which the companion lives: it walks around, stands, practises spear thrusts and
+/// cheers, as the shared `CompanionDirector` decides. One sprite pixel is always a whole number of
+/// device pixels, so the art stays sharp. `entrance` plays once when the stage appears; a tap
+/// makes the companion celebrate. With reduced motion it stands still in the middle.
+struct IOSCompanionStage: View {
     let character: String
-    var size: CGFloat = 88
-    var cheering: Bool = false
+    var height: CGFloat = 112
+    var entrance: String?
 
     @Environment(\.thrymTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-    @State private var blinking = false
-    @State private var bob: CGFloat = 0
-    @State private var hop: CGFloat = 0
+    @Environment(\.displayScale) private var displayScale
+    @State private var stageWidth: CGFloat = 0
+    @State private var x: CGFloat = .nan
+    @State private var facingRight = true
+    @State private var animation = "IDLE"
+    @State private var frameIndex = 0
+    @State private var celebrations = 0
+    @State private var entrancePlayed = false
 
     private var reduceMotion: Bool { systemReduceMotion || theme.reducedMotion }
+    private static let size = CGFloat(CompanionSprites.shared.SIZE)
+    private static let anchor = CGFloat(CompanionSprites.shared.ANCHOR_X)
+    private static let feetRow: CGFloat = 78
+
+    /// Points per sprite pixel, rounded down to whole device pixels.
+    private var pixel: CGFloat {
+        let scale = max(displayScale, 1)
+        return max(1, (height * scale / Self.size).rounded(.down)) / scale
+    }
+
+    private var spriteWidth: CGFloat { (stageWidth / pixel).rounded(.down) }
 
     var body: some View {
-        let pose = cheering ? "CHEER" : (blinking ? "BLINK" : "IDLE")
-        // Whole screen points per sprite pixel, with room for the hop above.
-        let pixel = max(1, (size / 35).rounded(.down))
-        Group {
-            if let image = IOSCompanion.image(character: character, pose: pose) {
+        let p = pixel
+        ZStack(alignment: .topLeading) {
+            if !x.isNaN, let image = IOSCompanion.image(character: character, animation: animation, index: frameIndex) {
+                let anchorX = x.rounded(.down) * p
+                let left = anchorX - Self.anchor * p
+                let top = height - Self.size * p
+                Ellipse()
+                    .fill(Color.black.opacity(0.25))
+                    .frame(width: 22 * p, height: 3 * p)
+                    .offset(x: anchorX - 11 * p, y: top + (Self.feetRow - 1) * p)
                 Image(decorative: image, scale: 1)
                     .interpolation(.none)
                     .resizable()
-                    .frame(width: pixel * 32, height: pixel * 32)
-                    .offset(y: -(bob + hop) * pixel)
+                    .frame(width: Self.size * p, height: Self.size * p)
+                    .scaleEffect(x: facingRight ? 1 : -1, y: 1, anchor: UnitPoint(x: (Self.anchor + 0.5) / Self.size, y: 0.5))
+                    .offset(x: left, y: top)
             }
         }
-        .frame(width: size, height: size, alignment: .bottom)
-        .task(id: "\(reduceMotion)-\(cheering)") {
-            blinking = false
-            bob = 0
-            guard !reduceMotion, !cheering else { return }
-            var elapsed: UInt64 = 0
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 520_000_000)
-                elapsed += 520
-                bob = bob == 0 ? 1 : 0
-                if elapsed >= 3_600 {
-                    elapsed = 0
-                    blinking = true
-                    try? await Task.sleep(nanoseconds: 140_000_000)
-                    blinking = false
+        .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
+        .background(GeometryReader { proxy in
+            Color.clear
+                .onAppear { stageWidth = proxy.size.width }
+                .onChange(of: proxy.size.width) { _, width in stageWidth = width }
+        })
+        .clipped()
+        .contentShape(Rectangle())
+        .onTapGesture { celebrations += 1 }
+        .accessibilityHidden(true)
+        .task(id: "\(character)-\(reduceMotion)-\(celebrations)-\(stageWidth > 0)") {
+            await run()
+        }
+    }
+
+    @MainActor
+    private func run() async {
+        let width = spriteWidth
+        guard width > 0 else { return }
+        let edge = CGFloat(CompanionDirector.shared.EDGE)
+        if x.isNaN {
+            x = entrance != nil ? width / 2 : edge + CGFloat.random(in: 0...1) * max(0, width - 2 * edge)
+        }
+        x = min(max(x, 0), width)
+        if reduceMotion {
+            x = width / 2
+            facingRight = true
+            let still = celebrations > 0 ? "CELEBRATE" : (entrance ?? "IDLE")
+            animation = still
+            frameIndex = max(0, IOSCompanion.durations(still).count - 1)
+            return
+        }
+        if celebrations > 0 {
+            guard await play("CELEBRATE") else { return }
+        } else if let entrance, !entrancePlayed {
+            entrancePlayed = true
+            guard await play(entrance, loops: entrance == "CHEER" ? 3 : 1) else { return }
+        }
+        var previous = animation
+        while !Task.isCancelled {
+            let action = IosCompanion.shared.nextAction(
+                seed: Int32.random(in: Int32.min...Int32.max),
+                x: Float(x),
+                facingRight: facingRight,
+                stageWidth: Float(width),
+                previousName: previous
+            )
+            facingRight = action.facingRight
+            switch action.animationName {
+            case "WALK":
+                animation = "WALK"
+                let frameMs = IOSCompanion.durations("WALK").first ?? 110
+                let step = CGFloat(CompanionDirector.shared.WALK_SPEED) * CGFloat(frameMs) / 1000
+                let target = CGFloat(action.targetX)
+                var index = 0
+                while abs(target - x) > 0.01 {
+                    frameIndex = index % 6
+                    index += 1
+                    guard await pause(frameMs) else { return }
+                    x = target > x ? min(target, x + step) : max(target, x - step)
                 }
+            case "IDLE":
+                animation = "IDLE"
+                let durations = IOSCompanion.durations("IDLE")
+                var left = UInt64(max(0, action.durationMs))
+                var index = 0
+                while left > 0 {
+                    frameIndex = index % durations.count
+                    guard await pause(durations[frameIndex]) else { return }
+                    left = left > durations[frameIndex] ? left - durations[frameIndex] : 0
+                    index += 1
+                }
+            case "CHEER":
+                guard await play("CHEER", loops: 2) else { return }
+            default:
+                guard await play(action.animationName) else { return }
+            }
+            previous = action.animationName
+        }
+    }
+
+    /// Plays `name` `loops` times; false when the stage went away meanwhile.
+    @MainActor
+    private func play(_ name: String, loops: Int = 1) async -> Bool {
+        animation = name
+        for _ in 0..<loops {
+            for (index, millis) in IOSCompanion.durations(name).enumerated() {
+                frameIndex = index
+                guard await pause(millis) else { return false }
             }
         }
-        .task(id: "hop-\(reduceMotion)-\(cheering)") {
-            hop = 0
-            guard !reduceMotion, cheering else { return }
-            for height in [1, 2, 3, 2, 1, 0] as [CGFloat] {
-                hop = height
-                try? await Task.sleep(nanoseconds: 90_000_000)
-            }
-        }
+        return true
+    }
+
+    private func pause(_ millis: UInt64) async -> Bool {
+        try? await Task.sleep(nanoseconds: millis * 1_000_000)
+        return !Task.isCancelled
     }
 }
 
-/// The companion with a speech bubble. A tap on the companion makes it cheer. `onHide` adds a
-/// button that hides it; without it the card has no close button (onboarding).
+/// The companion with what it says: name and line on top, below the stage on which it walks
+/// around. `entrance` plays once when the card appears. `onHide` adds a button that hides it;
+/// without it the card has no close button (onboarding).
 struct IOSCompanionCard: View {
     let character: String
     let line: String
-    var spriteSize: CGFloat = 88
-    var cheering: Bool = false
+    var stageHeight: CGFloat = 112
+    var entrance: String?
     var onHide: (() -> Void)?
 
-    @State private var tapCheer = false
+    @Environment(\.thrymTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         let text = IOSCompanion.lineText(line, character: character)
-        HStack(alignment: .bottom, spacing: 8) {
-            IOSCompanionSprite(character: character, size: spriteSize, cheering: cheering || tapCheer)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    tapCheer = true
-                    Task { @MainActor in
-                        try? await Task.sleep(nanoseconds: 1_200_000_000)
-                        tapCheer = false
-                    }
-                }
-                .accessibilityHidden(true)
-
-            ThrymCard(tone: .elevated) {
+        ThrymCard(tone: .elevated) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 8) {
-                    Text(text)
-                        .font(.geist(.subheadline))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityLabel(Text("\(IOSCompanion.displayName(character)) sagt: \(text)"))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(IOSCompanion.displayName(character).uppercased())
+                            .font(.geist(.caption, weight: .bold))
+                            .tracking(1.5)
+                            .foregroundStyle(theme.palette(for: colorScheme).accentText)
+                        Text(text)
+                            .font(.geist(.subheadline))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text("\(IOSCompanion.displayName(character)) sagt: \(text)"))
                     if let onHide {
                         Button(action: onHide) {
                             Image(systemName: "xmark")
@@ -241,9 +353,8 @@ struct IOSCompanionCard: View {
                         .accessibilityLabel(Text("Für heute ausblenden"))
                     }
                 }
+                IOSCompanionStage(character: character, height: stageHeight, entrance: entrance)
             }
-            .padding(.bottom, 12)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

@@ -46,6 +46,7 @@ struct IOSWorkoutCompletionScreen: View {
     /// The workout whose records already played the success haptic, so a rebuilt or
     /// restored screen does not celebrate twice.
     @SceneStorage("thrym.workout.recordsCelebratedSessionID") private var recordsCelebratedSessionID = 0
+    @AppStorage(IOSCompanion.choiceKey) private var companionChoice = "AUTO"
     private var sets: [ILWorkoutSet] { store.data?.workoutSets.filter { $0.sessionId == session.id && $0.reps > 0 } ?? [] }
     private var remaining: Int { rows.compactMap(\.remainingPlannedSets).reduce(0, +) }
     var body: some View {
@@ -77,10 +78,18 @@ struct IOSWorkoutCompletionScreen: View {
         }
     }
 
+    /// The companion celebrates records with a jump and cheers for a finished workout otherwise;
+    /// below it the record board.
     @ViewBuilder
     private var recordsCard: some View {
-        if let recordSummary, !recordSummary.exercises.isEmpty {
-            IOSWorkoutRecordsCard(summary: recordSummary, unitSystem: unitSystem)
+        if let recordSummary {
+            if let character = IOSCompanion.characterName(choice: companionChoice) {
+                let completion = IOSCompanion.completion(sessionID: session.id, recordCount: recordSummary.recordCount)
+                IOSCompanionCard(character: character, line: completion.line, entrance: completion.animation)
+            }
+            if !recordSummary.exercises.isEmpty {
+                IOSWorkoutRecordsCard(summary: recordSummary, unitSystem: unitSystem)
+            }
         }
     }
 

@@ -61,6 +61,7 @@ import com.thrym.app.presentation.theme.accentText
 import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.thrymMotion
 import com.thrym.feature.onboarding.R
+import com.thrym.shared.companion.CompanionAnimation
 import com.thrym.shared.companion.CompanionCharacter
 import com.thrym.shared.companion.CompanionLine
 import org.koin.androidx.compose.koinViewModel
@@ -189,7 +190,7 @@ fun OnboardingScreen(
 private fun WelcomeStep(companion: CompanionCharacter?) {
     val dims = thrymDimens
     if (companion != null) {
-        CompanionCard(character = companion, line = CompanionLine.ONBOARDING_WELCOME)
+        CompanionCard(character = companion, line = CompanionLine.ONBOARDING_WELCOME, entrance = CompanionAnimation.CHEER)
     } else {
         StepIcon(Icons.Default.FitnessCenter)
     }
@@ -264,7 +265,7 @@ private fun UnitsStep(
 @Composable
 private fun StartStep(companion: CompanionCharacter?) {
     if (companion != null) {
-        CompanionCard(character = companion, line = CompanionLine.ONBOARDING_START, cheering = true)
+        CompanionCard(character = companion, line = CompanionLine.ONBOARDING_START, entrance = CompanionAnimation.CELEBRATE)
     } else {
         StepIcon(Icons.Default.PlayArrow)
     }

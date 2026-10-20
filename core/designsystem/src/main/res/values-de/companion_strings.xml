@@ -17,4 +17,8 @@
     <string name="companion_line_everyday_technique">Erst saubere Technik. Das schwere Gewicht kommt von allein.</string>
     <string name="companion_line_everyday_recovery">Schlaf und gutes Essen machen auch stark.</string>
     <string name="companion_line_everyday_small_plates">Kleine Scheiben zählen. Fortschritt ist Fortschritt.</string>
+    <string name="companion_line_workout_done_fought">Training geschafft. Gut gekämpft!</string>
+    <string name="companion_line_workout_done_hall">Wieder ein Training in der Halle. Weiter so!</string>
+    <string name="companion_line_record_skalds">Neue Bestleistung! Davon werden die Skalden singen.</string>
+    <string name="companion_line_record_saga">Ein Rekord! Der kommt in die Saga.</string>
 </resources>

@@ -17,4 +17,8 @@
     <string name="companion_line_everyday_technique">Clean technique first. The heavy weight will come.</string>
     <string name="companion_line_everyday_recovery">Sleep and good food make you strong, too.</string>
     <string name="companion_line_everyday_small_plates">Small plates count. Progress is progress.</string>
+    <string name="companion_line_workout_done_fought">Workout done. Well fought!</string>
+    <string name="companion_line_workout_done_hall">Another workout in the hall. Keep it up!</string>
+    <string name="companion_line_record_skalds">A new personal best! The skalds will sing of this.</string>
+    <string name="companion_line_record_saga">A record! That one goes into the saga.</string>
 </resources>

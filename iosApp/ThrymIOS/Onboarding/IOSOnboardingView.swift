@@ -140,7 +140,7 @@ struct IOSOnboardingView: View {
     @ViewBuilder
     private func welcomeStep(palette: ThrymTheme.Palette) -> some View {
         if let companion {
-            IOSCompanionCard(character: companion, line: "ONBOARDING_WELCOME")
+            IOSCompanionCard(character: companion, line: "ONBOARDING_WELCOME", entrance: "CHEER")
         } else {
             stepIcon("dumbbell.fill", palette: palette)
         }
@@ -191,7 +191,7 @@ struct IOSOnboardingView: View {
     @ViewBuilder
     private func startStep(palette: ThrymTheme.Palette) -> some View {
         if let companion {
-            IOSCompanionCard(character: companion, line: "ONBOARDING_START", cheering: true)
+            IOSCompanionCard(character: companion, line: "ONBOARDING_START", entrance: "CELEBRATE")
         } else {
             stepIcon("play.fill", palette: palette)
         }

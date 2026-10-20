@@ -172,7 +172,10 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
                 SummaryMetric(stringResource(R.string.workout_summary_sets), sets.size.toString(), Modifier.weight(1f))
             }
             SummaryMetric(stringResource(R.string.workout_summary_volume), WeightFormatting.formatVolume(sets.sumOf { it.weightKg * it.reps }, unitSystem), Modifier.fillMaxWidth())
-            recordSummary?.let { CompletionRecordsCard(it, rows, unitSystem) }
+            recordSummary?.let {
+                CompletionCompanion(session.id, it.recordCount)
+                CompletionRecordsCard(it, rows, unitSystem)
+            }
             rows.filter { it.sets.any { set -> set.reps > 0 } }.forEach { row ->
                 Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(row.exercise.localizedName(), style = MaterialTheme.typography.titleMedium)

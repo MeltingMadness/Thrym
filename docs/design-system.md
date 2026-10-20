@@ -107,7 +107,7 @@ Gilt für Android und iOS gleich:
 
 ## Begleiter (`presentation/companion`)
 
-`CompanionSprite` zeichnet Odin oder die Walküre als 32 × 32 Pixel große 16-Bit-Figur aus `CompanionSprites` (`:shared`), mit ganzzahliger Skalierung und ohne Glättung. `CompanionCard` setzt die Figur neben eine Sprechblase (`ThrymSurfaceCard`, Ton `ELEVATED`), optional mit X zum Ausblenden. Die Figur hat ihre eigene feste Palette und folgt nicht dem Farbschema, damit sie in jedem Schema gleich aussieht. iOS: `IOSCompanionSprite` und `IOSCompanionCard` mit `ThrymCard`. Details in [`features/begleiter.md`](features/begleiter.md).
+`CompanionStage` ist ein Streifen, in dem Odin oder die Walküre als ganze 16-Bit-Figur aus `CompanionSprites` (`:shared`, 80 × 80 Pixel je Bild) herumläuft, steht, mit dem Speer übt und jubelt; ein Sprite-Pixel ist immer eine ganze Zahl von Bildschirmpixeln, ohne Glättung, mit einem weichen Schatten unter den Füßen. `CompanionCard` (`ThrymSurfaceCard`, Ton `ELEVATED`) zeigt oben Namen und Spruch, optional mit X zum Ausblenden, darunter die Bühne. Die Figur hat ihre eigene feste Palette und folgt nicht dem Farbschema, damit sie in jedem Schema gleich aussieht. iOS: `IOSCompanionStage` und `IOSCompanionCard` mit `ThrymCard`. Details in [`features/begleiter.md`](features/begleiter.md).
 
 ## App-Hülle
 
