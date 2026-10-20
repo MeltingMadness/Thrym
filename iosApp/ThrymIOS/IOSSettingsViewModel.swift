@@ -83,6 +83,18 @@ final class IOSSettingsViewModel: ObservableObject {
         feature.updateDeloadMode(value: value)
     }
 
+    func updateWeeklyGoalEnabled(_ enabled: Bool) {
+        feature.updateWeeklyGoalEnabled(enabled: enabled)
+    }
+
+    /// Sets the weekly goal from the running week on; earlier weeks keep the goal they had.
+    func updateWeeklyGoal(_ goal: Int) {
+        feature.updateWeeklyGoal(
+            goal: Int32(goal),
+            currentWeekStartEpochDay: IOSRecognition.currentWeekStartEpochDay(weekStart: state.weekStart)
+        )
+    }
+
     func updateUseDynamicColor(_ enabled: Bool) {
         feature.updateUseDynamicColor(enabled: enabled)
     }
@@ -509,6 +521,9 @@ struct SettingsFormState {
     var autoRestTimerEnabled: Bool
     var defaultRestTimeSeconds: Int
     var deloadMode: String
+    var weeklyGoalEnabled: Bool
+    /// Weekly goal changes as `WeeklyGoalRules.encode` writes them, "0:3,20745:4".
+    var weeklyGoalHistory: String
     var plateCalculatorEnabled: Bool
     var availablePlates: [Double]
     var barbellWeightKg: Double
@@ -538,6 +553,8 @@ struct SettingsFormState {
         autoRestTimerEnabled: Bool,
         defaultRestTimeSeconds: Int,
         deloadMode: String,
+        weeklyGoalEnabled: Bool = true,
+        weeklyGoalHistory: String = "",
         plateCalculatorEnabled: Bool,
         availablePlates: [Double],
         barbellWeightKg: Double,
@@ -566,6 +583,8 @@ struct SettingsFormState {
         self.autoRestTimerEnabled = autoRestTimerEnabled
         self.defaultRestTimeSeconds = defaultRestTimeSeconds
         self.deloadMode = deloadMode
+        self.weeklyGoalEnabled = weeklyGoalEnabled
+        self.weeklyGoalHistory = weeklyGoalHistory
         self.plateCalculatorEnabled = plateCalculatorEnabled
         self.availablePlates = availablePlates
         self.barbellWeightKg = barbellWeightKg
@@ -625,6 +644,8 @@ struct SettingsFormState {
         autoRestTimerEnabled = sharedState.autoRestTimerEnabled
         defaultRestTimeSeconds = Int(sharedState.defaultRestTimeSeconds)
         deloadMode = sharedState.deloadMode
+        weeklyGoalEnabled = sharedState.weeklyGoalEnabled
+        weeklyGoalHistory = sharedState.weeklyGoalHistory
         plateCalculatorEnabled = sharedState.plateCalculatorEnabled
         availablePlates = sharedState.availablePlates.map { $0.doubleValue }
         barbellWeightKg = sharedState.barbellWeightKg

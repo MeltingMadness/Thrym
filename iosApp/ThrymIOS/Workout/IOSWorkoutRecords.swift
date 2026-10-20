@@ -152,6 +152,7 @@ enum IOSWorkoutRecords {
         exerciseName: String,
         lines: [IOSWorkoutRecordLine],
         unitSystem: String,
+        mark: StrengthMark? = nil,
         shownAt: Date = Date()
     ) -> IOSWorkoutRecordNotice? {
         guard let first = lines.first else { return nil }
@@ -173,7 +174,9 @@ enum IOSWorkoutRecords {
         return IOSWorkoutRecordNotice(
             id: UUID(),
             sessionID: sessionID,
-            title: String(localized: "\(lines.count) neue Rekorde · \(exerciseName)"),
+            // A round mark leads the title: "100-kg-Marke · Kniebeuge (Langhantel)".
+            title: mark.map { "\(IOSRecognition.markTitle($0)) · \(exerciseName)" }
+                ?? String(localized: "\(lines.count) neue Rekorde · \(exerciseName)"),
             detail: detail,
             shownAt: shownAt
         )

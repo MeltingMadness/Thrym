@@ -1,5 +1,6 @@
 package com.thrym.app.presentation.navigation
 
+import com.thrym.shared.recognition.WeeklyGoalChange
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.annotation.PluralsRes
@@ -668,5 +669,13 @@ private class NavigationSmokePreferencesRepository : AppPreferencesRepository {
 
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         state.value = state.value.copy(backupReminderEnabled = enabled)
+    }
+
+    override suspend fun updateWeeklyGoalEnabled(enabled: Boolean) {
+        state.value = state.value.copy(weeklyGoalEnabled = enabled)
+    }
+
+    override suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>) {
+        state.value = state.value.copy(weeklyGoalHistory = history)
     }
 }

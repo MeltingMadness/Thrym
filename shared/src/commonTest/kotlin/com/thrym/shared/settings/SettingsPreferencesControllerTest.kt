@@ -1,5 +1,6 @@
 package com.thrym.shared.settings
 
+import com.thrym.shared.recognition.WeeklyGoalChange
 import com.thrym.shared.model.AppPreferences
 import com.thrym.shared.model.DeloadMode
 import com.thrym.shared.model.IntensitySystem
@@ -215,6 +216,28 @@ class SettingsPreferencesControllerTest {
     }
 
     @Test
+    fun updateWeeklyGoal_keepsTheGoalOfEarlierWeeks() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = FakeSharedReminderScheduler()
+        )
+
+        controller.updateWeeklyGoal(goal = 4, currentWeekStartEpochDay = 20_745L)
+        controller.updateWeeklyGoalEnabled(false)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(WeeklyGoalChange(0L, 3), WeeklyGoalChange(20_745L, 4)),
+            repository.current.weeklyGoalHistory
+        )
+        assertEquals(3, repository.current.weeklyGoalFor(20_738L))
+        assertEquals(4, repository.current.weeklyGoalFor(20_745L))
+        assertEquals(false, repository.current.weeklyGoalEnabled)
+    }
+
+    @Test
     fun backupReminder_isDueAtSevenDaysOnlyWhenOptedIn() {
         val sevenDays = BACKUP_REMINDER_THRESHOLD_MILLIS
 
@@ -343,6 +366,14 @@ private class FakeSharedAppPreferencesRepository(
 
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         state.value = state.value.copy(backupReminderEnabled = enabled)
+    }
+
+    override suspend fun updateWeeklyGoalEnabled(enabled: Boolean) {
+        state.value = state.value.copy(weeklyGoalEnabled = enabled)
+    }
+
+    override suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>) {
+        state.value = state.value.copy(weeklyGoalHistory = history)
     }
 }
 

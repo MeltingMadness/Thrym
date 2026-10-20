@@ -942,18 +942,30 @@ struct IOSWorkoutScreen: View {
         data: ILTrainingData
     ) -> IOSWorkoutRecordNotice? {
         let exercise = data.exercises.first { $0.id == exerciseID }
+        let after = IOSWorkoutRecords.recordInputs(exerciseID: exerciseID, data: data)
         let lines = IOSWorkoutRecords.liveImprovements(
             sessionID: sessionID,
             before: before,
-            after: IOSWorkoutRecords.recordInputs(exerciseID: exerciseID, data: data),
+            after: after,
             addedLoad: exercise?.tracksAddedLoad == true,
             data: data
         )
+        // A mark always comes with a weight or reps record of the same set; it only names the title.
+        let mark = lines.isEmpty ? nil : exercise.flatMap { exercise in
+            IOSRecognition.liveMark(
+                sessionID: sessionID,
+                before: before,
+                after: after,
+                category: exercise.category,
+                unitSystem: settings.state.unitSystem
+            )
+        }
         guard let notice = IOSWorkoutRecords.notice(
             sessionID: sessionID,
             exerciseName: exercise?.displayName ?? String(localized: "Übung"),
             lines: lines,
-            unitSystem: settings.state.unitSystem
+            unitSystem: settings.state.unitSystem,
+            mark: mark
         ) else { return nil }
         withAnimation(noticeAnimation) { recordNotice = notice }
         let feedback = UINotificationFeedbackGenerator()

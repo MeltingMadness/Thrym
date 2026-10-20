@@ -1,5 +1,6 @@
 package com.thrym.app.presentation.progression
 
+import com.thrym.shared.recognition.WeeklyGoalChange
 import androidx.lifecycle.SavedStateHandle
 import com.thrym.app.fakes.FakeTrainingPlanRepository
 import com.thrym.app.domain.model.TrainingPlan
@@ -873,5 +874,13 @@ private class FakePreferencesRepository : AppPreferencesRepository {
 
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         state.value = state.value.copy(backupReminderEnabled = enabled)
+    }
+
+    override suspend fun updateWeeklyGoalEnabled(enabled: Boolean) {
+        state.value = state.value.copy(weeklyGoalEnabled = enabled)
+    }
+
+    override suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>) {
+        state.value = state.value.copy(weeklyGoalHistory = history)
     }
 }

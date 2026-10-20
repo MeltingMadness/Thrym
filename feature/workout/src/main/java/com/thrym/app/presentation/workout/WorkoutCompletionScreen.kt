@@ -1,5 +1,6 @@
 package com.thrym.app.presentation.workout
 
+import com.thrym.shared.recognition.CompletionFacts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -90,7 +91,7 @@ internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, err
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<ExerciseWithSets>, recordInputs: List<RecordSetInput>?, unitSystem: UnitSystem,
+internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<ExerciseWithSets>, recordInputs: List<RecordSetInput>?, facts: CompletionFacts?, unitSystem: UnitSystem,
     finishState: WorkoutFinishState, onClose: () -> Unit, onDetails: () -> Unit, onPlanEditor: () -> Unit,
     onProgression: () -> Unit, onRetryProgression: () -> Unit) {
     var showPlanChanges by rememberSaveable(session.id) { mutableStateOf(false) }
@@ -103,6 +104,11 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
     val addedLoadIds = rows.filter { it.exercise.tracksAddedLoad }.map { it.exercise.id }.distinct()
     val recordSummary = remember(recordInputs, recordOrder, addedLoadIds) {
         recordInputs?.let { SessionRecords.summarize(session.id, recordOrder, it, addedLoadIds) }
+    }
+    // Round marks reached for the first time; they sit on the board but are no records.
+    val categories = rows.associate { it.exercise.id to it.exercise.category.name }
+    val marks = remember(recordInputs, categories, unitSystem) {
+        recordInputs?.let { inputs -> sessionMarksByExercise(session.id, inputs, categories, unitSystem) }.orEmpty()
     }
     // One haptic the first time the board shows records, not again after rotation or a restore.
     val haptic = rememberHapticFeedback()
@@ -132,6 +138,8 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
             session = session,
             rows = rows,
             recordSummary = recordSummary,
+            marks = marks,
+            facts = facts,
             unitSystem = unitSystem,
             onClose = onClose,
             onDetails = onDetails,
@@ -158,7 +166,16 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(stringResource(if (remaining > 0) R.string.workout_summary_headline_partial else R.string.workout_summary_headline_complete), style = MaterialTheme.typography.headlineMedium)
-            Text(if (remaining > 0) pluralStringResource(R.plurals.workout_summary_partial_subtitle, sets.size, sets.size) else session.name)
+            Text(
+                if (remaining > 0) {
+                    pluralStringResource(R.plurals.workout_summary_partial_subtitle, sets.size, sets.size)
+                } else {
+                    listOfNotNull(
+                        session.name.takeIf { it.isNotBlank() },
+                        facts?.let { stringResource(R.string.recognition_training_number, it.trainingNumber) }
+                    ).joinToString(" · ")
+                }
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SummaryMetric(
                     stringResource(R.string.workout_summary_duration),
@@ -172,7 +189,8 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
                 SummaryMetric(stringResource(R.string.workout_summary_sets), sets.size.toString(), Modifier.weight(1f))
             }
             SummaryMetric(stringResource(R.string.workout_summary_volume), WeightFormatting.formatVolume(sets.sumOf { it.weightKg * it.reps }, unitSystem), Modifier.fillMaxWidth())
-            recordSummary?.let { CompletionRecordsCard(it, rows, unitSystem) }
+            facts?.let { CompletionFactsBlock(it) }
+            recordSummary?.let { CompletionRecordsCard(it, rows, unitSystem, marks) }
             rows.filter { it.sets.any { set -> set.reps > 0 } }.forEach { row ->
                 Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(row.exercise.localizedName(), style = MaterialTheme.typography.titleMedium)

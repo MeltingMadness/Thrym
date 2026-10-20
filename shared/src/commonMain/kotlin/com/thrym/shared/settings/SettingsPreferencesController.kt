@@ -9,9 +9,12 @@ import com.thrym.shared.model.AppearanceStyle
 import com.thrym.shared.model.ThemeScheme
 import com.thrym.shared.model.UnitSystem
 import com.thrym.shared.model.WeekStart
+import com.thrym.shared.recognition.WeeklyGoalChange
+import com.thrym.shared.recognition.WeeklyGoalRules
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -41,6 +44,8 @@ interface SharedAppPreferencesRepository {
     suspend fun updateBarbellWeightKg(weightKg: Double)
     suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?)
     suspend fun updateBackupReminderEnabled(enabled: Boolean)
+    suspend fun updateWeeklyGoalEnabled(enabled: Boolean)
+    suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>)
 }
 
 interface SharedReminderScheduler {
@@ -177,5 +182,22 @@ class SettingsPreferencesController(
 
     fun updateBackupReminderEnabled(enabled: Boolean) {
         controllerScope.launch { appPreferencesRepository.updateBackupReminderEnabled(enabled) }
+    }
+
+    fun updateWeeklyGoalEnabled(enabled: Boolean) {
+        controllerScope.launch { appPreferencesRepository.updateWeeklyGoalEnabled(enabled) }
+    }
+
+    /**
+     * Sets the weekly goal from the week starting at [currentWeekStartEpochDay] on; earlier
+     * weeks keep the goal they had. The caller supplies the week, the controller has no clock.
+     */
+    fun updateWeeklyGoal(goal: Int, currentWeekStartEpochDay: Long) {
+        controllerScope.launch {
+            val history = appPreferencesRepository.preferences.first().weeklyGoalHistory
+            appPreferencesRepository.updateWeeklyGoalHistory(
+                WeeklyGoalRules.withChange(history, currentWeekStartEpochDay, goal)
+            )
+        }
     }
 }

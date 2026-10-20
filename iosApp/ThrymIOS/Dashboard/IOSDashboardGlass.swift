@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 /// One day of the current week for the Liquid Glass week strip.
@@ -271,6 +272,8 @@ struct IOSDashboardGlassWeekStrip: View {
     let workoutsThisWeek: Int
     let volumeKg: Double
     let unitSystem: String
+    /// With a weekly goal the header reads "2 von 3 · 4.320 kg" and the streak sits below the days.
+    var weeklyGoal: WeeklyGoalStatus? = nil
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.thrymTheme) private var theme
@@ -286,9 +289,12 @@ struct IOSDashboardGlassWeekStrip: View {
                     .tracking(0.8)
                     .thrymSecondaryText()
                 Spacer()
-                Text("\(ilWorkoutCountText(workoutsThisWeek)) · \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))")
+                Text("\(weeklyGoal.map(IOSRecognition.weekProgressText) ?? ilWorkoutCountText(workoutsThisWeek)) · \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))")
                     .font(.geist(.subheadline, weight: .bold))
                     .monospacedDigit()
+                    .accessibilityLabel(weeklyGoal.map {
+                        "\(IOSRecognition.weekProgressAccessibility($0)), \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))"
+                    } ?? "\(ilWorkoutCountText(workoutsThisWeek)), \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))")
             }
             HStack(spacing: 0) {
                 ForEach(days) { day in
@@ -316,6 +322,10 @@ struct IOSDashboardGlassWeekStrip: View {
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(accessibilityText(day))
                 }
+            }
+            if let footer = weeklyGoal.flatMap(IOSRecognition.weekFooterText) {
+                IOSWeekGoalFooter(text: footer)
+                    .accessibilityHidden(true)
             }
         }
         .padding(.horizontal, 16)
