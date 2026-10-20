@@ -1,5 +1,8 @@
 package com.thrym.app.presentation.settings
 
+import kotlinx.coroutines.flow.first
+import com.thrym.shared.recognition.WeeklyGoalRules
+import java.time.LocalDate
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -190,6 +193,18 @@ class SettingsViewModel(
 
     fun updateBackupReminderEnabled(enabled: Boolean) {
         preferencesController.updateBackupReminderEnabled(enabled)
+    }
+
+    fun updateWeeklyGoalEnabled(enabled: Boolean) {
+        preferencesController.updateWeeklyGoalEnabled(enabled)
+    }
+
+    /** Sets the weekly goal from the running week on; earlier weeks keep theirs. */
+    fun updateWeeklyGoal(goal: Int) {
+        viewModelScope.launch {
+            val weekStart = appPreferencesRepository.preferences.first().weekStart.toShared()
+            preferencesController.updateWeeklyGoal(goal, currentWeekStartEpochDay(weekStart))
+        }
     }
 
 
@@ -434,3 +449,7 @@ class SettingsViewModel(
         const val TAG = "SettingsViewModel"
     }
 }
+
+/** First day of the running week as an epoch day, by the configured week start. */
+internal fun currentWeekStartEpochDay(weekStart: com.thrym.shared.model.WeekStart): Long =
+    WeeklyGoalRules.weekStartOf(LocalDate.now().toEpochDay(), weekStart)

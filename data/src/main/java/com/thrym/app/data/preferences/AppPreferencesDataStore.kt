@@ -40,6 +40,9 @@ internal object AppPreferenceKeys {
     val BARBELL_WEIGHT_KG = doublePreferencesKey("barbell_weight_kg")
     val LAST_SUCCESSFUL_EXPORT_EPOCH_MILLIS = longPreferencesKey("last_successful_export_epoch_millis")
     val BACKUP_REMINDER_ENABLED = booleanPreferencesKey("backup_reminder_enabled")
+    val WEEKLY_GOAL_ENABLED = booleanPreferencesKey("weekly_goal_enabled")
+    /** Goal changes as `epochDay:goal`, comma-separated (see `WeeklyGoalRules.encode`). */
+    val WEEKLY_GOAL_HISTORY = stringPreferencesKey("weekly_goal_history")
     val ACTIVE_WORKOUT_EXERCISE_ORDER = stringPreferencesKey("active_workout_exercise_order")
 
     fun restTimerState(sessionId: Long) =

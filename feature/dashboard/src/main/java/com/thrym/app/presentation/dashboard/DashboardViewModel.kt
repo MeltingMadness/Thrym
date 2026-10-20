@@ -1,5 +1,10 @@
 package com.thrym.app.presentation.dashboard
 
+import com.thrym.app.presentation.common.toSharedWeekStart
+import com.thrym.shared.recognition.TrainingMilestones
+import com.thrym.shared.recognition.WeeklyGoalEngine
+import com.thrym.shared.recognition.WeeklyGoalSession
+import com.thrym.shared.recognition.WeeklyGoalStatus
 import com.thrym.app.presentation.common.UiStrings
 import com.thrym.app.presentation.common.toUserDetail
 import com.thrym.feature.dashboard.R as UxR
@@ -152,6 +157,10 @@ data class DashboardUiState(
     /** Seven days from the configured week start; empty until loaded. */
     val weekDays: List<DashboardWeekDay> = emptyList(),
     val volumeThisWeekKg: Double = 0.0,
+    /** Weekly goal and streak; null while loading or when the goal is switched off. */
+    val weeklyGoal: WeeklyGoalStatus? = null,
+    /** Days since the last workout when they make a pause (21 or more), else null. */
+    val pauseDays: Int? = null,
     val unitSystem: UnitSystem = UnitSystem.METRIC,
     /**
      * Exercises by id for plan previews; plan rows do not always carry the name. The state keeps
@@ -710,6 +719,22 @@ class DashboardViewModel(
                 }
 
                 val lastWorkout = workoutRepository.getLastCompletedSessionBefore(nowEpochMillis)
+                val weeklyGoal = if (preferences.weeklyGoalEnabled) {
+                    WeeklyGoalEngine.evaluate(
+                        todayEpochDay = now.toEpochDay(),
+                        weekStart = preferences.weekStart.toSharedWeekStart(),
+                        sessions = workoutRepository.getCompletedSessionStarts().map { start ->
+                            WeeklyGoalSession(start.startTime.toLocalDate().toEpochDay(), start.isDeload)
+                        },
+                        history = preferences.weeklyGoalHistory
+                    )
+                } else {
+                    null
+                }
+                val pauseDays = TrainingMilestones.pauseDays(
+                    lastEpochDay = lastWorkout?.startTime?.toLocalDate()?.toEpochDay(),
+                    todayEpochDay = now.toEpochDay()
+                )
                 val lastWorkoutExerciseCount = if (lastWorkout != null) {
                     workoutRepository.getExerciseIdsForSession(lastWorkout.id).size
                 } else 0
@@ -783,6 +808,8 @@ class DashboardViewModel(
                         workoutsThisMonth = workoutsThisMonth,
                         weekDays = weekDays,
                         volumeThisWeekKg = volumeByWeek.lastOrNull()?.second ?: 0.0,
+                        weeklyGoal = weeklyGoal,
+                        pauseDays = pauseDays,
                         unitSystem = preferences.unitSystem,
                         recentRecords = recordsWithExercises,
                         lastWorkout = lastWorkout,

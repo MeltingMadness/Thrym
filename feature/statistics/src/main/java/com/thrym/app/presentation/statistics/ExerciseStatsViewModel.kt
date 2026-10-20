@@ -20,7 +20,11 @@ import com.thrym.app.domain.util.MuscleVolume
 import com.thrym.app.domain.util.MuscleVolumeCalculator
 import com.thrym.app.domain.util.WorkoutCalculations
 import com.thrym.app.domain.util.catchAndLog
+import com.thrym.app.presentation.common.toSharedUnit
 import com.thrym.app.presentation.common.toUserMessage
+import com.thrym.shared.recognition.StrengthMarkLadder
+import com.thrym.shared.recognition.StrengthMarks
+import com.thrym.shared.workout.RecordSetInput
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -78,6 +82,8 @@ data class ExerciseStatsUiState(
     val e1rmProgression: E1rmProgression? = null,
     val weeklyMuscleVolume: List<MuscleVolume> = emptyList(),
     val recentSets: List<WorkoutSet> = emptyList(),
+    /** Round marks of a barbell or bodyweight exercise, one ladder per kind that has a mark. */
+    val markLadders: List<StrengthMarkLadder> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -108,10 +114,15 @@ class ExerciseStatsViewModel(
             try {
                 val exercise = exerciseRepository.getExerciseById(exerciseId)
                 val sets = loadHistoricalSets()
+                val unitSystem = appPreferencesRepository.preferences.first().unitSystem
+                val markLadders = exercise?.let {
+                    StrengthMarks.history(sets.map { set -> set.toMarkInput() }, it.category.name, unitSystem.toSharedUnit())
+                }.orEmpty()
 
                 _uiState.value = _uiState.value.copy(
                     exercise = exercise,
                     recentSets = sets.take(50),
+                    markLadders = markLadders,
                     isLoading = false
                 )
 
@@ -269,3 +280,15 @@ class ExerciseStatsViewModel(
         return bySession.values.toList()
     }
 }
+
+/** A completed work set as the mark rules see it; warm-ups are already filtered out. */
+private fun WorkoutSet.toMarkInput(): RecordSetInput = RecordSetInput(
+    id = id,
+    sessionId = sessionId,
+    exerciseId = exerciseId,
+    weightKg = weightKg,
+    reps = reps,
+    setType = setType.name,
+    completedAtEpochMillis = completedAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+    sessionFinished = true
+)

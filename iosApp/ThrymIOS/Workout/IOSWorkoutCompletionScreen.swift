@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 struct IOSWorkoutFinishSheet: View {
@@ -34,6 +35,7 @@ struct IOSWorkoutCompletionScreen: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(IOSTrainingStore.self) private var store
     @Environment(\.thrymAppearance) private var appearance
+    @EnvironmentObject private var settings: IOSSettingsViewModel
     let session: ILWorkoutSession
     let rows: [IOSWorkoutExerciseRow]
     let unitSystem: String
@@ -43,6 +45,9 @@ struct IOSWorkoutCompletionScreen: View {
     @State private var planApplied = false
     /// Records of this workout (`IOSWorkoutRecords.summary`), computed outside `body`.
     @State private var recordSummary: IOSWorkoutRecordSummary?
+    /// Round marks of this workout per exercise and its facts (number, weekly goal, jubilee, comeback).
+    @State private var marks: [Int64: [StrengthMark]] = [:]
+    @State private var facts: CompletionFacts?
     /// The workout whose records already played the success haptic, so a rebuilt or
     /// restored screen does not celebrate twice.
     @SceneStorage("thrym.workout.recordsCelebratedSessionID") private var recordsCelebratedSessionID = 0
@@ -69,6 +74,13 @@ struct IOSWorkoutCompletionScreen: View {
         }
         let summary = IOSWorkoutRecords.summary(session: session, rows: rows, data: data)
         recordSummary = summary
+        marks = IOSRecognition.sessionMarks(
+            sessionID: session.id,
+            exercises: rows.map(\.exercise),
+            data: data,
+            unitSystem: unitSystem
+        )
+        facts = IOSRecognition.completionFacts(sessionID: session.id, sessions: data.workoutSessions, settings: settings.state)
         if summary.recordCount > 0, recordsCelebratedSessionID != Int(session.id) {
             recordsCelebratedSessionID = Int(session.id)
             let feedback = UINotificationFeedbackGenerator()
@@ -80,7 +92,14 @@ struct IOSWorkoutCompletionScreen: View {
     @ViewBuilder
     private var recordsCard: some View {
         if let recordSummary, !recordSummary.exercises.isEmpty {
-            IOSWorkoutRecordsCard(summary: recordSummary, unitSystem: unitSystem)
+            IOSWorkoutRecordsCard(summary: recordSummary, unitSystem: unitSystem, marks: marks)
+        }
+    }
+
+    @ViewBuilder
+    private var factsBlock: some View {
+        if let facts {
+            IOSCompletionFactsBlock(facts: facts)
         }
     }
 
@@ -93,7 +112,11 @@ struct IOSWorkoutCompletionScreen: View {
         return ScrollView {
             VStack(spacing: 20) {
                 VStack(spacing: 6) {
-                    Text([session.startDate.formatted(.dateTime.weekday(.wide).day().month(.twoDigits)), session.name.isEmpty ? nil : session.name]
+                    Text([
+                        session.startDate.formatted(.dateTime.weekday(.wide).day().month(.twoDigits)),
+                        session.name.isEmpty ? nil : session.name,
+                        facts.map { String(localized: "Training \(Int($0.trainingNumber))") }
+                    ]
                         .compactMap { $0 }.joined(separator: " · ").uppercased())
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
@@ -119,6 +142,7 @@ struct IOSWorkoutCompletionScreen: View {
                     lens("\(trained.count)", unit: trained.count == 1 ? String(localized: "Übung (Anzahl)", comment: "Unit under the exercise count, like min and kg") : String(localized: "Übungen (Anzahl)", comment: "Unit under the exercise count, like min and kg"), label: String(localized: "Übungen"))
                 }
 
+                factsBlock
                 recordsCard
 
                 ForEach(trained) { row in
@@ -206,12 +230,15 @@ struct IOSWorkoutCompletionScreen: View {
                     .foregroundStyle(.green).padding().frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
                 Text(remaining > 0 ? String(localized: "Teiltraining gespeichert") : String(localized: "Training geschafft")).font(.geist(.title, weight: .bold))
-                Text(session.name).thrymSecondaryText()
+                Text([session.name.isEmpty ? nil : session.name, facts.map { String(localized: "Training \(Int($0.trainingNumber))") }]
+                    .compactMap { $0 }.joined(separator: " · "))
+                    .thrymSecondaryText()
                 HStack(spacing: 12) {
                     metric(String(localized: "Dauer"), String(localized: "\(session.durationSeconds / 60) min"))
                     metric(String(localized: "Sätze"), "\(sets.count)")
                 }
                 metric(String(localized: "Volumen"), iosWorkoutDisplayWeight(kilograms: sets.reduce(0) { $0 + $1.weightKg * Double($1.reps) }, unitSystem: unitSystem))
+                factsBlock
                 recordsCard
                 ForEach(rows.filter { !$0.sets.isEmpty }) { row in
                     VStack(alignment: .leading, spacing: 10) {

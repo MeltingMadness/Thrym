@@ -46,6 +46,8 @@ import com.thrym.app.presentation.theme.GlassLevel
 import com.thrym.app.presentation.theme.liquidGlass
 import com.thrym.core.designsystem.R
 import com.thrym.feature.workout.R as WorkoutR
+import com.thrym.shared.recognition.CompletionFacts
+import com.thrym.shared.recognition.StrengthMark
 import com.thrym.shared.workout.SessionRecordSummary
 /**
  * Workout summary in Liquid Glass: "Geschafft.", three lenses (duration, volume, exercises),
@@ -57,6 +59,8 @@ internal fun GlassWorkoutCompletion(
     session: WorkoutSession,
     rows: List<ExerciseWithSets>,
     recordSummary: SessionRecordSummary?,
+    marks: Map<Long, List<StrengthMark>>,
+    facts: CompletionFacts?,
     unitSystem: UnitSystem,
     onClose: () -> Unit,
     onDetails: () -> Unit,
@@ -92,7 +96,8 @@ internal fun GlassWorkoutCompletion(
                 Text(
                     text = listOfNotNull(
                         session.startTime.format(DateFormatting.weekdayDayMonth(currentLocale())),
-                        session.name.takeIf { it.isNotBlank() }
+                        session.name.takeIf { it.isNotBlank() },
+                        facts?.let { stringResource(R.string.recognition_training_number, it.trainingNumber) }
                     ).joinToString(" · ").uppercase(currentLocale()),
                     style = AthleticLabel,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -140,7 +145,8 @@ internal fun GlassWorkoutCompletion(
                 )
             }
 
-            recordSummary?.let { CompletionRecordsCard(it, rows, unitSystem) }
+            facts?.let { CompletionFactsBlock(it) }
+            recordSummary?.let { CompletionRecordsCard(it, rows, unitSystem, marks) }
 
             trainedRows.forEach { row ->
                 Column(

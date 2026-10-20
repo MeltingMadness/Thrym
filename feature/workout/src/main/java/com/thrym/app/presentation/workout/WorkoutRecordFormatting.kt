@@ -6,6 +6,7 @@ import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.model.WorkoutSet
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.markTitle
 import com.thrym.app.presentation.common.setLoadText
 import com.thrym.core.designsystem.R
 import com.thrym.feature.workout.R as WorkoutR
@@ -128,9 +129,14 @@ internal fun formatFirstBestSet(strings: UiStrings, set: WorkoutSet, unitSystem:
     )
 }
 
-/** Title of the live notice: "2 neue Rekorde · Bankdrücken". */
+/**
+ * Title of the live notice: "2 neue Rekorde · Bankdrücken". When the set also reached a round
+ * mark, the mark leads instead: "100-kg-Marke · Kniebeuge (Langhantel)".
+ */
 internal fun liveRecordTitle(strings: UiStrings, event: WorkoutEvent.NewRecords): String =
-    strings.getQuantity(WorkoutR.plurals.workout_record_live_title, event.records.size, event.records.size, event.exerciseName)
+    event.mark?.let { mark ->
+        strings.get(R.string.recognition_title_with_detail, strings.markTitle(mark), event.exerciseName)
+    } ?: strings.getQuantity(WorkoutR.plurals.workout_record_live_title, event.records.size, event.records.size, event.exerciseName)
 
 /**
  * What TalkBack reads for a record row, as one sentence: "Gewicht 100 kg × 5, 2,5 kg mehr als

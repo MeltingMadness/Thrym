@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +52,10 @@ import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.common.localizedName
+import com.thrym.app.presentation.common.rememberUiStrings
+import com.thrym.app.presentation.common.weekFooterText
+import com.thrym.app.presentation.common.weekProgressDescription
+import com.thrym.app.presentation.common.weekProgressText
 import com.thrym.app.presentation.common.skeletonDateFormatter
 import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.theme.GlassLevel
@@ -58,6 +64,7 @@ import com.thrym.app.presentation.theme.LocalAppearanceStyle
 import com.thrym.app.presentation.theme.liquidGlass
 import com.thrym.core.designsystem.R
 import com.thrym.feature.dashboard.R as DashboardR
+import com.thrym.shared.recognition.WeeklyGoalStatus
 import java.time.LocalDate
 import java.time.format.TextStyle
 
@@ -336,9 +343,11 @@ internal fun GlassWeekStrip(
     days: List<DashboardWeekDay>,
     workoutsThisWeek: Int,
     volumeKg: Double,
-    unitSystem: UnitSystem
+    unitSystem: UnitSystem,
+    weeklyGoal: WeeklyGoalStatus? = null
 ) {
     if (days.isEmpty()) return
+    val strings = rememberUiStrings()
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val done = if (dark) Color.White else Color(0xFF0B0D12)
     val onDone = if (dark) Color(0xFF0B0D12) else Color.White
@@ -355,7 +364,15 @@ internal fun GlassWeekStrip(
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        val weekDescription = weeklyGoal?.let { strings.weekProgressDescription(it) }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = if (weekDescription != null) {
+                Modifier.semantics(mergeDescendants = true) { contentDescription = weekDescription }
+            } else {
+                Modifier
+            }
+        ) {
             Text(
                 text = stringResource(DashboardR.string.dashboard_ui_this_week).uppercase(currentLocale()),
                 style = AthleticLabel,
@@ -364,7 +381,8 @@ internal fun GlassWeekStrip(
             )
             Text(
                 text = listOf(
-                    pluralStringResource(DashboardR.plurals.dashboard_ui_training_count, workoutsThisWeek, workoutsThisWeek),
+                    weeklyGoal?.let { strings.weekProgressText(it) }
+                        ?: pluralStringResource(DashboardR.plurals.dashboard_ui_training_count, workoutsThisWeek, workoutsThisWeek),
                     WeightFormatting.formatVolume(volumeKg, unitSystem)
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
@@ -414,5 +432,34 @@ internal fun GlassWeekStrip(
                 }
             }
         }
+        weeklyGoal?.let(strings::weekFooterText)?.let { footer ->
+            WeekGoalFooter(footer)
+        }
+    }
+}
+
+/**
+ * Quiet line under the week: calendar symbol and "7 Wochen in Folge" (or "Wochenziel erreicht").
+ * The header already speaks it for TalkBack, so the line itself stays silent.
+ */
+@Composable
+internal fun WeekGoalFooter(text: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.clearAndSetSemantics {},
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.EventAvailable,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

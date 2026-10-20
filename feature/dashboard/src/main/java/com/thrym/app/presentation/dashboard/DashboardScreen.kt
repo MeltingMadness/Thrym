@@ -1,5 +1,15 @@
 package com.thrym.app.presentation.dashboard
 
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import com.thrym.app.presentation.common.rememberUiStrings
+import com.thrym.app.presentation.common.weekFooterText
+import com.thrym.app.presentation.common.weekProgressDescription
+import com.thrym.app.presentation.common.weekProgressText
+import com.thrym.shared.recognition.WeeklyGoalStatus
 import com.thrym.feature.dashboard.R as UxR
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -233,7 +243,8 @@ fun DashboardScreen(
                         days = state.weekDays,
                         workoutsThisWeek = state.workoutsThisWeek,
                         volumeKg = state.volumeThisWeekKg,
-                        unitSystem = state.unitSystem
+                        unitSystem = state.unitSystem,
+                        weeklyGoal = state.weeklyGoal
                     )
                 }
             }
@@ -278,6 +289,7 @@ fun DashboardScreen(
                     WorkoutStreakBentoCard(
                         workoutsThisWeek = state.workoutsThisWeek,
                         workoutsThisMonth = state.workoutsThisMonth,
+                        weeklyGoal = state.weeklyGoal,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -288,6 +300,16 @@ fun DashboardScreen(
             // mehr angezeigt; ein aktiver manueller Modus bleibt bedienbar.
             val deloadSuggested =
                 state.trainingTrend.assessment?.trainingTrend?.deloadSuggested == true
+            val pauseDays = state.pauseDays
+            if (pauseDays != null && state.deloadMode == null && state.activeSession == null) {
+                item(key = "comeback_card") {
+                    ComebackCard(
+                        pauseDays = pauseDays,
+                        isUpdating = state.isDeloadModeUpdating,
+                        onEaseBackIn = { viewModel.activateDeloadMode(DeloadMode.HALVE_SET_VOLUME) }
+                    )
+                }
+            }
             if (deloadSuggested || state.deloadMode != null) {
                 item(key = "deload_card") {
                     DeloadCard(
@@ -751,12 +773,51 @@ private fun CommandCenterCard(
 }
 
 
+/**
+ * Offer after a pause of three weeks or more: the existing deload mode, so the first workouts
+ * back are lighter. Names the pause as a fact, never as a reproach.
+ */
+@Composable
+private fun ComebackCard(pauseDays: Int, isUpdating: Boolean, onEaseBackIn: () -> Unit) {
+    val dims = thrymDimens
+    ThrymSurfaceCard(modifier = Modifier.fillMaxWidth(), tone = ThrymSurfaceTone.ELEVATED) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dims.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+        ) {
+            Text(
+                text = pluralStringResource(R.plurals.recognition_comeback_pause, pauseDays, pauseDays),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() }
+            )
+            Text(
+                text = stringResource(R.string.recognition_comeback_offer),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedButton(
+                onClick = onEaseBackIn,
+                enabled = !isUpdating,
+                modifier = Modifier.padding(top = dims.spacingXs),
+                colors = ThrymInteractiveColors.outlinedButton()
+            ) {
+                Text(stringResource(R.string.recognition_comeback_action))
+            }
+        }
+    }
+}
+
 @Composable
 private fun WorkoutStreakBentoCard(
     workoutsThisWeek: Int,
     workoutsThisMonth: Int,
+    weeklyGoal: WeeklyGoalStatus?,
     modifier: Modifier = Modifier
 ) {
+    val strings = rememberUiStrings()
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
@@ -769,8 +830,19 @@ private fun WorkoutStreakBentoCard(
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(stringResource(DashboardR.string.dashboard_ui_this_week), style = MaterialTheme.typography.labelMedium)
-                Text(pluralStringResource(DashboardR.plurals.dashboard_ui_training_count, workoutsThisWeek, workoutsThisWeek), style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold)
+                if (weeklyGoal != null) {
+                    val description = strings.weekProgressDescription(weeklyGoal)
+                    Column(
+                        modifier = Modifier.clearAndSetSemantics { contentDescription = description },
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(strings.weekProgressText(weeklyGoal), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        strings.weekFooterText(weeklyGoal)?.let { WeekGoalFooter(it) }
+                    }
+                } else {
+                    Text(pluralStringResource(DashboardR.plurals.dashboard_ui_training_count, workoutsThisWeek, workoutsThisWeek), style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold)
+                }
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(stringResource(DashboardR.string.dashboard_ui_this_month), style = MaterialTheme.typography.labelMedium)

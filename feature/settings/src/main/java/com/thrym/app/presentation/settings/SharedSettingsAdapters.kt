@@ -10,6 +10,7 @@ import com.thrym.app.domain.model.WeekStart
 import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.domain.repository.ReminderScheduler
 import com.thrym.shared.model.Weekday
+import com.thrym.shared.recognition.WeeklyGoalChange
 import com.thrym.shared.settings.SharedAppPreferencesRepository
 import com.thrym.shared.settings.SharedReminderScheduler
 import kotlinx.coroutines.flow.Flow
@@ -105,6 +106,14 @@ internal class AndroidSharedAppPreferencesRepository(
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         delegate.updateBackupReminderEnabled(enabled)
     }
+
+    override suspend fun updateWeeklyGoalEnabled(enabled: Boolean) {
+        delegate.updateWeeklyGoalEnabled(enabled)
+    }
+
+    override suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>) {
+        delegate.updateWeeklyGoalHistory(history)
+    }
 }
 
 internal class AndroidSharedReminderScheduler(
@@ -143,7 +152,9 @@ internal fun AppPreferences.toShared(): com.thrym.shared.model.AppPreferences =
         availablePlates = availablePlates,
         barbellWeightKg = barbellWeightKg,
         lastSuccessfulExportEpochMillis = lastSuccessfulExportEpochMillis,
-        backupReminderEnabled = backupReminderEnabled
+        backupReminderEnabled = backupReminderEnabled,
+        weeklyGoalEnabled = weeklyGoalEnabled,
+        weeklyGoalHistory = weeklyGoalHistory
     )
 
 internal fun com.thrym.shared.model.AppPreferences.toApp(): AppPreferences =
@@ -168,7 +179,9 @@ internal fun com.thrym.shared.model.AppPreferences.toApp(): AppPreferences =
         availablePlates = availablePlates,
         barbellWeightKg = barbellWeightKg,
         lastSuccessfulExportEpochMillis = lastSuccessfulExportEpochMillis,
-        backupReminderEnabled = backupReminderEnabled
+        backupReminderEnabled = backupReminderEnabled,
+        weeklyGoalEnabled = weeklyGoalEnabled,
+        weeklyGoalHistory = weeklyGoalHistory
     )
 
 internal fun ReminderConfig.toShared(): com.thrym.shared.model.ReminderConfig =

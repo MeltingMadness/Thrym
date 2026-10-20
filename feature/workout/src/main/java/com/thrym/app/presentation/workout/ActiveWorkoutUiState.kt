@@ -1,5 +1,6 @@
 package com.thrym.app.presentation.workout
 
+import com.thrym.shared.recognition.StrengthMark
 import androidx.lifecycle.ViewModel
 import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.RecordType
@@ -182,7 +183,12 @@ sealed class WorkoutEvent {
      * The records one log or edit beat, in the shared type order, so the UI shows them as a
      * single message. Only records that had an earlier best come in, see `SessionRecords`.
      */
-    data class NewRecords(val exerciseName: String, val records: List<LiveRecordUi>) : WorkoutEvent()
+    /** [mark] is a round mark the same set reached for the first time; it only changes the title. */
+    data class NewRecords(
+        val exerciseName: String,
+        val records: List<LiveRecordUi>,
+        val mark: StrengthMark? = null
+    ) : WorkoutEvent()
 
     /** A set was deleted; the UI offers to undo it. */
     data class SetDeleted(val setNumber: Int) : WorkoutEvent()
