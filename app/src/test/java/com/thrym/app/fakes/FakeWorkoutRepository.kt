@@ -1,5 +1,6 @@
 package com.thrym.app.fakes
 
+import com.thrym.app.domain.model.CompletedSessionStart
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.thrym.app.domain.model.CompletedWorkoutSummary
@@ -331,6 +332,11 @@ class FakeWorkoutRepository : WorkoutRepository {
         getAllCompletedSessionsListCallCount++
         return sessions.value.filter { !it.isActive }.map { it.session }
     }
+
+    override suspend fun getCompletedSessionStarts(): List<CompletedSessionStart> =
+        sessions.value.filter { !it.isActive }
+            .map { CompletedSessionStart(it.session.startTime, it.session.isDeload) }
+            .sortedBy { it.startTime }
 
     override suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,

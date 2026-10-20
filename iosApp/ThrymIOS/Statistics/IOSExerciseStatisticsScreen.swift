@@ -1,4 +1,5 @@
 import Charts
+import Shared
 import SwiftUI
 
 enum IOSExerciseMetric: String, CaseIterable, Identifiable {
@@ -66,6 +67,12 @@ struct IOSExerciseStatisticsScreen: View {
 
     private var exercise: ILExercise? {
         store.data?.exercises.first(where: { $0.id == exerciseId })
+    }
+
+    /// Round marks of this exercise, one ladder per kind that has a reached mark.
+    private var markLadders: [StrengthMarkLadder] {
+        guard let exercise, let data = store.data else { return [] }
+        return IOSRecognition.markLadders(exercise: exercise, data: data, unitSystem: settings.state.unitSystem)
     }
 
     private var exerciseName: String {
@@ -193,6 +200,10 @@ struct IOSExerciseStatisticsScreen: View {
                 filter: $recordFilter
             )
 
+            ForEach(markLadders, id: \.kind) { ladder in
+                IOSExerciseMarksCard(ladder: ladder, unitSystem: unitSystem)
+            }
+
             IOSExerciseSessionHistoryCard(
                 sessions: sessions,
                 selectedMetric: selectedMetric,
@@ -243,6 +254,9 @@ struct IOSExerciseStatisticsScreen: View {
                 records: store.data?.personalRecords.filter { $0.exerciseId == exerciseId } ?? [],
                 unitSystem: unitSystem
             )
+            ForEach(markLadders, id: \.kind) { ladder in
+                IOSExerciseMarksCard(ladder: ladder, unitSystem: unitSystem)
+            }
             if let comparison = analyticsExercise.lastWorkoutComparison {
                 IOSExerciseLastWorkoutComparisonCard(comparison: comparison, metric: selectedMetric, unitSystem: unitSystem)
             }

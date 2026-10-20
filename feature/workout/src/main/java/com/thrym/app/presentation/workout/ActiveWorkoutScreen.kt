@@ -229,6 +229,7 @@ fun ActiveWorkoutScreen(
     }
 
     val completionRecordInputs by viewModel.completionRecordInputs.collectAsStateWithLifecycle()
+    val completionFacts by viewModel.completionFacts.collectAsStateWithLifecycle()
     LaunchedEffect(activeSession?.endTime) {
         if (activeSession?.endTime != null) viewModel.loadCompletionRecords()
     }
@@ -237,6 +238,7 @@ fun ActiveWorkoutScreen(
             session = activeSession,
             rows = state.exercisesWithSets,
             recordInputs = completionRecordInputs,
+            facts = completionFacts,
             unitSystem = preferences.unitSystem,
             finishState = state.finishState,
             onClose = onWorkoutFinished,

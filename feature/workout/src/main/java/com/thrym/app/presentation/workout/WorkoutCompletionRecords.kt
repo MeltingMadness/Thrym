@@ -48,7 +48,11 @@ import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.theme.AthleticNumber
 import com.thrym.app.presentation.theme.semantic
 import com.thrym.app.presentation.theme.semanticText
+import com.thrym.app.presentation.common.markTitle
+import com.thrym.app.presentation.common.markValue
+import com.thrym.core.designsystem.R
 import com.thrym.feature.workout.R as WorkoutR
+import com.thrym.shared.recognition.StrengthMark
 import com.thrym.shared.workout.SessionExerciseRecords
 import com.thrym.shared.workout.SessionRecordLine
 import com.thrym.shared.workout.SessionRecordSummary
@@ -65,6 +69,7 @@ internal fun CompletionRecordsCard(
     summary: SessionRecordSummary,
     rows: List<ExerciseWithSets>,
     unitSystem: UnitSystem,
+    marks: Map<Long, List<StrengthMark>> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     if (summary.exercises.isEmpty()) return
@@ -87,7 +92,7 @@ internal fun CompletionRecordsCard(
             if (summary.recordCount == 0) {
                 FirstBests(summary, exercisesById, setsById, strings, unitSystem)
             } else {
-                RecordsBoard(summary, exercisesById, setsById, strings, unitSystem)
+                RecordsBoard(summary, exercisesById, setsById, strings, unitSystem, marks)
             }
         }
     }
@@ -130,7 +135,8 @@ private fun RecordsBoard(
     exercisesById: Map<Long, Exercise>,
     setsById: Map<Long, WorkoutSet>,
     strings: UiStrings,
-    unitSystem: UnitSystem
+    unitSystem: UnitSystem,
+    marks: Map<Long, List<StrengthMark>>
 ) {
     RecordsHeader(
         title = pluralStringResource(WorkoutR.plurals.workout_records_count, summary.recordCount, summary.recordCount),
@@ -143,7 +149,14 @@ private fun RecordsBoard(
     )
     summary.exercises.filter { it.lines.isNotEmpty() }.forEach { records ->
         SectionDivider()
-        ExerciseRecordsSection(records, exercisesById[records.exerciseId], setsById, strings, unitSystem)
+        ExerciseRecordsSection(
+            records,
+            exercisesById[records.exerciseId],
+            setsById,
+            strings,
+            unitSystem,
+            marks[records.exerciseId].orEmpty()
+        )
     }
     val firstTimeNames = summary.firstTimeExerciseIds.mapNotNull { exercisesById[it]?.localizedName() }
     if (firstTimeNames.isNotEmpty()) {
@@ -212,7 +225,8 @@ private fun ExerciseRecordsSection(
     exercise: Exercise?,
     setsById: Map<Long, WorkoutSet>,
     strings: UiStrings,
-    unitSystem: UnitSystem
+    unitSystem: UnitSystem,
+    marks: List<StrengthMark>
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -223,6 +237,7 @@ private fun ExerciseRecordsSection(
             overflow = TextOverflow.Ellipsis
         )
         val addedLoad = exercise?.tracksAddedLoad == true
+        marks.forEach { mark -> MarkLineRow(mark, strings) }
         records.lines.forEach { line ->
             val type = recordTypeOf(line.type) ?: return@forEach
             RecordLineRow(line, type, line.setId?.let(setsById::get), addedLoad, strings, unitSystem)
@@ -309,6 +324,52 @@ private fun RecordLineRow(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
+        chip()
+    }
+}
+
+/**
+ * A round mark above the records of its exercise: "MARKE  100 kg  [Erstmals]". It shares the
+ * grammar of a record row but is no record, so the header count leaves it out.
+ */
+@Composable
+private fun MarkLineRow(mark: StrengthMark, strings: UiStrings) {
+    val description = stringResource(R.string.recognition_mark_row_cd, strings.markTitle(mark))
+    val chip: @Composable () -> Unit = {
+        RecordChip(
+            text = stringResource(WorkoutR.string.workout_records_first_type),
+            ink = MaterialTheme.semanticText.warning,
+            fill = MaterialTheme.semantic.warning.copy(alpha = 0.16f)
+        )
+    }
+    val labelText = stringResource(R.string.recognition_mark_label).uppercase(currentLocale())
+    val value = strings.markValue(mark)
+    val valueStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, fontFeatureSettings = "tnum")
+    val rowModifier = Modifier
+        .fillMaxWidth()
+        .clearAndSetSemantics { contentDescription = description }
+    if (LocalDensity.current.fontScale >= STACKED_RECORD_FONT_SCALE) {
+        Column(modifier = rowModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(text = labelText, style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = value, style = valueStyle)
+            chip()
+        }
+        return
+    }
+    Row(
+        modifier = rowModifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = labelText,
+            modifier = Modifier.fillMaxWidth(0.3f),
+            style = AthleticLabel,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(text = value, modifier = Modifier.weight(1f), style = valueStyle, maxLines = 1)
         chip()
     }
 }

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Weekly goal: "2 of 3" next to the week's volume. -->
+    <string name="recognition_week_progress">%1$d of %2$d</string>
+    <plurals name="recognition_week_progress_cd">
+        <item quantity="one">%1$d of %2$d workout this week</item>
+        <item quantity="other">%1$d of %2$d workouts this week</item>
+    </plurals>
+    <plurals name="recognition_streak_weeks">
+        <item quantity="one">%d week in a row</item>
+        <item quantity="other">%d weeks in a row</item>
+    </plurals>
+    <plurals name="recognition_buffer_weeks">
+        <item quantity="one">%d buffer week</item>
+        <item quantity="other">%d buffer weeks</item>
+    </plurals>
+    <string name="recognition_weekly_goal_met">Weekly goal reached</string>
+
+    <!-- Completion: the workout number in the date line and the facts below the lenses. -->
+    <string name="recognition_training_number">Workout %1$d</string>
+    <!-- Only jubilees use it (10, 25, 50, 100 …), so the suffix is always "th". -->
+    <string name="recognition_jubilee_title">Your %1$dth workout</string>
+    <string name="recognition_jubilee_since">Since %1$s</string>
+    <string name="recognition_comeback_title">Back again</string>
+    <plurals name="recognition_comeback_pause">
+        <item quantity="one">After %d day off</item>
+        <item quantity="other">After %d days off</item>
+    </plurals>
+
+    <!-- Home: offer after a pause of three weeks or more. -->
+    <string name="recognition_comeback_offer">After a break, the deload mode makes your workouts lighter for a while. You can end it at any time.</string>
+    <string name="recognition_comeback_action">Ease back in</string>
+
+    <!-- Marks: round numbers reached for the first time. -->
+    <string name="recognition_mark_load">%1$d %2$s mark</string>
+    <string name="recognition_mark_added_load">+%1$d %2$s mark</string>
+    <string name="recognition_mark_reps">%1$d-rep mark</string>
+    <string name="recognition_mark_label">Mark</string>
+    <string name="recognition_mark_value_added_load">+%1$d %2$s</string>
+    <string name="recognition_mark_row_cd">%1$s, reached for the first time</string>
+    <string name="recognition_marks_title">Marks · %1$s</string>
+    <string name="recognition_marks_reps_unit">reps</string>
+    <string name="recognition_marks_next">next</string>
+    <string name="recognition_marks_last">Last on %1$s</string>
+    <string name="recognition_marks_footnote">A mark counts with the first work set that reaches it. Warm-up sets don\'t count.</string>
+    <string name="recognition_marks_reached_cd">%1$s, reached on %2$s</string>
+    <string name="recognition_marks_next_cd">Next: %1$s</string>
+    <string name="recognition_title_with_detail" translatable="false">%1$s · %2$s</string>
+
+    <!-- Settings. -->
+    <string name="settings_weekly_goal">Weekly goal</string>
+    <string name="settings_weekly_goal_show">Show weekly goal</string>
+    <string name="settings_weekly_goal_hint">Counts completed workouts per week. A deload week keeps the streak, and every four weeks held earn a buffer week.</string>
+    <plurals name="settings_weekly_goal_value">
+        <item quantity="one">%d workout per week</item>
+        <item quantity="other">%d workouts per week</item>
+    </plurals>
+</resources>

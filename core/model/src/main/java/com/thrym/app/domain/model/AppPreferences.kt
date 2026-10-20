@@ -1,6 +1,9 @@
 package com.thrym.app.domain.model
 
+import com.thrym.shared.recognition.WeeklyGoalChange
+import com.thrym.shared.recognition.WeeklyGoalRules
 import java.time.DayOfWeek
+import java.time.LocalDate
 
 enum class UnitSystem {
     METRIC,
@@ -68,5 +71,12 @@ data class AppPreferences(
     /** Epoch millis of the most recent completed export to a user-selected document. */
     val lastSuccessfulExportEpochMillis: Long? = null,
     /** Opt-in for the local Settings reminder when the external export is stale. */
-    val backupReminderEnabled: Boolean = false
-)
+    val backupReminderEnabled: Boolean = false,
+    /** Shows the weekly goal and its streak; switching it off keeps [weeklyGoalHistory]. */
+    val weeklyGoalEnabled: Boolean = true,
+    /** Goal per week from its change on (see [WeeklyGoalRules]); empty means the default goal. */
+    val weeklyGoalHistory: List<WeeklyGoalChange> = emptyList()
+) {
+    /** Goal of the week starting at [weekStart]. */
+    fun weeklyGoalFor(weekStart: LocalDate): Int = WeeklyGoalRules.goalFor(weeklyGoalHistory, weekStart.toEpochDay())
+}

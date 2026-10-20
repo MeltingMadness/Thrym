@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recognition_week_progress">%1$d von %2$d</string>
+    <plurals name="recognition_week_progress_cd">
+        <item quantity="one">%1$d von %2$d Training diese Woche</item>
+        <item quantity="other">%1$d von %2$d Trainings diese Woche</item>
+    </plurals>
+    <plurals name="recognition_streak_weeks">
+        <item quantity="one">%d Woche in Folge</item>
+        <item quantity="other">%d Wochen in Folge</item>
+    </plurals>
+    <plurals name="recognition_buffer_weeks">
+        <item quantity="one">%d Woche Puffer</item>
+        <item quantity="other">%d Wochen Puffer</item>
+    </plurals>
+    <string name="recognition_weekly_goal_met">Wochenziel erreicht</string>
+
+    <string name="recognition_training_number">Training %1$d</string>
+    <string name="recognition_jubilee_title">Dein %1$d. Training</string>
+    <string name="recognition_jubilee_since">Seit dem %1$s</string>
+    <string name="recognition_comeback_title">Wieder dabei</string>
+    <plurals name="recognition_comeback_pause">
+        <item quantity="one">Nach %d Tag Pause</item>
+        <item quantity="other">Nach %d Tagen Pause</item>
+    </plurals>
+
+    <string name="recognition_comeback_offer">Nach einer Pause macht der Deload-Modus deine Trainings eine Weile leichter. Du kannst ihn jederzeit beenden.</string>
+    <string name="recognition_comeback_action">Leichter einsteigen</string>
+
+    <string name="recognition_mark_load">%1$d-%2$s-Marke</string>
+    <string name="recognition_mark_added_load">+%1$d-%2$s-Marke</string>
+    <string name="recognition_mark_reps">%1$d-Wdh-Marke</string>
+    <string name="recognition_mark_label">Marke</string>
+    <string name="recognition_mark_value_added_load">+%1$d %2$s</string>
+    <string name="recognition_mark_row_cd">%1$s, zum ersten Mal erreicht</string>
+    <string name="recognition_marks_title">Marken · %1$s</string>
+    <string name="recognition_marks_reps_unit">Wdh</string>
+    <string name="recognition_marks_next">nächste</string>
+    <string name="recognition_marks_last">Zuletzt am %1$s</string>
+    <string name="recognition_marks_footnote">Eine Marke zählt beim ersten Arbeitssatz, der sie erreicht. Aufwärmsätze zählen nicht.</string>
+    <string name="recognition_marks_reached_cd">%1$s, erreicht am %2$s</string>
+    <string name="recognition_marks_next_cd">Nächste: %1$s</string>
+
+    <string name="settings_weekly_goal">Wochenziel</string>
+    <string name="settings_weekly_goal_show">Wochenziel anzeigen</string>
+    <string name="settings_weekly_goal_hint">Zählt abgeschlossene Trainings pro Woche. Eine Deload-Woche hält die Serie, und je vier gehaltene Wochen bringen eine Woche Puffer.</string>
+    <plurals name="settings_weekly_goal_value">
+        <item quantity="one">%d Training pro Woche</item>
+        <item quantity="other">%d Trainings pro Woche</item>
+    </plurals>
+</resources>

@@ -2,6 +2,7 @@
 
 ## Unveröffentlicht
 
+- Wochenziel und Marken (Android und iOS): Die Startseite zeigt „2 von 3“ Trainings der Woche und ab zwei Wochen die Serie („7 Wochen in Folge“). Eine Deload-Woche hält die Serie, je vier gehaltene Wochen bringen eine Woche Puffer für eine verpasste. Das Ziel (2 bis 7, Standard 3) und die Anzeige lassen sich in den Einstellungen unter „Wochenziel“ ändern; eine Änderung gilt ab der laufenden Woche. Der Abschluss nennt die Nummer des Trainings und höchstens zwei Fakten: Wochenziel erreicht, Jubiläum („Dein 100. Training“) oder Rückkehr nach mindestens 21 Tagen Pause. Nach so einer Pause bietet die Startseite „Leichter einsteigen“ mit dem Deload-Modus an. Langhantel- und Eigengewichtsübungen haben runde Marken (etwa 100 kg, +20 kg, 20 Wdh): Eine zum ersten Mal erreichte Marke steht auf der Rekordtafel und im Titel der Rekordmeldung, die Übungsstatistik zeigt die erreichten Marken und die nächste.
 - iOS-Training: Die Trainingszeit bleibt beim Scrollen sichtbar. Verschwindet der Kopf mit der großen Zeit, schwebt sie als kleine Kapsel oben mit; ein Tipp darauf führt zurück zum Kopf. Android zeigt den Kopf ohnehin fest über der Liste.
 - iOS Liquid Glass: Eine einzelne Pause im Dock sitzt jetzt direkt über der Tab-Leiste. Bisher schwebte sie gut 80 pt darüber, weil der Stapel immer die Höhe von drei Zeilen belegte.
 - iOS-Übungsauswahl (Training und Plan-Editor): Ohne Auswahl erscheint kein Knopf mehr. Bisher stand dort ein deaktiviertes „0 Übungen hinzufügen“ als fast unlesbarer schwarzer Balken über dem Suchfeld.
