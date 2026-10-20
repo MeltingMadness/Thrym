@@ -9,6 +9,7 @@ struct IOSPlansScreen: View {
 
         var id: String { rawValue }
         var title: String { self == .plans ? String(localized: "Pläne") : String(localized: "Meta-Pläne") }
+        var systemImage: String { self == .plans ? "list.bullet.rectangle.portrait" : "rectangle.stack" }
     }
 
     @Environment(IOSTrainingStore.self) private var store
@@ -41,17 +42,6 @@ struct IOSPlansScreen: View {
             .thrymScreenBackground()
             .navigationTitle("Pläne")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Picker("Bereich", selection: $mode) {
-                        ForEach(SectionMode.allCases) { section in
-                            Text(section.title).tag(section)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 240)
-                    .accessibilityLabel("Planbereich")
-                }
-
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         editor = mode == .plans ? .plan(nil) : .metaPlan(nil)
@@ -118,6 +108,17 @@ struct IOSPlansScreen: View {
     private var planList: some View {
         List {
             Group {
+            Section {
+                IOSPlansModeSwitcher(
+                    mode: $mode,
+                    planCount: data?.trainingPlans.count ?? 0,
+                    metaPlanCount: data?.metaTrainingPlans.count ?? 0
+                )
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            }
+
             if let error = store.errorMessage {
                 Section {
                     Label(error, systemImage: "exclamationmark.triangle")
@@ -132,7 +133,7 @@ struct IOSPlansScreen: View {
                     ContentUnavailableView("Noch keine Pläne", systemImage: "list.bullet.rectangle", description: Text("Lege einen Trainingsplan an, um Übungen und Ziele zu speichern."))
                         .listRowBackground(Color.clear)
                 } else {
-                    Section("Trainingspläne") {
+                    Section {
                         ForEach(plans) { plan in
                             IOSPlanListRow(
                                 plan: plan,
@@ -155,7 +156,7 @@ struct IOSPlansScreen: View {
                     ContentUnavailableView("Noch keine Meta-Pläne", systemImage: "rectangle.stack", description: Text("Bündele mehrere Trainingspläne zu einer wiederholbaren Rotation."))
                         .listRowBackground(Color.clear)
                 } else {
-                    Section("Meta-Pläne") {
+                    Section {
                         ForEach(metaPlans) { metaPlan in
                             IOSMetaPlanListRow(
                                 plan: metaPlan,
@@ -226,6 +227,107 @@ private struct IOSPlansDeleteRequest: Identifiable {
     let itemID: Int64
     let title: String
     var id: String { "\(kind)-\(itemID)" }
+}
+
+/// Switches between plans and meta plans. A full-width capsule below the title
+/// with the count per kind; the selected segment is a bright pill in Liquid Glass
+/// (white on dark, near black on light glass) and the accent color in Ember.
+private struct IOSPlansModeSwitcher: View {
+    @Binding var mode: IOSPlansScreen.SectionMode
+    let planCount: Int
+    let metaPlanCount: Int
+
+    @Environment(\.thrymAppearance) private var appearance
+    @Environment(\.thrymTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var selection
+
+    private static let glassInk = Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255)
+
+    var body: some View {
+        let palette = theme.palette(for: colorScheme)
+        HStack(spacing: 4) {
+            ForEach(IOSPlansScreen.SectionMode.allCases) { section in
+                segment(section, count: section == .plans ? planCount : metaPlanCount, palette: palette)
+            }
+        }
+        .padding(4)
+        .background { container(palette: palette) }
+        .sensoryFeedback(.selection, trigger: mode)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Planbereich")
+    }
+
+    private func segment(_ section: IOSPlansScreen.SectionMode, count: Int, palette: ThrymTheme.Palette) -> some View {
+        let selected = section == mode
+        let ink = selected ? selectedInk(palette: palette) : palette.textPrimary
+        return Button {
+            guard !selected else { return }
+            if reduceMotion {
+                mode = section
+            } else {
+                withAnimation(.snappy(duration: 0.28)) { mode = section }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: section.systemImage)
+                    .font(.system(size: 14, weight: .semibold))
+                Text(section.title)
+                    .font(.geist(.subheadline, weight: .bold))
+                    .lineLimit(1)
+                Text(count, format: .number)
+                    .font(.geist(.caption, weight: .bold))
+                    .monospacedDigit()
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(ink.opacity(selected ? 0.14 : 0.10), in: Capsule())
+            }
+            .minimumScaleFactor(0.75)
+            .foregroundStyle(ink)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .padding(.horizontal, 8)
+            .background {
+                if selected {
+                    Capsule()
+                        .fill(selectedFill(palette: palette))
+                        .shadow(color: .black.opacity(appearance == .liquidGlass ? 0.28 : 0.12), radius: 6, y: 3)
+                        .matchedGeometryEffect(id: "selection", in: selection)
+                }
+            }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(section.title)
+        .accessibilityValue(Text(count, format: .number))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    @ViewBuilder
+    private func container(palette: ThrymTheme.Palette) -> some View {
+        switch appearance {
+        case .liquidGlass:
+            Capsule().fill(.clear).liquidGlass(.standard, in: Capsule())
+        case .ember:
+            Capsule()
+                .fill(palette.surfaceMuted)
+                .overlay { Capsule().strokeBorder(palette.separator) }
+        }
+    }
+
+    private func selectedFill(palette: ThrymTheme.Palette) -> Color {
+        switch appearance {
+        case .liquidGlass: colorScheme == .dark ? .white : Self.glassInk
+        case .ember: palette.primary
+        }
+    }
+
+    private func selectedInk(palette: ThrymTheme.Palette) -> Color {
+        switch appearance {
+        case .liquidGlass: colorScheme == .dark ? Self.glassInk : .white
+        case .ember: palette.buttonText
+        }
+    }
 }
 
 private struct IOSPlanListRow: View {

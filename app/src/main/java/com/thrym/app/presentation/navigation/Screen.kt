@@ -39,7 +39,6 @@ sealed class Screen(val route: String) {
     data object PlanEditor : Screen("plans/edit/{planId}") {
         fun createRoute(planId: Long) = "plans/edit/$planId"
     }
-    data object MetaPlanList : Screen("meta_plans")
     data object MetaPlanEditorNew : Screen("meta_plans/new")
     data object MetaPlanEditor : Screen("meta_plans/edit/{metaPlanId}") {
         fun createRoute(metaPlanId: Long) = "meta_plans/edit/$metaPlanId"

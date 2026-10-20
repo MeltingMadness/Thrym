@@ -8,7 +8,6 @@ import com.thrym.app.domain.error.toAppError
 import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.TrainingPlan
 import com.thrym.app.domain.repository.ExerciseRepository
-import com.thrym.app.domain.repository.MetaTrainingPlanRepository
 import com.thrym.app.domain.repository.TrainingPlanRepository
 import com.thrym.app.domain.repository.WorkoutRepository
 import com.thrym.app.presentation.common.toUserMessage
@@ -32,16 +31,8 @@ data class PlanListItem(
     val lastDoneDaysAgo: Long? = null
 )
 
-/** Compact meta plan row so rotations are visible without opening the meta plan screen. */
-data class PlanListMetaPlan(
-    val id: Long,
-    val name: String,
-    val subPlanNames: List<String>
-)
-
 data class PlanListUiState(
     val plans: List<PlanListItem> = emptyList(),
-    val metaPlans: List<PlanListMetaPlan> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -50,7 +41,6 @@ class TrainingPlanListViewModel(
     private val planRepository: TrainingPlanRepository,
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
-    private val metaTrainingPlanRepository: MetaTrainingPlanRepository,
     private val strings: UiStrings
 ) : ViewModel() {
 
@@ -66,13 +56,12 @@ class TrainingPlanListViewModel(
             combine(
                 planRepository.getAllPlans(),
                 exerciseRepository.getAllExercises(),
-                workoutRepository.observeLastSessionPerPlan(),
-                metaTrainingPlanRepository.getAllMetaPlans()
-            ) { plans, exercises, lastSessions, metaPlans ->
+                workoutRepository.observeLastSessionPerPlan()
+            ) { plans, exercises, lastSessions ->
                 val exerciseById = exercises.associateBy { it.id }
                 val lastStartByPlanId = lastSessions.associateBy({ it.planId }, { it.lastStartTime })
                 val today = LocalDate.now()
-                val items = plans.map { plan ->
+                plans.map { plan ->
                     PlanListItem(
                         plan = plan,
                         exercises = plan.exercises.map { exerciseById[it.exerciseId] },
@@ -84,21 +73,9 @@ class TrainingPlanListViewModel(
                         }
                     )
                 }
-                val planNameById = plans.associateBy({ it.id }, { it.name })
-                val metaItems = metaPlans.map { meta ->
-                    PlanListMetaPlan(
-                        id = meta.id,
-                        name = meta.name,
-                        subPlanNames = meta.items
-                            .sortedBy { it.orderIndex }
-                            .mapNotNull { planNameById[it.trainingPlanId] }
-                    )
-                }
-                items to metaItems
-            }.collect { (items, metaItems) ->
+            }.collect { items ->
                 _uiState.value = _uiState.value.copy(
                     plans = items,
-                    metaPlans = metaItems,
                     isLoading = false,
                     error = null
                 )

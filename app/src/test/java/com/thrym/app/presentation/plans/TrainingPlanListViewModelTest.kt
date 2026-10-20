@@ -6,7 +6,6 @@ import com.thrym.app.domain.model.MuscleGroup
 import com.thrym.app.domain.model.PlanExercise
 import com.thrym.app.domain.model.TrainingPlan
 import com.thrym.app.fakes.FakeExerciseRepository
-import com.thrym.app.fakes.FakeMetaTrainingPlanRepository
 import com.thrym.app.fakes.FakeTrainingPlanRepository
 import com.thrym.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +30,6 @@ class TrainingPlanListViewModelTest {
     private lateinit var planRepo: FakeTrainingPlanRepository
     private lateinit var exerciseRepo: FakeExerciseRepository
     private lateinit var workoutRepo: FakeWorkoutRepository
-    private lateinit var metaPlanRepo: FakeMetaTrainingPlanRepository
 
     @Before
     fun setUp() {
@@ -39,7 +37,6 @@ class TrainingPlanListViewModelTest {
         planRepo = FakeTrainingPlanRepository()
         exerciseRepo = FakeExerciseRepository()
         workoutRepo = FakeWorkoutRepository()
-        metaPlanRepo = FakeMetaTrainingPlanRepository(workoutRepo)
     }
 
     @After
@@ -73,7 +70,7 @@ class TrainingPlanListViewModelTest {
         planRepo.savePlan(TrainingPlan(name = "Plan A", exercises = sharedExercises))
         planRepo.savePlan(TrainingPlan(name = "Plan B", exercises = sharedExercises))
 
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, strings = com.thrym.app.fakes.TestUiStrings)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -83,7 +80,7 @@ class TrainingPlanListViewModelTest {
 
     @Test
     fun `startPlanWorkout startet neue Session wenn keine aktive Session existiert`() = runTest {
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, strings = com.thrym.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
         val plan = TrainingPlan(id = 101L, name = "Push", exercises = emptyList())
         var createdSessionId: Long? = null
@@ -112,7 +109,7 @@ class TrainingPlanListViewModelTest {
             ),
             isActive = true
         )
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, strings = com.thrym.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
         val plan = TrainingPlan(id = 101L, name = "Push", exercises = emptyList())
         var callbackCalled = false
@@ -128,7 +125,7 @@ class TrainingPlanListViewModelTest {
     }
 
     @Test
-    fun `loadPlans liefert zuletzt trainiert und Meta-Plaene`() = runTest {
+    fun `loadPlans liefert zuletzt trainiert`() = runTest {
         val pushId = planRepo.savePlan(TrainingPlan(name = "Push", exercises = emptyList()))
         val pullId = planRepo.savePlan(TrainingPlan(name = "Pull", exercises = emptyList()))
         workoutRepo.addSession(
@@ -140,22 +137,12 @@ class TrainingPlanListViewModelTest {
                 planId = pushId
             )
         )
-        metaPlanRepo.saveMetaPlan(
-            com.thrym.app.domain.model.MetaTrainingPlan(
-                name = "Push/Pull",
-                items = listOf(
-                    com.thrym.app.domain.model.MetaTrainingPlanItem(trainingPlanId = pullId, orderIndex = 1),
-                    com.thrym.app.domain.model.MetaTrainingPlanItem(trainingPlanId = pushId, orderIndex = 0)
-                )
-            )
-        )
 
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, strings = com.thrym.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = vm.uiState.value
         assertEquals(3L, state.plans.first { it.plan.id == pushId }.lastDoneDaysAgo)
         assertEquals(null, state.plans.first { it.plan.id == pullId }.lastDoneDaysAgo)
-        assertEquals(listOf("Push", "Pull"), state.metaPlans.single().subPlanNames)
     }
 }
