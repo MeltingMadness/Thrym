@@ -1,5 +1,9 @@
 package com.thrym.app.presentation.settings
 
+import com.thrym.shared.recognition.WeeklyGoalRules
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
 import com.thrym.app.presentation.theme.accentText
 import com.thrym.feature.settings.R as UxR
@@ -496,6 +500,44 @@ fun SettingsScreen(
                                         SchemeColorDot(color = PlateColors.forWeight(plate))
                                     },
                                     label = { Text(plateLabel) },
+                                    colors = ThrymInteractiveColors.filterChip()
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                PreferenceCard(title = stringResource(id = R.string.settings_weekly_goal)) {
+                    ToggleRow(
+                        title = stringResource(id = R.string.settings_weekly_goal_show),
+                        subtitle = stringResource(id = R.string.settings_weekly_goal_hint),
+                        checked = state.preferences.weeklyGoalEnabled,
+                        onCheckedChange = viewModel::updateWeeklyGoalEnabled
+                    )
+                    if (state.preferences.weeklyGoalEnabled) {
+                        val currentGoal = WeeklyGoalRules.goalFor(
+                            state.preferences.weeklyGoalHistory,
+                            currentWeekStartEpochDay(state.preferences.weekStart.toShared())
+                        )
+                        Spacer(modifier = Modifier.height(dims.spacingXs))
+                        Text(
+                            text = pluralStringResource(R.plurals.settings_weekly_goal_value, currentGoal, currentGoal),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                        ) {
+                            (WeeklyGoalRules.MIN_GOAL..WeeklyGoalRules.MAX_GOAL).forEach { goal ->
+                                val description = pluralStringResource(R.plurals.settings_weekly_goal_value, goal, goal)
+                                FilterChip(
+                                    selected = currentGoal == goal,
+                                    onClick = { viewModel.updateWeeklyGoal(goal) },
+                                    label = { Text(goal.toString()) },
+                                    modifier = Modifier.semantics { contentDescription = description },
                                     colors = ThrymInteractiveColors.filterChip()
                                 )
                             }

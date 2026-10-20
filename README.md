@@ -22,13 +22,13 @@ Thrym was previously called **IronLog**. See [Migrating from IronLog](#migrating
 | Area | What the app does |
 |---|---|
 | **First start** | A short introduction that also asks for the weight unit (kg/lb); skipped automatically if training data already exists |
-| **Home** | Start a workout (from a plan, a meta-plan or as a free session), daily readiness check-in and training readiness, deload hint and deload mode (half the sets or −15 % weight), weekly volume per muscle group (MEV/MAV), 8-week volume trend, notice of pending progression suggestions |
-| **Active workout** | Direct logging with prefilled values (weight, reps), expandable extra fields (RPE/RIR, set type, set intention, plate calculator), set types normal/warm-up/drop/failure, rest timer, supersets, moving exercises and supersets up or down during the session, multi-select when adding exercises, live detection of personal records with the gain over your previous best, a finish button at the end of the list once every planned set is logged, finishing early with open sets, and a summary with a records board |
+| **Home** | Start a workout (from a plan, a meta-plan or as a free session), daily readiness check-in and training readiness, deload hint and deload mode (half the sets or −15 % weight), a weekly goal with a streak that a deload week or an earned buffer week keeps alive, an offer to ease back in after three weeks off, weekly volume per muscle group (MEV/MAV), 8-week volume trend, notice of pending progression suggestions |
+| **Active workout** | Direct logging with prefilled values (weight, reps), expandable extra fields (RPE/RIR, set type, set intention, plate calculator), set types normal/warm-up/drop/failure, rest timer, supersets, moving exercises and supersets up or down during the session, multi-select when adding exercises, live detection of personal records with the gain over your previous best, a finish button at the end of the list once every planned set is logged, finishing early with open sets, and a summary with the workout number, the weekly goal, jubilees and comebacks, and a records board that also names round marks reached for the first time (such as 100 kg) |
 | **Plans** | Training plans with targets and optional individual set targets per exercise, meta-plans (a rotation through several plans, including "skip"), a progression scheme per plan exercise |
 | **Progression coach** | After the workout: suggestions for new targets, which are applied to the plan only after you confirm them |
 | **History** | All workouts (paged) with search and filters by time period and plan, a detail view to correct or delete single sets and add a workout note, swipe to delete |
-| **Exercises** | Exercise library with search and muscle filter, training figures per exercise (sessions, last trained), custom exercises, archiving, statistics per exercise (records, estimated 1RM, progress chart) |
-| **Settings** | Units (kg/lb), first day of the week, appearance (Liquid Glass or Ember style, 7 color schemes, light/dark/system, Dynamic Color), reduced motion, RPE/RIR/off, rest timer, plates and bar weight, workout reminders, backup export/import with an optional reminder, internal safety backup, incident report |
+| **Exercises** | Exercise library with search and muscle filter, training figures per exercise (sessions, last trained), custom exercises, archiving, statistics per exercise (records, estimated 1RM, progress chart, round marks reached) |
+| **Settings** | Units (kg/lb), first day of the week, appearance (Liquid Glass or Ember style, 7 color schemes, light/dark/system, Dynamic Color), reduced motion, RPE/RIR/off, weekly goal, rest timer, plates and bar weight, workout reminders, backup export/import with an optional reminder, internal safety backup, incident report |
 
 The table describes the Android app, which is the functional reference. The iOS app covers the same areas. Its current state and what has been verified on iOS are tracked in [`docs/ios-feature-parity.md`](docs/ios-feature-parity.md) (German). Some features depend on the platform, for example Dynamic Color, which needs Android 12 or later.
 
@@ -105,6 +105,7 @@ The internal design and engineering documents in `docs/` are written in **German
 | [`docs/features/progressions-coach.md`](docs/features/progressions-coach.md) | Rules and flow of the progression coach |
 | [`docs/features/meta-plaene.md`](docs/features/meta-plaene.md) | Meta-plan rotation, skipping, weight history |
 | [`docs/features/onboarding.md`](docs/features/onboarding.md) | First-start introduction: steps, when it appears, implementation |
+| [`docs/features/wochenziel-und-marken.md`](docs/features/wochenziel-und-marken.md) | Weekly goal and streak, workout facts, round marks |
 | [`docs/readiness-data-integration.md`](docs/readiness-data-integration.md) | Daily check-in and set intention: data model and integration |
 | [`docs/ios-feature-parity.md`](docs/ios-feature-parity.md) | Feature status and acceptance of the iOS app |
 | [`iosApp/README.md`](iosApp/README.md) | Generating the iOS project, native checks |

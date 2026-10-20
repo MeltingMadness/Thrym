@@ -97,6 +97,27 @@ struct SettingsScreen: View {
                         ))
                     }
 
+                    Section("Wochenziel") {
+                        Toggle("Wochenziel anzeigen", isOn: Binding(
+                            get: { viewModel.state.weeklyGoalEnabled },
+                            set: viewModel.updateWeeklyGoalEnabled
+                        ))
+
+                        Picker("Ziel", selection: Binding(
+                            get: { IOSRecognition.currentGoal(history: viewModel.state.weeklyGoalHistory, weekStart: viewModel.state.weekStart) },
+                            set: viewModel.updateWeeklyGoal
+                        )) {
+                            ForEach(2...7, id: \.self) { goal in
+                                Text("\(goal) Trainings pro Woche").tag(goal)
+                            }
+                        }
+                        .disabled(!viewModel.state.weeklyGoalEnabled)
+
+                        Text("Zählt abgeschlossene Trainings pro Woche. Eine Deload-Woche hält die Serie, und je vier gehaltene Wochen bringen eine Woche Puffer.")
+                            .font(.geist(.footnote))
+                            .thrymSecondaryText()
+                    }
+
                     Section("Rest-Timer") {
                         Toggle("Automatischer Rest-Timer", isOn: Binding(
                             get: { viewModel.state.autoRestTimerEnabled },

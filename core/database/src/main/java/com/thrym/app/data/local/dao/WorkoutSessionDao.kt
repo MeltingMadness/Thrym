@@ -127,6 +127,10 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC")
     suspend fun getAllCompletedSessionsList(): List<WorkoutSessionEntity>
 
+    /** Only start and deload flag of every completed session, for the weekly goal. */
+    @Query("SELECT startTime, isDeload FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime")
+    suspend fun getCompletedSessionStarts(): List<CompletedSessionStartRow>
+
     @Query("""
         SELECT planId, MAX(startTime) AS lastStartTime
         FROM workout_sessions

@@ -1,5 +1,7 @@
 package com.thrym.shared.model
 
+import com.thrym.shared.recognition.WeeklyGoalChange
+import com.thrym.shared.recognition.WeeklyGoalRules
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -104,8 +106,15 @@ data class AppPreferences(
     /** Epoch millis of the most recent completed export to a user-selected document. */
     val lastSuccessfulExportEpochMillis: Long? = null,
     /** Opt-in for the local Settings reminder when the external export is stale. */
-    val backupReminderEnabled: Boolean = false
-)
+    val backupReminderEnabled: Boolean = false,
+    /** Shows the weekly goal and its streak; switching it off keeps [weeklyGoalHistory]. */
+    val weeklyGoalEnabled: Boolean = true,
+    /** Goal per week from its change on; empty means the default goal throughout. */
+    val weeklyGoalHistory: List<WeeklyGoalChange> = emptyList()
+) {
+    /** Goal of the week starting at [weekStartEpochDay]. */
+    fun weeklyGoalFor(weekStartEpochDay: Long): Int = WeeklyGoalRules.goalFor(weeklyGoalHistory, weekStartEpochDay)
+}
 
 @Serializable
 data class BuildInfo(

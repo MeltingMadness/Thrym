@@ -1505,6 +1505,48 @@ class DashboardViewModelTest {
         assertEquals(today, state.draftDate)
     }
 
+    @Test
+    fun `wochenziel zaehlt die laufende woche und die gehaltenen wochen davor`() = runTest {
+        val weekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        var nextId = 500L
+        fun addCompleted(day: LocalDate) {
+            val start = LocalDateTime.of(day, LocalTime.of(7, 0))
+            workoutRepo.addSession(
+                WorkoutSession(id = nextId++, startTime = start, endTime = start.plusHours(1), durationSeconds = 3600),
+                isActive = false
+            )
+        }
+        listOf(1L, 2L).forEach { weeksAgo -> (0L..2L).forEach { addCompleted(weekStart.minusWeeks(weeksAgo).plusDays(it)) } }
+        addCompleted(weekStart)
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val goal = vm.uiState.value.weeklyGoal
+        assertNotNull(goal)
+        assertEquals(3, goal!!.goal)
+        assertEquals(1, goal.completedThisWeek)
+        assertEquals(2, goal.streakWeeks)
+        assertNull(vm.uiState.value.pauseDays)
+        assertEquals(0, workoutRepo.getAllCompletedSessionsListCallCount)
+    }
+
+    @Test
+    fun `ausgeschaltetes wochenziel liefert keinen status und eine pause wird erkannt`() = runTest {
+        preferencesRepo.updateWeeklyGoalEnabled(false)
+        val start = LocalDateTime.of(LocalDate.now().minusDays(30), LocalTime.of(18, 0))
+        workoutRepo.addSession(
+            WorkoutSession(id = 600L, startTime = start, endTime = start.plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(vm.uiState.value.weeklyGoal)
+        assertEquals(30, vm.uiState.value.pauseDays)
+    }
+
     private class FailingDeloadPreferencesRepository(
         initial: AppPreferences,
         private val failure: Throwable

@@ -417,6 +417,22 @@
         }
       }
     },
+    "%@, erreicht am %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, erreicht am %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, reached on %2$@"
+          }
+        }
+      }
+    },
     "%@, heute": {
       "localizations": {
         "de": {
@@ -477,6 +493,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@, first time"
+          }
+        }
+      }
+    },
+    "%@, zum ersten Mal erreicht": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, zum ersten Mal erreicht"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, reached for the first time"
           }
         }
       }
@@ -1032,6 +1064,46 @@
         }
       }
     },
+    "%lld Trainings pro Woche": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Training pro Woche"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Trainings pro Woche"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld workout per week"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld workouts per week"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld Vorschläge warten auf deine Entscheidung.": {
       "localizations": {
         "de": {
@@ -1205,6 +1277,86 @@
                       "value": "%arg reps"
                     }
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Wochen Puffer": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Woche Puffer"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Wochen Puffer"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld buffer week"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld buffer weeks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Wochen in Folge": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Woche in Folge"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Wochen in Folge"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld week in a row"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld weeks in a row"
                 }
               }
             }
@@ -1468,6 +1620,22 @@
       },
       "shouldTranslate": false
     },
+    "%lld von %lld": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %2$lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %2$lld"
+          }
+        }
+      }
+    },
     "%lld von %lld Arbeitssätzen": {
       "localizations": {
         "de": {
@@ -1524,6 +1692,22 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld von %lld Trainings diese Woche": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %2$lld Trainings diese Woche"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %2$lld workouts this week"
           }
         }
       }
@@ -1979,6 +2163,38 @@
         }
       }
     },
+    "%lld-%@-Marke": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld-%2$@-Marke"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld %2$@ mark"
+          }
+        }
+      }
+    },
+    "%lld-Wdh.-Marke": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld-Wdh.-Marke"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld-rep mark"
+          }
+        }
+      }
+    },
     "%lld. %@": {
       "localizations": {
         "de": {
@@ -2069,6 +2285,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "+ Warm-up set"
+          }
+        }
+      }
+    },
+    "+%lld-%@-Marke": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%1$lld-%2$@-Marke"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%1$lld %2$@ mark"
           }
         }
       }
@@ -4647,6 +4879,23 @@
       },
       "shouldTranslate": false
     },
+    "Dein %lld. Training": {
+      "comment": "Only jubilees use it (10, 25, 50, 100 …), so the English suffix is always \"th\".",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein %lld. Training"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your %lldth workout"
+          }
+        }
+      }
+    },
     "Dein Log für Krafttraining.": {
       "localizations": {
         "de": {
@@ -5989,6 +6238,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "A new export is due."
+          }
+        }
+      }
+    },
+    "Eine Marke zählt beim ersten Arbeitssatz, der sie erreicht. Aufwärmsätze zählen nicht.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eine Marke zählt beim ersten Arbeitssatz, der sie erreicht. Aufwärmsätze zählen nicht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A mark counts with the first work set that reaches it. Warm-up sets don't count."
           }
         }
       }
@@ -8782,6 +9047,22 @@
         }
       }
     },
+    "Leichter einsteigen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leichter einsteigen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ease back in"
+          }
+        }
+      }
+    },
     "Letzte Sätze": {
       "localizations": {
         "de": {
@@ -9189,6 +9470,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Manual targets carry over without automatic changes."
+          }
+        }
+      }
+    },
+    "Marke": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marke"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark"
+          }
+        }
+      }
+    },
+    "Marken · %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marken · %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marks · %@"
           }
         }
       }
@@ -9900,6 +10213,46 @@
         }
       }
     },
+    "Nach %lld Tagen Pause": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Nach %lld Tag Pause"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Nach %lld Tagen Pause"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "After %lld day off"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "After %lld days off"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Nach einem abgeschlossenen Training mit aktivierter Progressionsregel erscheinen neue Hinweise hier.": {
       "localizations": {
         "de": {
@@ -9912,6 +10265,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "New suggestions appear here after you finish a workout with a progression rule enabled."
+          }
+        }
+      }
+    },
+    "Nach einer Pause macht der Deload-Modus deine Trainings eine Weile leichter. Du kannst ihn jederzeit beenden.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach einer Pause macht der Deload-Modus deine Trainings eine Weile leichter. Du kannst ihn jederzeit beenden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After a break, the deload mode makes your workouts lighter for a while. You can end it at any time."
           }
         }
       }
@@ -10719,6 +11088,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Next week"
+          }
+        }
+      }
+    },
+    "Nächste: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nächste: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next: %@"
           }
         }
       }
@@ -12889,6 +13274,22 @@
         }
       }
     },
+    "Seit dem %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seit dem %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Since %@"
+          }
+        }
+      }
+    },
     "Sekundäre Muskelgruppen": {
       "localizations": {
         "de": {
@@ -13844,6 +14245,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Workout"
+          }
+        }
+      }
+    },
+    "Training %lld": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workout %lld"
           }
         }
       }
@@ -15586,6 +16003,22 @@
         }
       }
     },
+    "Wieder dabei": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wieder dabei"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back again"
+          }
+        }
+      }
+    },
     "Wiederherstellung durchführen": {
       "localizations": {
         "de": {
@@ -16064,6 +16497,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Loading weekly volume…"
+          }
+        }
+      }
+    },
+    "Wochenziel": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wochenziel"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly goal"
+          }
+        }
+      }
+    },
+    "Wochenziel anzeigen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wochenziel anzeigen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show weekly goal"
+          }
+        }
+      }
+    },
+    "Wochenziel erreicht": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wochenziel erreicht"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly goal reached"
           }
         }
       }
@@ -16590,6 +17071,22 @@
         }
       }
     },
+    "Zuletzt erreicht am %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt erreicht am %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last reached on %@"
+          }
+        }
+      }
+    },
     "Zuletzt gestern": {
       "localizations": {
         "de": {
@@ -16802,6 +17299,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add extra set"
+          }
+        }
+      }
+    },
+    "Zählt abgeschlossene Trainings pro Woche. Eine Deload-Woche hält die Serie, und je vier gehaltene Wochen bringen eine Woche Puffer.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zählt abgeschlossene Trainings pro Woche. Eine Deload-Woche hält die Serie, und je vier gehaltene Wochen bringen eine Woche Puffer."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Counts completed workouts per week. A deload week keeps the streak, and every four weeks held earn a buffer week."
           }
         }
       }
@@ -17142,6 +17655,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "never trained"
+          }
+        }
+      }
+    },
+    "nächste": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nächste"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "next"
           }
         }
       }

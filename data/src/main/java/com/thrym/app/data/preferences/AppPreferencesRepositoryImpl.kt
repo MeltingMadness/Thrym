@@ -13,6 +13,8 @@ import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.model.WeekStart
 import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.data.local.dao.WorkoutSessionDao
+import com.thrym.shared.recognition.WeeklyGoalChange
+import com.thrym.shared.recognition.WeeklyGoalRules
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -86,7 +88,9 @@ class AppPreferencesRepositoryImpl(
             availablePlates = parseAvailablePlates(prefs.stringOrNull(AppPreferenceKeys.AVAILABLE_PLATES)),
             barbellWeightKg = prefs[AppPreferenceKeys.BARBELL_WEIGHT_KG] ?: DEFAULT_BARBELL_WEIGHT_KG,
             lastSuccessfulExportEpochMillis = prefs[AppPreferenceKeys.LAST_SUCCESSFUL_EXPORT_EPOCH_MILLIS],
-            backupReminderEnabled = prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] ?: false
+            backupReminderEnabled = prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] ?: false,
+            weeklyGoalEnabled = prefs[AppPreferenceKeys.WEEKLY_GOAL_ENABLED] ?: true,
+            weeklyGoalHistory = WeeklyGoalRules.decode(prefs.stringOrNull(AppPreferenceKeys.WEEKLY_GOAL_HISTORY))
         )
     }
 
@@ -235,6 +239,18 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun updateWeeklyGoalEnabled(enabled: Boolean) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.WEEKLY_GOAL_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.WEEKLY_GOAL_HISTORY] = WeeklyGoalRules.encode(history)
         }
     }
 

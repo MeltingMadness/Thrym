@@ -1,5 +1,6 @@
 package com.thrym.app.fakes
 
+import com.thrym.shared.recognition.WeeklyGoalChange
 import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.DeloadMode
 import com.thrym.app.domain.model.IntensitySystem
@@ -131,6 +132,14 @@ class FakeAppPreferencesRepository(
 
     override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
         state.value = state.value.copy(backupReminderEnabled = enabled)
+    }
+
+    override suspend fun updateWeeklyGoalEnabled(enabled: Boolean) {
+        state.value = state.value.copy(weeklyGoalEnabled = enabled)
+    }
+
+    override suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>) {
+        state.value = state.value.copy(weeklyGoalHistory = history)
     }
 
     override suspend fun readRestTimerState(sessionId: Long): String? {

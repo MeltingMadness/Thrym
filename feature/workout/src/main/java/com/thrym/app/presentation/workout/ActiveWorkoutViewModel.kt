@@ -1,5 +1,11 @@
 package com.thrym.app.presentation.workout
 
+import com.thrym.app.presentation.common.toSharedWeekStart
+import com.thrym.app.presentation.common.toSharedUnit
+import com.thrym.shared.recognition.CompletionFacts
+import com.thrym.shared.recognition.StrengthMarks
+import com.thrym.shared.recognition.MilestoneSession
+import com.thrym.shared.recognition.TrainingMilestones
 import com.thrym.app.presentation.common.UiStrings
 import com.thrym.app.presentation.common.UserMessageException
 import com.thrym.app.presentation.common.exerciseName
@@ -87,6 +93,14 @@ class ActiveWorkoutViewModel(
      * workout's display order, see [SessionRecords.summarize].
      */
     val completionRecordInputs: StateFlow<List<RecordSetInput>?> = _completionRecordInputs.asStateFlow()
+
+    private val _completionFacts = MutableStateFlow<CompletionFacts?>(null)
+
+    /**
+     * Workout number, weekly goal, jubilee and comeback of the finished session, see
+     * [TrainingMilestones.completionFacts]; null until loaded.
+     */
+    val completionFacts: StateFlow<CompletionFacts?> = _completionFacts.asStateFlow()
 
     private val sessionPhase = workoutRepository.observeSessionById(sessionId)
         .map<WorkoutSession?, ActiveWorkoutSessionPhase> { session ->
@@ -700,7 +714,10 @@ class ActiveWorkoutViewModel(
                 LiveRecordUi(type = type, value = line.value, previous = previous, addedLoad = addedLoad)
             }
             if (records.isEmpty()) return
-            _events.emit(WorkoutEvent.NewRecords(strings.exerciseName(exercise), records))
+            // A mark always comes with a weight or reps record of the same set, so it rides along.
+            val unitSystem = appPreferencesRepository.preferences.first().unitSystem
+            val mark = StrengthMarks.liveMark(sessionId, setsBefore, setsAfter, exercise.category.name, unitSystem.toSharedUnit())
+            _events.emit(WorkoutEvent.NewRecords(strings.exerciseName(exercise), records, mark))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -761,12 +778,20 @@ class ActiveWorkoutViewModel(
             try {
                 val session = workoutRepository.getSessionById(sessionId) ?: return@launch
                 if (session.endTime == null) return@launch
+                val completedSessions = workoutRepository.getAllCompletedSessionsList()
+                val preferences = appPreferencesRepository.preferences.first()
+                _completionFacts.value = TrainingMilestones.completionFacts(
+                    sessionId = sessionId,
+                    sessions = completedSessions.map { it.toMilestoneSession() },
+                    weekStart = preferences.weekStart.toSharedWeekStart(),
+                    goalHistory = preferences.weeklyGoalHistory.takeIf { preferences.weeklyGoalEnabled }
+                )
                 val exerciseIds = workoutRepository.getSetsForSessionList(sessionId)
                     .filter { it.reps > 0 }
                     .map { it.exerciseId }
                     .distinct()
                 if (exerciseIds.isEmpty()) return@launch
-                val finishedSessionIds = workoutRepository.getAllCompletedSessionsList().mapTo(HashSet()) { it.id }
+                val finishedSessionIds = completedSessions.mapTo(HashSet()) { it.id }
                 _completionRecordInputs.value = exerciseIds
                     .flatMap { statisticsRepository.getSetsForExerciseList(it) }
                     .map { it.toRecordInput(sessionFinished = it.sessionId in finishedSessionIds) }
@@ -1083,3 +1108,11 @@ class ActiveWorkoutViewModel(
         private const val GENERATION_FAILURE_MESSAGE = "progression_generation_failed"
     }
 }
+
+private fun WorkoutSession.toMilestoneSession(): MilestoneSession = MilestoneSession(
+    id = id,
+    epochDay = startTime.toLocalDate().toEpochDay(),
+    // Only the order matters, so a fixed offset is enough.
+    orderKey = startTime.toInstant(java.time.ZoneOffset.UTC).toEpochMilli(),
+    isDeload = isDeload
+)

@@ -8,6 +8,7 @@ import com.thrym.app.domain.model.ThemeMode
 import com.thrym.app.domain.model.ThemeScheme
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.model.WeekStart
+import com.thrym.shared.recognition.WeeklyGoalChange
 import kotlinx.coroutines.flow.Flow
 
 interface AppPreferencesRepository {
@@ -34,6 +35,8 @@ interface AppPreferencesRepository {
     suspend fun updateBarbellWeightKg(weightKg: Double)
     suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?)
     suspend fun updateBackupReminderEnabled(enabled: Boolean)
+    suspend fun updateWeeklyGoalEnabled(enabled: Boolean)
+    suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>)
 
     /**
      * Persists the active workout rest timers for one session.

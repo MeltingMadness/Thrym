@@ -1,5 +1,6 @@
 package com.thrym.app.data.repository
 
+import com.thrym.app.domain.model.CompletedSessionStart
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -519,6 +520,11 @@ class WorkoutRepositoryImpl(
 
     override suspend fun getAllCompletedSessionsList(): List<WorkoutSession> =
         sessionDao.getAllCompletedSessionsList().map { it.toDomain() }
+
+    override suspend fun getCompletedSessionStarts(): List<CompletedSessionStart> =
+        sessionDao.getCompletedSessionStarts().map { row ->
+            CompletedSessionStart(EpochConverter.toLocalDateTime(row.startTime), row.isDeload)
+        }
 
     override suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,

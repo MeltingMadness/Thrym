@@ -1,5 +1,6 @@
 package com.thrym.app.domain.repository
 
+import com.thrym.app.domain.model.CompletedSessionStart
 import androidx.paging.PagingData
 import com.thrym.app.domain.model.CompletedWorkoutSummary
 import com.thrym.app.domain.model.PreviousExerciseSession
@@ -95,6 +96,9 @@ interface WorkoutRepository {
     suspend fun getLastCompletedSessionBefore(untilEpochMillis: Long): WorkoutSession? =
         getLastCompletedSession()
     suspend fun getAllCompletedSessionsList(): List<WorkoutSession>
+    /** Start and deload flag of every completed session, without loading whole sessions. */
+    suspend fun getCompletedSessionStarts(): List<CompletedSessionStart> =
+        getAllCompletedSessionsList().map { CompletedSessionStart(it.startTime, it.isDeload) }
     suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,
         exerciseIds: List<Long>,

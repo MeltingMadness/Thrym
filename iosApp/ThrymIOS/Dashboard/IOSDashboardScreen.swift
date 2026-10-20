@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 /// Native iOS dashboard driven by the shared, immutable analytics projection.
@@ -141,6 +142,9 @@ struct IOSDashboardScreen: View {
             $0.status.uppercased() == "PENDING"
         }.count ?? 0
         let activeDeloadMode = settings.state.deloadMode.uppercased()
+        let sessions = store.data?.workoutSessions ?? []
+        let weeklyGoal = IOSRecognition.weeklyGoal(sessions: sessions, settings: settings.state)
+        let pauseDays = IOSRecognition.pauseDays(sessions: sessions)
         // The shared projection is the single source for trend, daily form and muscle facts.
         let assessment = store.readiness
 
@@ -172,7 +176,8 @@ struct IOSDashboardScreen: View {
                     ),
                     workoutsThisWeek: analytics.workoutsThisWeek,
                     volumeKg: analytics.weeklyVolume.first { $0.weekStart == analytics.currentWeekStart }?.volumeKg ?? 0,
-                    unitSystem: unitSystem
+                    unitSystem: unitSystem,
+                    weeklyGoal: weeklyGoal
                 )
             } else {
                 greeting
@@ -206,8 +211,13 @@ struct IOSDashboardScreen: View {
                 IOSDashboardWorkoutCounts(
                     week: analytics.workoutsThisWeek,
                     month: analytics.workoutsThisMonth,
-                    lastSessionDate: analytics.lastSessionDate
+                    lastSessionDate: analytics.lastSessionDate,
+                    weeklyGoal: weeklyGoal
                 )
+            }
+
+            if let pauseDays, activeDeloadMode == "NONE", store.data?.activeSession == nil {
+                IOSComebackCard(pauseDays: pauseDays) { settings.updateDeloadMode("HALVE_SET_VOLUME") }
             }
 
             if let trend = assessment?.trainingTrend,
@@ -1090,13 +1100,32 @@ private struct IOSDashboardWorkoutCounts: View {
     let week: Int
     let month: Int
     let lastSessionDate: String?
+    let weeklyGoal: WeeklyGoalStatus?
 
     var body: some View {
         ThrymCard(title: String(localized: "Trainingsrhythmus"), tone: .muted) {
             HStack(spacing: 0) {
-                metric(title: String(localized: "Diese Woche"), value: week)
+                if let weeklyGoal {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(IOSRecognition.weekProgressText(weeklyGoal))
+                            .font(.geist(.title2, weight: .bold))
+                            .monospacedDigit()
+                        Text("Diese Woche")
+                            .font(.geist(.caption))
+                            .thrymSecondaryText()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(IOSRecognition.weekProgressAccessibility(weeklyGoal))
+                } else {
+                    metric(title: String(localized: "Diese Woche"), value: week)
+                }
                 Divider().frame(height: 42)
                 metric(title: String(localized: "Dieser Monat"), value: month)
+            }
+            if let footer = weeklyGoal.flatMap(IOSRecognition.weekFooterText) {
+                IOSWeekGoalFooter(text: footer)
+                    .accessibilityHidden(true)
             }
             if let lastSessionDate = ilAnalyticsDateText(lastSessionDate) {
                 Text("Zuletzt am \(lastSessionDate)")

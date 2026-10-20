@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 /// Record board of the completion screen, the same in Ember and Liquid Glass and on Android
@@ -7,6 +8,9 @@ import SwiftUI
 struct IOSWorkoutRecordsCard: View {
     let summary: IOSWorkoutRecordSummary
     let unitSystem: String
+    /// Round marks reached for the first time, per exercise. They sit above the records of
+    /// their exercise but are no records, so the header count leaves them out.
+    var marks: [Int64: [StrengthMark]] = [:]
 
     @Environment(\.thrymTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
@@ -43,6 +47,9 @@ struct IOSWorkoutRecordsCard: View {
                         ForEach(records) { exercise in
                             Divider()
                             exerciseName(exercise)
+                            ForEach(Array((marks[exercise.exerciseID] ?? []).enumerated()), id: \.offset) { _, mark in
+                                stackedMarkRow(mark, ink: ink)
+                            }
                             ForEach(exercise.lines) { line in
                                 stackedRecordRow(line, ink: ink)
                             }
@@ -55,6 +62,9 @@ struct IOSWorkoutRecordsCard: View {
                             Divider()
                                 .gridCellUnsizedAxes(.horizontal)
                             exerciseName(exercise)
+                            ForEach(Array((marks[exercise.exerciseID] ?? []).enumerated()), id: \.offset) { _, mark in
+                                markRow(mark, ink: ink)
+                            }
                             ForEach(exercise.lines) { line in
                                 recordRow(line, ink: ink)
                             }
@@ -124,6 +134,59 @@ struct IOSWorkoutRecordsCard: View {
                 .gridColumnAlignment(.trailing)
                 .accessibilityHidden(true)
         }
+    }
+
+    /// A mark in the grammar of a record row: "MARKE  100 kg  [Erstmals]".
+    private func markRow(_ mark: StrengthMark, ink: ThrymSemanticInk) -> some View {
+        GridRow {
+            markLabel
+                .lineLimit(2)
+                .accessibilityHidden(true)
+            Text(IOSRecognition.markValue(mark))
+                .font(.geist(.headline, weight: .heavy))
+                .monospacedDigit()
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(markAccessibilityText(mark))
+            firstTimeChip(ink: ink)
+                .lineLimit(1)
+                .gridColumnAlignment(.trailing)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private func stackedMarkRow(_ mark: StrengthMark, ink: ThrymSemanticInk) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            markLabel
+            Text(IOSRecognition.markValue(mark))
+                .font(.geist(.headline, weight: .heavy))
+                .monospacedDigit()
+            firstTimeChip(ink: ink)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(markAccessibilityText(mark))
+    }
+
+    private var markLabel: some View {
+        Text(String(localized: "Marke").uppercased())
+            .font(.geist(.caption, weight: .bold))
+            .tracking(0.8)
+            .foregroundStyle(theme.palette(for: colorScheme).textSecondary)
+    }
+
+    private func markAccessibilityText(_ mark: StrengthMark) -> String {
+        String(localized: "\(IOSRecognition.markTitle(mark)), zum ersten Mal erreicht")
+    }
+
+    private func firstTimeChip(ink: ThrymSemanticInk) -> some View {
+        Text("Erstmals")
+            .font(.geist(.callout, weight: .bold))
+            .foregroundStyle(ink.warning)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 2)
+            .background(ink.warningFill.opacity(0.16), in: Capsule())
     }
 
     /// The same row for accessibility text sizes: the label on its own line, then the value,
