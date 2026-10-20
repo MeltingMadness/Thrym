@@ -8,6 +8,13 @@ Im Dialog „Training starten“ (Home) stehen **Meta-Pläne oben**, darunter di
 
 Für jeden Meta-Plan zeigt der Dialog den vorgeschlagenen Teilplan mit der Aktion **„Überspringen“**.
 
+## Pläne-Tab
+
+Trainingspläne und Meta-Pläne teilen sich den Tab „Pläne“. Ein breiter Umschalter unter dem Titel wechselt zwischen beiden („Pläne“ und „Meta-Pläne“, je mit Anzahl). „+“ legt je nach Auswahl einen Trainingsplan oder einen Meta-Plan an. Der Umschalter bleibt auch sichtbar, wenn eine Art noch leer ist; dann zeigt die Liste einen Hinweis.
+
+- **Android:** Meta-Pläne erscheinen als violette Karten mit Teilplan-Anzahl, nächstem Teilplan und letztem Training. Ein Tipp oder der Stift öffnet den Editor, der Mülleimer fragt vor dem Löschen nach. Eine eigene Meta-Plan-Seite gibt es nicht mehr.
+- **iOS:** Meta-Pläne erscheinen als Listenzeilen mit Teilplan-Anzahl. Ein Tipp öffnet den Editor; „Rotation starten“, „Bearbeiten“ und „Löschen“ liegen im Menü der Zeile, Löschen auch als Wischaktion.
+
 ## Rotation
 
 - Pro Teilplan zählt das **jüngste Ereignis**: der Start des letzten abgeschlossenen Trainings oder das letzte Überspringen.
@@ -45,5 +52,6 @@ Eine geplante Übung bekommt einen positiven Hinweis, wenn im letzten relevanten
 
 - Rotation und Überspringen: `MetaTrainingPlanRepository` / `MetaTrainingPlanDao`
 - Startdialog: `feature/dashboard/.../PlanSelectionSheet.kt`
-- Verwaltung: `feature/plans/.../MetaPlan*`
+- Pläne-Tab mit Umschalter: `feature/plans/.../TrainingPlanListScreen.kt`, `PlansGlass.kt` (`PlansModeSwitcher`), `MetaPlanListCard.kt`; iOS `iosApp/ThrymIOS/Plans/IOSPlansScreen.swift` (`IOSPlansModeSwitcher`)
+- Editor: `feature/plans/.../MetaPlanEditor*`, iOS `IOSMetaPlanEditorScreen.swift`
 - Tests (Emulator): `app/src/androidTest/.../MetaPlanSkipDaoTest.kt`, `WorkoutSetDaoContextScopeTest.kt`

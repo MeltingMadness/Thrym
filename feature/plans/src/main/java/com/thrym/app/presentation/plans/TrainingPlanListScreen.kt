@@ -3,18 +3,15 @@ package com.thrym.app.presentation.plans
 import com.thrym.app.presentation.common.ThrymTopBar
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,7 +21,6 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.AlertDialog
@@ -46,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thrym.core.designsystem.R
@@ -72,13 +70,18 @@ fun TrainingPlanListScreen(
     onCreatePlan: () -> Unit,
     onEditPlan: (Long) -> Unit,
     onStartWorkout: (Long, Long) -> Unit,
-    onOpenMetaPlans: () -> Unit,
+    onCreateMetaPlan: () -> Unit,
+    onEditMetaPlan: (Long) -> Unit,
     onOpenProgressionReview: () -> Unit,
-    viewModel: TrainingPlanListViewModel = koinViewModel()
+    viewModel: TrainingPlanListViewModel = koinViewModel(),
+    metaPlanViewModel: MetaPlanListViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val metaState by metaPlanViewModel.uiState.collectAsStateWithLifecycle()
+    var mode by rememberSaveable { mutableStateOf(PlansMode.PLANS) }
     var deletePlanId by remember { mutableStateOf<Long?>(null) }
     var deletePlanName by remember { mutableStateOf("") }
+    var deleteMetaPlan by remember { mutableStateOf<MetaPlanListItemUi?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val dims = thrymDimens
 
@@ -86,6 +89,13 @@ fun TrainingPlanListScreen(
         state.error?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(metaState.error) {
+        metaState.error?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            metaPlanViewModel.clearError()
         }
     }
 
@@ -106,109 +116,90 @@ fun TrainingPlanListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onCreatePlan,
+                onClick = if (mode == PlansMode.PLANS) onCreatePlan else onCreateMetaPlan,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(id = R.string.plans_add_cd)
+                    contentDescription = stringResource(
+                        id = if (mode == PlansMode.PLANS) R.string.plans_add_cd else R.string.meta_plans_add_cd
+                    )
                 )
             }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
-        when {
-            state.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+        if (state.isLoading || metaState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
-
-            state.plans.isEmpty() -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(horizontal = dims.spacingLg),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    ThrymSurfaceCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        tone = ThrymSurfaceTone.ELEVATED
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(dims.spacingLg),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.plans_empty_title),
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(dims.spacingXs))
-                            Text(
-                                text = stringResource(id = R.string.plans_empty_subtitle),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(dims.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+            ) {
+                item(key = "mode_switcher") {
+                    PlansModeSwitcher(
+                        selected = mode,
+                        planCount = state.plans.size,
+                        metaPlanCount = metaState.items.size,
+                        onSelect = { mode = it },
+                        modifier = Modifier.padding(bottom = dims.spacingXs)
+                    )
                 }
-            }
-
-            else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(dims.spacingMd),
-                    verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
-                ) {
-                    item(key = "meta_header") {
-                        SectionHeader(
-                            title = stringResource(id = R.string.plans_section_meta),
-                            actionLabel = stringResource(id = R.string.plans_meta_manage),
-                            onAction = onOpenMetaPlans
-                        )
-                    }
-                    if (state.metaPlans.isEmpty()) {
-                        item(key = "meta_empty") {
-                            MetaPlanHintCard(onClick = onOpenMetaPlans)
+                when (mode) {
+                    PlansMode.PLANS -> if (state.plans.isEmpty()) {
+                        item(key = "plans_empty") {
+                            PlansEmptyCard(
+                                title = stringResource(id = R.string.plans_empty_title),
+                                subtitle = stringResource(id = R.string.plans_empty_subtitle)
+                            )
                         }
                     } else {
-                        items(state.metaPlans, key = { "meta_${it.id}" }) { meta ->
-                            MetaPlanRow(meta = meta, onClick = onOpenMetaPlans)
+                        items(state.plans, key = { it.plan.id }) { item ->
+                            SwipeToDeletePlanCard(
+                                item = item,
+                                onStart = {
+                                    viewModel.startPlanWorkout(item.plan) { sessionId, planId ->
+                                        onStartWorkout(sessionId, planId)
+                                    }
+                                },
+                                onClick = { onEditPlan(item.plan.id) },
+                                onDelete = {
+                                    deletePlanId = item.plan.id
+                                    deletePlanName = item.plan.name
+                                }
+                            )
                         }
                     }
-                    item(key = "plans_header") {
-                        SectionHeader(title = stringResource(id = R.string.plans_section_plans))
+
+                    PlansMode.META_PLANS -> if (metaState.items.isEmpty()) {
+                        item(key = "meta_empty") {
+                            PlansEmptyCard(
+                                title = stringResource(id = R.string.meta_plans_empty_title),
+                                subtitle = stringResource(id = R.string.meta_plans_empty_subtitle)
+                            )
+                        }
+                    } else {
+                        items(metaState.items, key = { "meta_${it.metaPlan.id}" }) { item ->
+                            MetaPlanListCard(
+                                item = item,
+                                onEdit = { onEditMetaPlan(item.metaPlan.id) },
+                                onDelete = { deleteMetaPlan = item }
+                            )
+                        }
                     }
-                    items(state.plans, key = { it.plan.id }) { item ->
-                        SwipeToDeletePlanCard(
-                            item = item,
-                            onStart = {
-                                viewModel.startPlanWorkout(item.plan) { sessionId, planId ->
-                                    onStartWorkout(sessionId, planId)
-                                }
-                            },
-                            onClick = { onEditPlan(item.plan.id) },
-                            onDelete = {
-                                deletePlanId = item.plan.id
-                                deletePlanName = item.plan.name
-                            }
-                        )
-                    }
-                    item { Spacer(modifier = Modifier.height(dims.spacingXl)) }
                 }
+                item { Spacer(modifier = Modifier.height(dims.spacingXl)) }
             }
         }
 
@@ -236,6 +227,66 @@ fun TrainingPlanListScreen(
                         Text(stringResource(id = R.string.common_cancel))
                     }
                 }
+            )
+        }
+
+        deleteMetaPlan?.let { item ->
+            AlertDialog(
+                onDismissRequest = { deleteMetaPlan = null },
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                title = { Text(stringResource(id = R.string.meta_plans_delete_title)) },
+                text = { Text(stringResource(id = R.string.meta_plans_delete_text, item.metaPlan.name)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            metaPlanViewModel.deleteMetaPlan(item.metaPlan.id)
+                            deleteMetaPlan = null
+                        },
+                        colors = ThrymInteractiveColors.textButton()
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.common_delete),
+                            color = MaterialTheme.semanticText.danger
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deleteMetaPlan = null }, colors = ThrymInteractiveColors.textButton()) {
+                        Text(text = stringResource(id = R.string.common_cancel))
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlansEmptyCard(title: String, subtitle: String) {
+    val dims = thrymDimens
+    ThrymSurfaceCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = dims.spacingLg),
+        tone = ThrymSurfaceTone.ELEVATED
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dims.spacingLg),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(dims.spacingXs))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -365,89 +416,5 @@ private fun PlanCard(
                 Text(text = stringResource(id = R.string.dashboard_start_workout))
             }
         }
-    }
-}
-
-@Composable
-private fun SectionHeader(
-    title: String,
-    actionLabel: String? = null,
-    onAction: () -> Unit = {}
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 40.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
-        )
-        if (actionLabel != null) {
-            TextButton(onClick = onAction, colors = ThrymInteractiveColors.textButton()) {
-                Text(actionLabel)
-            }
-        }
-    }
-}
-
-@Composable
-private fun MetaPlanRow(meta: PlanListMetaPlan, onClick: () -> Unit) {
-    val dims = thrymDimens
-    ThrymSurfaceCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        tone = ThrymSurfaceTone.MUTED
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = dims.spacingMd, vertical = dims.spacingSm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Repeat,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.width(dims.spacingSm))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = meta.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                if (meta.subPlanNames.isNotEmpty()) {
-                    Text(
-                        text = meta.subPlanNames.joinToString(" → "),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MetaPlanHintCard(onClick: () -> Unit) {
-    val dims = thrymDimens
-    ThrymSurfaceCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        tone = ThrymSurfaceTone.MUTED
-    ) {
-        Text(
-            text = stringResource(id = R.string.meta_plans_empty_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = dims.spacingMd, vertical = dims.spacingSm)
-        )
     }
 }

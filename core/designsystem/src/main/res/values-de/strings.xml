@@ -199,7 +199,6 @@
     <string name="plans_progression_review_cd">Progressionsvorschläge</string>
     <string name="plans_section_meta">Meta-Pläne</string>
     <string name="plans_section_plans">Pläne</string>
-    <string name="plans_meta_manage">Verwalten</string>
 
     <string name="plan_editor_title_edit">Plan bearbeiten</string>
     <string name="plan_editor_title_new">Neuer Plan</string>
@@ -392,7 +391,6 @@
     <string name="plan_selection_meta_last_done_today">Heute</string>
     <string name="plan_selection_meta_last_done_yesterday">Gestern</string>
     <string name="plan_selection_meta_last_done_never">Noch nie</string>
-    <string name="meta_plans_title">Meta-Trainingspläne</string>
     <string name="meta_plans_add_cd">Meta-Plan erstellen</string>
     <string name="meta_plans_edit_cd">Meta-Plan bearbeiten</string>
     <string name="meta_plans_empty_title">Keine Meta-Trainingspläne</string>
