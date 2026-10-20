@@ -140,7 +140,10 @@ internal fun GlassWorkoutCompletion(
                 )
             }
 
-            recordSummary?.let { CompletionRecordsCard(it, rows, unitSystem) }
+            recordSummary?.let {
+                CompletionCompanion(session.id, it.recordCount)
+                CompletionRecordsCard(it, rows, unitSystem)
+            }
 
             trainedRows.forEach { row ->
                 Column(

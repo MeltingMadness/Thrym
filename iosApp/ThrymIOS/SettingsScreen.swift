@@ -3,6 +3,16 @@ import UniformTypeIdentifiers
 
 struct SettingsScreen: View {
     @EnvironmentObject private var viewModel: IOSSettingsViewModel
+    @AppStorage(IOSCompanion.choiceKey) private var companionChoice = "AUTO"
+
+    private func companionLabel(_ choice: String) -> String {
+        switch choice {
+        case "ODIN": return String(localized: "Odin")
+        case "VALKYRIE": return String(localized: "Walküre")
+        case "OFF": return String(localized: "Aus")
+        default: return String(localized: "Automatisch")
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -95,6 +105,23 @@ struct SettingsScreen: View {
                             get: { viewModel.state.shareWeightHistoryAcrossContexts },
                             set: viewModel.updateShareWeightHistoryAcrossContexts
                         ))
+                    }
+
+                    Section {
+                        Picker("Begleiter", selection: $companionChoice) {
+                            ForEach(IOSCompanion.choices, id: \.self) { option in
+                                Text(companionLabel(option)).tag(option)
+                            }
+                        }
+                        if let character = IOSCompanion.characterName(choice: companionChoice) {
+                            // A new identity restarts the stage, so the chosen companion greets with a cheer.
+                            IOSCompanionStage(character: character, height: 96, entrance: "CHEER")
+                                .id(character)
+                        }
+                    } header: {
+                        Text("Begleiter")
+                    } footer: {
+                        Text("Dein Begleiter führt dich durch den Start und schaut ab und zu auf der Startseite vorbei. Automatisch wählt Odin.")
                     }
 
                     Section("Rest-Timer") {

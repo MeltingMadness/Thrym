@@ -105,6 +105,10 @@ Gilt für Android und iOS gleich:
 
 **Scheibenfarben:** `PlateColors` in `theme/Color.kt` folgt der üblichen Kodierung (25 kg rot, 20 kg blau, 15 kg gelb, 10 kg grün, 5 kg weiß, kleinere Scheiben grau/silber).
 
+## Begleiter (`presentation/companion`)
+
+`CompanionStage` ist ein Streifen, in dem Odin oder die Walküre als ganze 16-Bit-Figur aus `CompanionSprites` (`:shared`, 80 × 80 Pixel je Bild) herumläuft, steht, mit dem Speer übt und jubelt; ein Sprite-Pixel ist immer eine ganze Zahl von Bildschirmpixeln, ohne Glättung, mit einem weichen Schatten unter den Füßen. `CompanionCard` (`ThrymSurfaceCard`, Ton `ELEVATED`) zeigt oben Namen und Spruch, optional mit X zum Ausblenden, darunter die Bühne. Die Figur hat ihre eigene feste Palette und folgt nicht dem Farbschema, damit sie in jedem Schema gleich aussieht. iOS: `IOSCompanionStage` und `IOSCompanionCard` mit `ThrymCard`. Details in [`features/begleiter.md`](features/begleiter.md).
+
 ## App-Hülle
 
 - XML-Themes in `app/src/main/res/values/themes.xml`: `Theme.Thrym` für die App, `Theme.Thrym.Splash` für den Start.

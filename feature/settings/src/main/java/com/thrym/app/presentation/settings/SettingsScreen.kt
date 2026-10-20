@@ -426,6 +426,12 @@ fun SettingsScreen(
             }
 
             item {
+                PreferenceCard(title = stringResource(SettingsR.string.settings_section_companion)) {
+                    CompanionSettingsContent()
+                }
+            }
+
+            item {
                 PreferenceCard(title = stringResource(id = R.string.settings_section_barbell)) {
                     ToggleRow(
                         title = stringResource(id = R.string.settings_plate_calculator_title),

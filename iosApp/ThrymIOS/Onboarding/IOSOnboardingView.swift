@@ -32,6 +32,10 @@ struct IOSOnboardingView: View {
     @Environment(\.thrymTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var step: IOSOnboardingStep = .welcome
+    @AppStorage(IOSCompanion.choiceKey) private var companionChoice = "AUTO"
+
+    /// The companion who guides through the steps, `nil` when it is switched off.
+    private var companion: String? { IOSCompanion.characterName(choice: companionChoice) }
 
     private var steps: [IOSOnboardingStep] { IOSOnboardingStep.allCases }
     private var stepIndex: Int { steps.firstIndex(of: step) ?? 0 }
@@ -135,7 +139,11 @@ struct IOSOnboardingView: View {
 
     @ViewBuilder
     private func welcomeStep(palette: ThrymTheme.Palette) -> some View {
-        stepIcon("dumbbell.fill", palette: palette)
+        if let companion {
+            IOSCompanionCard(character: companion, line: "ONBOARDING_WELCOME", entrance: "CHEER")
+        } else {
+            stepIcon("dumbbell.fill", palette: palette)
+        }
         stepTitle(Text("Willkommen bei \(Self.appName)"))
         Text("Dein Log für Krafttraining.")
             .font(.geist(.body))
@@ -167,6 +175,9 @@ struct IOSOnboardingView: View {
 
     @ViewBuilder
     private func unitsStep(palette: ThrymTheme.Palette) -> some View {
+        if let companion {
+            IOSCompanionCard(character: companion, line: "ONBOARDING_UNITS")
+        }
         stepTitle(Text("In welcher Einheit trainierst du?"))
         VStack(spacing: 12) {
             unitOption(value: "METRIC", short: "kg", label: Text("Kilogramm"), palette: palette)
@@ -179,7 +190,11 @@ struct IOSOnboardingView: View {
 
     @ViewBuilder
     private func startStep(palette: ThrymTheme.Palette) -> some View {
-        stepIcon("play.fill", palette: palette)
+        if let companion {
+            IOSCompanionCard(character: companion, line: "ONBOARDING_START", entrance: "CELEBRATE")
+        } else {
+            stepIcon("play.fill", palette: palette)
+        }
         stepTitle(Text("Bereit"))
         Text("Starte ein freies Training oder lege zuerst einen Plan an.")
             .font(.geist(.body))

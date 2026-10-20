@@ -54,12 +54,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.presentation.common.ThrymSurfaceCard
+import com.thrym.app.presentation.companion.CompanionCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
 import com.thrym.app.presentation.theme.accentText
 import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.thrymMotion
 import com.thrym.feature.onboarding.R
+import com.thrym.shared.companion.CompanionAnimation
+import com.thrym.shared.companion.CompanionCharacter
+import com.thrym.shared.companion.CompanionLine
 import org.koin.androidx.compose.koinViewModel
 import com.thrym.core.designsystem.R as DesignR
 
@@ -74,6 +78,7 @@ fun OnboardingScreen(
 ) {
     val stepIndex by viewModel.stepIndex.collectAsStateWithLifecycle()
     val unitSystem by viewModel.unitSystem.collectAsStateWithLifecycle()
+    val companion by viewModel.companion.collectAsStateWithLifecycle()
     val steps = viewModel.steps
     val step = steps[stepIndex]
     val dims = thrymDimens
@@ -134,12 +139,13 @@ fun OnboardingScreen(
                 verticalArrangement = Arrangement.spacedBy(dims.spacingLg)
             ) {
                 when (steps[index]) {
-                    OnboardingStep.WELCOME -> WelcomeStep()
+                    OnboardingStep.WELCOME -> WelcomeStep(companion)
                     OnboardingStep.UNITS -> UnitsStep(
+                        companion = companion,
                         selected = unitSystem,
                         onSelect = viewModel::selectUnitSystem
                     )
-                    OnboardingStep.START -> StartStep()
+                    OnboardingStep.START -> StartStep(companion)
                 }
             }
         }
@@ -181,9 +187,13 @@ fun OnboardingScreen(
 }
 
 @Composable
-private fun WelcomeStep() {
+private fun WelcomeStep(companion: CompanionCharacter?) {
     val dims = thrymDimens
-    StepIcon(Icons.Default.FitnessCenter)
+    if (companion != null) {
+        CompanionCard(character = companion, line = CompanionLine.ONBOARDING_WELCOME, entrance = CompanionAnimation.CHEER)
+    } else {
+        StepIcon(Icons.Default.FitnessCenter)
+    }
     StepTitle(stringResource(R.string.onboarding_welcome_title, stringResource(DesignR.string.app_name)))
     Text(
         text = stringResource(R.string.onboarding_welcome_subtitle),
@@ -218,8 +228,15 @@ private fun WelcomeStep() {
 }
 
 @Composable
-private fun UnitsStep(selected: UnitSystem, onSelect: (UnitSystem) -> Unit) {
+private fun UnitsStep(
+    companion: CompanionCharacter?,
+    selected: UnitSystem,
+    onSelect: (UnitSystem) -> Unit
+) {
     val dims = thrymDimens
+    if (companion != null) {
+        CompanionCard(character = companion, line = CompanionLine.ONBOARDING_UNITS)
+    }
     StepTitle(stringResource(R.string.onboarding_units_title))
     Column(
         modifier = Modifier.selectableGroup(),
@@ -246,8 +263,12 @@ private fun UnitsStep(selected: UnitSystem, onSelect: (UnitSystem) -> Unit) {
 }
 
 @Composable
-private fun StartStep() {
-    StepIcon(Icons.Default.PlayArrow)
+private fun StartStep(companion: CompanionCharacter?) {
+    if (companion != null) {
+        CompanionCard(character = companion, line = CompanionLine.ONBOARDING_START, entrance = CompanionAnimation.CELEBRATE)
+    } else {
+        StepIcon(Icons.Default.PlayArrow)
+    }
     StepTitle(stringResource(R.string.onboarding_start_title))
     Text(
         text = stringResource(R.string.onboarding_start_body),

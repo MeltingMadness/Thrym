@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="companion_name_odin">Odin</string>
+    <string name="companion_name_valkyrie">Valkyrie</string>
+    <string name="companion_hide_today">Hide for today</string>
+    <string name="companion_says">%1$s says: %2$s</string>
+    <string name="companion_line_onboarding_welcome_odin">Hail! I\'m Odin, and I\'ll walk you through the first steps.</string>
+    <string name="companion_line_onboarding_welcome_valkyrie">Hail! I\'m your valkyrie, and I\'ll walk you through the first steps.</string>
+    <string name="companion_line_onboarding_units">Kilos or pounds? The bar weighs the same either way.</string>
+    <string name="companion_line_onboarding_start">To the hall! I\'ll drop by now and then. You can swap me or switch me off in the settings.</string>
+    <string name="companion_line_first_steps_welcome">Welcome to the hall! Start your first workout whenever you\'re ready.</string>
+    <string name="companion_line_trained_today_rest">Well fought today. Rest is part of the training too.</string>
+    <string name="companion_line_trained_today_sleep">Today\'s work is done. Even Thor needs his sleep.</string>
+    <string name="companion_line_welcome_back_one_set">Good to see you again! Every comeback starts with a single set.</string>
+    <string name="companion_line_everyday_yggdrasil">Steady beats fast. Even Yggdrasil grew one ring at a time.</string>
+    <string name="companion_line_everyday_warmup">A good warm-up is half the battle.</string>
+    <string name="companion_line_everyday_technique">Clean technique first. The heavy weight will come.</string>
+    <string name="companion_line_everyday_recovery">Sleep and good food make you strong, too.</string>
+    <string name="companion_line_everyday_small_plates">Small plates count. Progress is progress.</string>
+    <string name="companion_line_workout_done_fought">Workout done. Well fought!</string>
+    <string name="companion_line_workout_done_hall">Another workout in the hall. Keep it up!</string>
+    <string name="companion_line_record_skalds">A new personal best! The skalds will sing of this.</string>
+    <string name="companion_line_record_saga">A record! That one goes into the saga.</string>
+</resources>

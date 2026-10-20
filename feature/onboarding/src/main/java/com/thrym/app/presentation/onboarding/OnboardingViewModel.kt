@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.repository.AppPreferencesRepository
+import com.thrym.app.domain.repository.CompanionRepository
 import com.thrym.app.domain.repository.OnboardingRepository
 import com.thrym.app.domain.util.AppLogger
+import com.thrym.shared.companion.CompanionCharacter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,7 +31,8 @@ enum class OnboardingStep {
 
 class OnboardingViewModel(
     private val onboardingRepository: OnboardingRepository,
-    private val appPreferencesRepository: AppPreferencesRepository
+    private val appPreferencesRepository: AppPreferencesRepository,
+    companionRepository: CompanionRepository
 ) : ViewModel() {
 
     val steps: List<OnboardingStep> = OnboardingStep.entries
@@ -40,6 +43,10 @@ class OnboardingViewModel(
     val unitSystem: StateFlow<UnitSystem> = appPreferencesRepository.preferences
         .map { it.unitSystem }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UnitSystem.METRIC)
+
+    /** The companion who guides through the steps; `null` while loading or when switched off. */
+    val companion: StateFlow<CompanionCharacter?> = companionRepository.character
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private var finishing = false
 

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_section_companion">Companion</string>
+    <string name="settings_companion_auto">Automatic</string>
+    <string name="settings_companion_odin">Odin</string>
+    <string name="settings_companion_valkyrie">Valkyrie</string>
+    <string name="settings_companion_off">Off</string>
+    <string name="settings_companion_hint">Your companion walks you through the start and drops by on the home screen now and then. Automatic picks Odin.</string>
+</resources>
