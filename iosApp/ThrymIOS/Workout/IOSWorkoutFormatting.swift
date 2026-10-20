@@ -62,6 +62,18 @@ func iosWorkoutFormatDuration(_ seconds: Int) -> String {
     return String(format: "%02d:%02d", safeSeconds / 60, safeSeconds % 60)
 }
 
+/// Workout clock: "mm:ss", from one hour on "h:mm:ss". The Liquid Glass head and
+/// the floating time bubble show the same value.
+func iosWorkoutElapsedClock(_ seconds: Int) -> String {
+    let elapsed = max(0, seconds)
+    let hours = elapsed / 3600
+    let minutes = (elapsed % 3600) / 60
+    let rest = elapsed % 60
+    return hours > 0
+        ? String(format: "%d:%02d:%02d", hours, minutes, rest)
+        : String(format: "%02d:%02d", minutes, rest)
+}
+
 func iosWorkoutDisplayWeight(
     kilograms: Double,
     unitSystem: String

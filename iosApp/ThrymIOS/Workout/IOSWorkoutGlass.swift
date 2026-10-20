@@ -38,7 +38,7 @@ struct IOSWorkoutGlassHeader: View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 0) {
                 TimelineView(.periodic(from: startDate, by: 1)) { context in
-                    Text(elapsedText(at: context.date))
+                    Text(iosWorkoutElapsedClock(Int(context.date.timeIntervalSince(startDate))))
                         .font(.geist(size: 30, weight: .bold))
                         .monospacedDigit()
                 }
@@ -71,16 +71,6 @@ struct IOSWorkoutGlassHeader: View {
         }
         }
         .padding(.horizontal, 20)
-    }
-
-    private func elapsedText(at date: Date) -> String {
-        let elapsed = max(0, Int(date.timeIntervalSince(startDate)))
-        let hours = elapsed / 3600
-        let minutes = (elapsed % 3600) / 60
-        let seconds = elapsed % 60
-        return hours > 0
-            ? String(format: "%d:%02d:%02d", hours, minutes, seconds)
-            : String(format: "%02d:%02d", minutes, seconds)
     }
 }
 
@@ -411,15 +401,34 @@ struct IOSWorkoutGlassRestDockStack: View {
         return min(preferred, (viewportHeight * 0.4).rounded(.down))
     }
 
+    /// Measured height of all rows; nil until the first layout pass.
+    @State private var contentHeight: CGFloat?
+
+    /// Height of `rowCount` rows before they are measured.
+    static func estimatedContentHeight(rowCount: Int) -> CGFloat {
+        guard rowCount > 0 else { return 0 }
+        return CGFloat(rowCount) * rowHeight + CGFloat(rowCount - 1) * rowSpacing
+    }
+
+    /// The stack is exactly as tall as its rows, at most `maxHeight`. A frame
+    /// with only a maximum would take the full maximum and centre a single
+    /// row in it, so the dock floated about 80 pt above the bottom edge.
+    static func height(contentHeight: CGFloat, maxHeight: CGFloat) -> CGFloat {
+        min(contentHeight, maxHeight)
+    }
+
     var body: some View {
-        ViewThatFits(in: .vertical) {
+        let content = contentHeight ?? Self.estimatedContentHeight(rowCount: entries.count)
+        ScrollView {
             rows
-            ScrollView {
-                rows
-            }
-            .scrollIndicatorsFlash(onAppear: true)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
         }
-        .frame(maxHeight: maxHeight)
+        .scrollDisabled(content <= maxHeight)
+        // Clip only while the rows actually scroll.
+        .scrollClipDisabled(content <= maxHeight)
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollIndicatorsFlash(onAppear: true)
+        .frame(height: Self.height(contentHeight: content, maxHeight: maxHeight))
         .padding(.bottom, 8)
         .animation(reduceMotion || theme.reducedMotion ? nil : .snappy, value: entries.map(\.id))
     }

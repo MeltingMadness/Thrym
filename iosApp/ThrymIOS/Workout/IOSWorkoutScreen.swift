@@ -138,6 +138,9 @@ struct IOSWorkoutScreen: View {
     @State private var pauseRowKey: String?
     /// Height of the workout area, which caps the rest dock stack.
     @State private var viewportHeight: CGFloat = 0
+    /// The head with the workout time has scrolled out of view; the time bubble shows instead.
+    @State private var headTimeHidden = false
+    private static let headID = "workout-head"
     @State private var localErrorMessage: String?
     @State private var deletedSet: ILWorkoutSet?
     @State private var deletedIntention: ILSetIntention = .unknown
@@ -346,11 +349,15 @@ struct IOSWorkoutScreen: View {
         ScrollViewReader { proxy in
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
-                if liquidGlass {
-                    glassWorkoutHeader(session: session, layout: layout, proxy: proxy)
-                } else {
-                    workoutHeader(session: session)
+                Group {
+                    if liquidGlass {
+                        glassWorkoutHeader(session: session, layout: layout, proxy: proxy)
+                    } else {
+                        workoutHeader(session: session)
+                    }
                 }
+                .id(Self.headID)
+                .modifier(IOSWorkoutHeadTimeVisibilityFallback(isHidden: $headTimeHidden))
 
                 // Liquid Glass shows the timers in the dock and pause screen instead.
                 if !liquidGlass {
@@ -404,6 +411,23 @@ struct IOSWorkoutScreen: View {
             .padding(.top, 8)
         }
         .scrollDismissesKeyboard(.interactively)
+        .modifier(IOSWorkoutHeadTimeVisibility(isHidden: $headTimeHidden))
+        .overlay(alignment: .top) {
+            if headTimeHidden {
+                IOSWorkoutElapsedBubble(startDate: session.startDate) {
+                    withAnimation(reduceMotion || theme.reducedMotion ? nil : .snappy) {
+                        proxy.scrollTo(Self.headID, anchor: .top)
+                    }
+                }
+                .padding(.top, 6)
+                .transition(
+                    reduceMotion || theme.reducedMotion
+                        ? .identity
+                        : .opacity.combined(with: .scale(scale: 0.9, anchor: .top))
+                )
+            }
+        }
+        .animation(reduceMotion || theme.reducedMotion ? nil : .snappy, value: headTimeHidden)
         .safeAreaInset(edge: .bottom) {
             // Liquid Glass moves "Beenden" and "Verwerfen" into the head and shows
             // every running rest as a dock row instead.
@@ -1277,6 +1301,96 @@ private struct IOSWorkoutElapsedView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Training-Zeit")
+        }
+    }
+}
+
+/// How far the list scrolls before the head's time line (label and large clock,
+/// below 8 pt list padding) has left the visible area.
+private let iosWorkoutHeadTimeDepth: CGFloat = 56
+
+/// Reports whether the head's time line has scrolled out of view, from the list's
+/// scroll offset. Only the flip is reported, not every scroll frame.
+private struct IOSWorkoutHeadTimeVisibility: ViewModifier {
+    @Binding var isHidden: Bool
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top > iosWorkoutHeadTimeDepth
+            } action: { _, hidden in
+                isHidden = hidden
+            }
+        } else {
+            content
+        }
+    }
+}
+
+/// iOS 17 has no scroll geometry; there the head reports its own position in the
+/// scroll view. The bubble may then appear a few points late.
+private struct IOSWorkoutHeadTimeVisibilityFallback: ViewModifier {
+    @Binding var isHidden: Bool
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content
+        } else {
+            content.onGeometryChange(for: Bool.self) { proxy in
+                proxy.frame(in: .scrollView).minY + iosWorkoutHeadTimeDepth < 8
+            } action: { hidden in
+                isHidden = hidden
+            }
+        }
+    }
+}
+
+/// Floating workout time while the head is scrolled away: a small glass capsule at
+/// the top with the running clock. A tap scrolls back to the head.
+private struct IOSWorkoutElapsedBubble: View {
+    let startDate: Date
+    let onTap: () -> Void
+
+    @Environment(\.thrymAppearance) private var appearance
+    @Environment(\.thrymTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        TimelineView(.periodic(from: startDate, by: 1)) { context in
+            let clock = iosWorkoutElapsedClock(Int(context.date.timeIntervalSince(startDate)))
+            Button(action: onTap) {
+                HStack(spacing: 6) {
+                    Image(systemName: "stopwatch")
+                        .font(.system(size: 13, weight: .bold))
+                        .thrymAccentText()
+                    Text(clock)
+                        .font(.geist(size: 16, weight: .bold))
+                        .monospacedDigit()
+                }
+                .padding(.horizontal, 14)
+                .frame(minHeight: 36)
+                .background { surface }
+                .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
+                // 44 pt hit area around the slimmer capsule.
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Training-Zeit")
+            .accessibilityValue(clock)
+            .accessibilityHint("Zeigt den Trainingskopf")
+        }
+    }
+
+    @ViewBuilder
+    private var surface: some View {
+        if appearance == .liquidGlass {
+            Color.clear.liquidGlass(.strong, in: Capsule())
+        } else {
+            let palette = theme.palette(for: colorScheme)
+            Capsule()
+                .fill(palette.surfaceElevated)
+                .overlay { Capsule().strokeBorder(palette.primary.opacity(0.35)) }
         }
     }
 }
