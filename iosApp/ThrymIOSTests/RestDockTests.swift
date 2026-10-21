@@ -109,6 +109,21 @@ final class RestDockTests: XCTestCase {
         XCTAssertEqual(IOSWorkoutGlassRestDockStack.maxHeight(viewportHeight: 500), 200)
     }
 
+    func testOneRowStackIsOnlyAsTallAsTheRow() {
+        let cap = IOSWorkoutGlassRestDockStack.maxHeight(viewportHeight: 760)
+        let oneRow = IOSWorkoutGlassRestDockStack.estimatedContentHeight(rowCount: 1)
+        XCTAssertEqual(oneRow, IOSWorkoutGlassRestDockStack.rowHeight)
+        // Taking the cap here would float the single row in the middle of three rows.
+        XCTAssertEqual(IOSWorkoutGlassRestDockStack.height(contentHeight: oneRow, maxHeight: cap), oneRow)
+    }
+
+    func testManyRowsStopAtTheCap() {
+        let cap = IOSWorkoutGlassRestDockStack.maxHeight(viewportHeight: 760)
+        let fiveRows = IOSWorkoutGlassRestDockStack.estimatedContentHeight(rowCount: 5)
+        XCTAssertEqual(IOSWorkoutGlassRestDockStack.height(contentHeight: fiveRows, maxHeight: cap), cap)
+        XCTAssertEqual(IOSWorkoutGlassRestDockStack.estimatedContentHeight(rowCount: 0), 0)
+    }
+
     func testUnmeasuredViewportUsesThePreferredCap() {
         XCTAssertEqual(
             IOSWorkoutGlassRestDockStack.maxHeight(viewportHeight: 0),

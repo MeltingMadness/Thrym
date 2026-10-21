@@ -16597,6 +16597,22 @@
         }
       }
     },
+    "Zeigt den Trainingskopf": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeigt den Trainingskopf"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows the workout header"
+          }
+        }
+      }
+    },
     "Zeigt im Training 15 Prozent weniger Gewicht": {
       "localizations": {
         "de": {

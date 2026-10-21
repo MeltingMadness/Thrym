@@ -57,12 +57,17 @@ struct IOSWorkoutExercisePicker: View {
             .navigationTitle("Übungen wählen")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { dismiss() } } }
+            // Only with a selection: a disabled "0 Übungen hinzufügen" did nothing and showed
+            // as an unreadable dark bar above the search field.
             .safeAreaInset(edge: .bottom) {
-                Button {
-                    selected.compactMap { id in exercises.first { $0.id == id } }.forEach(onSelect)
-                    dismiss()
-                } label: { Text("\(selected.count) Übungen hinzufügen").frame(maxWidth: .infinity).padding(.vertical, 6) }
-                .buttonStyle(.borderedProminent).thrymButtonText().disabled(selected.isEmpty).padding().background(.bar)
+                if !selected.isEmpty {
+                    Button {
+                        selected.compactMap { id in exercises.first { $0.id == id } }.forEach(onSelect)
+                        dismiss()
+                    } label: { Text("\(selected.count) Übungen hinzufügen").frame(maxWidth: .infinity).padding(.vertical, 6) }
+                    .buttonStyle(.borderedProminent).thrymButtonText()
+                    .padding(.horizontal).padding(.vertical, 8)
+                }
             }
         }
     }
