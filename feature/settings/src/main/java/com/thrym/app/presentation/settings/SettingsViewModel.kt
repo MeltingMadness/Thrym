@@ -199,6 +199,10 @@ class SettingsViewModel(
         preferencesController.updateWeeklyGoalEnabled(enabled)
     }
 
+    fun updateAutoApplyProgression(enabled: Boolean) {
+        preferencesController.updateAutoApplyProgression(enabled)
+    }
+
     /** Sets the weekly goal from the running week on; earlier weeks keep theirs. */
     fun updateWeeklyGoal(goal: Int) {
         viewModelScope.launch {

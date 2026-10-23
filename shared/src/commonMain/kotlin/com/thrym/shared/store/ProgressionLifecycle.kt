@@ -15,6 +15,7 @@ import com.thrym.shared.progression.isProgressionWorkSet
 import com.thrym.shared.progression.isSuccessfulProgression
 import com.thrym.shared.progression.BackupProgressionFacade
 import com.thrym.shared.progression.BackupProgressionHistory
+import com.thrym.shared.progression.ProgressionAutoApply
 import com.thrym.shared.progression.ProgressionOutcomeType
 import com.thrym.shared.progression.ProgressionReasonCode
 import com.thrym.shared.progression.ProgressionStreakEffect
@@ -273,6 +274,25 @@ class ProgressionLifecycle(
         suggestionId: Long,
         finalTarget: BackupProgressionTarget,
     ): ProgressionDecisionResult = acceptSuggestions(mapOf(suggestionId to finalTarget))
+
+    /**
+     * With "Steigerungen automatisch übernehmen" on: accepts the pending increases of [sessionId]
+     * ([ProgressionAutoApply]) as "Alle sicheren übernehmen" would, one per plan position. A stale
+     * or invalid selection changes no plan row; those rows then wait in the review as usual.
+     */
+    suspend fun autoApplySafeIncreases(sessionId: Long): Set<Long> {
+        val selected = store.snapshot().progressionSuggestions
+            .filter { suggestion ->
+                suggestion.sourceSessionId == sessionId &&
+                    suggestion.status == STATUS_PENDING &&
+                    suggestion.suggestedTarget != null &&
+                    ProgressionAutoApply.isSafeIncrease(suggestion.outcomeType, suggestion.reasonCode)
+            }
+            .distinctBy { Triple(it.planId, it.exerciseId, it.orderIndex) }
+        if (selected.isEmpty()) return emptySet()
+        val result = acceptSuggestions(selected.associate { it.id to requireNotNull(it.suggestedTarget) })
+        return (result as? ProgressionDecisionResult.Accepted)?.suggestionIds.orEmpty()
+    }
 
     /** Rejects a pending suggestion without ever touching its current plan row. */
     suspend fun rejectSuggestion(suggestionId: Long): ProgressionDecisionResult {

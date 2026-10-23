@@ -157,6 +157,7 @@ class IosSettingsFeature {
     fun updateBarbellWeightKg(weightKg: Double) = controller.updateBarbellWeightKg(weightKg)
     fun updateBackupReminderEnabled(enabled: Boolean) = controller.updateBackupReminderEnabled(enabled)
     fun updateWeeklyGoalEnabled(enabled: Boolean) = controller.updateWeeklyGoalEnabled(enabled)
+    fun updateAutoApplyProgression(enabled: Boolean) = controller.updateAutoApplyProgression(enabled)
     fun updateWeeklyGoal(goal: Int, currentWeekStartEpochDay: Long) =
         controller.updateWeeklyGoal(goal, currentWeekStartEpochDay)
 
@@ -399,6 +400,7 @@ class IosSettingsState(
     val weeklyGoalEnabled: Boolean,
     /** Goal changes as `WeeklyGoalRules.encode` writes them; decode with `WeeklyGoalRules.decode`. */
     val weeklyGoalHistory: String,
+    val autoApplyProgression: Boolean,
     val versionName: String,
     val versionCode: Int,
 )
@@ -456,6 +458,8 @@ internal class IosAppPreferencesRepository(
         persist { it.copy(weeklyGoalEnabled = enabled) }
     override suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>) =
         persist { it.copy(weeklyGoalHistory = history) }
+    override suspend fun updateAutoApplyProgression(enabled: Boolean) =
+        persist { it.copy(autoApplyProgression = enabled) }
 
     private fun persist(transform: (AppPreferences) -> AppPreferences) {
         val updated = transform(mutablePreferences.value)
@@ -526,6 +530,7 @@ internal class IosAppPreferencesRepository(
             ),
             weeklyGoalEnabled = userDefaults.boolOrDefault(Keys.weeklyGoalEnabled, defaults.weeklyGoalEnabled),
             weeklyGoalHistory = WeeklyGoalRules.decode(userDefaults.stringForKey(Keys.weeklyGoalHistory)),
+            autoApplyProgression = userDefaults.boolOrDefault(Keys.autoApplyProgression, defaults.autoApplyProgression),
         )
     }
 
@@ -590,6 +595,7 @@ internal class IosAppPreferencesRepository(
         userDefaults.setBool(preferences.backupReminderEnabled, Keys.backupReminderEnabled)
         userDefaults.setBool(preferences.weeklyGoalEnabled, Keys.weeklyGoalEnabled)
         userDefaults.setObject(WeeklyGoalRules.encode(preferences.weeklyGoalHistory), Keys.weeklyGoalHistory)
+        userDefaults.setBool(preferences.autoApplyProgression, Keys.autoApplyProgression)
     }
 
     private object Keys {
@@ -619,6 +625,7 @@ internal class IosAppPreferencesRepository(
         const val backupReminderEnabled = "settings.backupReminderEnabled"
         const val weeklyGoalEnabled = "settings.weeklyGoalEnabled"
         const val weeklyGoalHistory = "settings.weeklyGoalHistory"
+        const val autoApplyProgression = "settings.autoApplyProgression"
     }
 
     private fun loadAvailablePlates(defaults: List<Double>): List<Double> {
@@ -875,6 +882,7 @@ private fun SettingsPreferencesState.toIosState(buildInfo: BuildInfo): IosSettin
     ),
     weeklyGoalEnabled = preferences.weeklyGoalEnabled,
     weeklyGoalHistory = WeeklyGoalRules.encode(preferences.weeklyGoalHistory),
+    autoApplyProgression = preferences.autoApplyProgression,
     versionName = buildInfo.versionName,
     versionCode = buildInfo.versionCode,
 )

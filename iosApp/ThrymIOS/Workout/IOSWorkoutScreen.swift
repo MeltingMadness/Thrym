@@ -1072,7 +1072,10 @@ struct IOSWorkoutScreen: View {
         let order = data.map { exerciseLayout(session: session, data: $0).rows.map(\.id) } ?? exerciseOrder
         Task {
             defer { isFinishing = false }
-            let success = await store.command("workout.finish", fields: ["sessionId": session.id])
+            let success = await store.command("workout.finish", fields: [
+                "sessionId": session.id,
+                "autoApplyProgression": settings.state.autoApplyProgression
+            ])
             if success {
                 completedSessionID = Int(session.id)
                 // The completion screen lists the exercises in this order. The store

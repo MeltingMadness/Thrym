@@ -1,6 +1,8 @@
 # Progressions-Coach
 
-Der Coach schlägt nach einem planbasierten Workout neue Zielwerte pro Planübung vor. **Er ändert einen Plan nie von selbst.** Erst wenn du einen Vorschlag bestätigst, wird der Plan angepasst.
+Der Coach schlägt nach einem planbasierten Workout neue Zielwerte pro Planübung vor. **Ohne deine Zustimmung ändert er einen Plan nicht.** Erst wenn du einen Vorschlag bestätigst, wird der Plan angepasst.
+
+**Steigerungen automatisch übernehmen** (Einstellungen → Training, Standard aus): Ist die Einstellung an, übernimmt die App direkt nach dem Beenden eines Trainings die sicheren Steigerungen dieses Trainings in den Plan, als hättest du sie unverändert bestätigt. Sicher sind nur Vorschläge (`PROPOSE_CHANGE`) mit den Gründen `REP_TARGET_ADVANCED`, `LOAD_ADVANCED`, `TOTAL_REPS_COMPLETED` und `RPE_WITHIN_TARGET` (`ProgressionAutoApply` in `:shared`). Backoffs, wiederholte Ziele, abweichende Lasten und Hinweise warten weiter unter „Progression prüfen“. Pro Planposition wird höchstens ein Vorschlag übernommen; ein inzwischen geänderter Plan macht ihn wie bei einer Bestätigung `STALE`. Android liest die Einstellung im `ActiveWorkoutViewModel`, iOS gibt sie mit dem Befehl `workout.finish` an `ProgressionLifecycle.autoApplySafeIncreases`.
 
 Fachliche Grundlage: [`../research/2026-08-08-progression-schemes.md`](../research/2026-08-08-progression-schemes.md).
 

@@ -353,6 +353,8 @@
 
     <string name="settings_share_weight_history_title">Share weights between standalone and meta plans</string>
     <string name="settings_share_weight_history_subtitle">When off, each standalone and meta plan keeps its own weight history.</string>
+    <string name="settings_auto_apply_progression_title">Apply increases automatically</string>
+    <string name="settings_auto_apply_progression_subtitle">After a workout, more weight or reps from the coach go straight into the plan. A backoff still waits for your confirmation.</string>
 
     <string name="settings_reminder_enabled_title">Workout reminders</string>
     <string name="settings_reminder_enabled_subtitle">Scheduled reminders as notifications</string>

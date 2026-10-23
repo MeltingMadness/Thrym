@@ -114,6 +114,10 @@ internal class AndroidSharedAppPreferencesRepository(
     override suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>) {
         delegate.updateWeeklyGoalHistory(history)
     }
+
+    override suspend fun updateAutoApplyProgression(enabled: Boolean) {
+        delegate.updateAutoApplyProgression(enabled)
+    }
 }
 
 internal class AndroidSharedReminderScheduler(
@@ -154,7 +158,8 @@ internal fun AppPreferences.toShared(): com.thrym.shared.model.AppPreferences =
         lastSuccessfulExportEpochMillis = lastSuccessfulExportEpochMillis,
         backupReminderEnabled = backupReminderEnabled,
         weeklyGoalEnabled = weeklyGoalEnabled,
-        weeklyGoalHistory = weeklyGoalHistory
+        weeklyGoalHistory = weeklyGoalHistory,
+        autoApplyProgression = autoApplyProgression
     )
 
 internal fun com.thrym.shared.model.AppPreferences.toApp(): AppPreferences =
@@ -181,7 +186,8 @@ internal fun com.thrym.shared.model.AppPreferences.toApp(): AppPreferences =
         lastSuccessfulExportEpochMillis = lastSuccessfulExportEpochMillis,
         backupReminderEnabled = backupReminderEnabled,
         weeklyGoalEnabled = weeklyGoalEnabled,
-        weeklyGoalHistory = weeklyGoalHistory
+        weeklyGoalHistory = weeklyGoalHistory,
+        autoApplyProgression = autoApplyProgression
     )
 
 internal fun ReminderConfig.toShared(): com.thrym.shared.model.ReminderConfig =
