@@ -10,7 +10,9 @@ import com.thrym.app.domain.model.SetType
 import com.thrym.app.domain.model.WorkoutPlanTarget
 import com.thrym.app.domain.model.WorkoutSet
 import com.thrym.shared.plans.PlannedSet
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -75,6 +77,27 @@ class PlannedSetsDoneTest {
     fun `a target without slots is not done on its own`() {
         assertFalse(listOf(planned(1, sets = 0)).allPlannedSetsDone())
         assertFalse(listOf(planned(1, sets = 0, SetType.NORMAL), adHoc(7, SetType.NORMAL)).allPlannedSetsDone())
+    }
+
+    @Test
+    fun `a superset moves on to the next member with open sets, round after round`() {
+        val a = planned(1, sets = 3, SetType.NORMAL)
+        val b = planned(2, sets = 3)
+        val c = planned(3, sets = 2, SetType.NORMAL, SetType.NORMAL)
+        val single = planned(4, sets = 3, SetType.NORMAL)
+        val groups = listOf(
+            ExerciseRenderGroup("superset", supersetGroupId = 1, exercises = listOf(a, b, c)),
+            ExerciseRenderGroup("single", supersetGroupId = null, exercises = listOf(single))
+        )
+
+        assertEquals(b.key, groups.nextSupersetMember(a.key))
+        // C is done, so B goes back to A for the next round.
+        assertEquals(a.key, groups.nextSupersetMember(b.key))
+        assertEquals(a.key, groups.nextSupersetMember(c.key))
+        assertNull(groups.nextSupersetMember(single.key))
+
+        val finished = listOf(ExerciseRenderGroup("superset", 1, listOf(a, planned(2, sets = 1, SetType.NORMAL))))
+        assertNull(finished.nextSupersetMember(a.key))
     }
 
     private fun planned(id: Long, sets: Int = 3, vararg logged: SetType) = ExerciseWithSets(

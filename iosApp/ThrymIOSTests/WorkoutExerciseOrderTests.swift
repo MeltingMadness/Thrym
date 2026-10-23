@@ -151,6 +151,59 @@ final class WorkoutExerciseOrderTests: XCTestCase {
         XCTAssertEqual(completion.rows.map(\.id), storedAtFinish)
     }
 
+    /// Superset A + B + C: after a set the next member with open sets comes, after the last
+    /// member the first one again; members without open sets and plain cards are skipped.
+    func testNextSupersetMemberFollowsTheRoundAndSkipsFinishedMembers() {
+        let layout = IOSWorkoutExerciseLayout(
+            rowsInDefaultOrder: [
+                row("target-1", group: 1, sets: 3, logged: 1),
+                row("target-2", group: 1, sets: 3, logged: 0),
+                row("target-3", group: 1, sets: 2, logged: 2),
+                row("target-4", sets: 3, logged: 1)
+            ],
+            storedKeys: []
+        )
+
+        XCTAssertEqual(layout.nextSupersetRowID(after: "target-1"), "target-2")
+        // C is done, so B goes back to A for the next round.
+        XCTAssertEqual(layout.nextSupersetRowID(after: "target-2"), "target-1")
+        XCTAssertEqual(layout.nextSupersetRowID(after: "target-3"), "target-1")
+        XCTAssertNil(layout.nextSupersetRowID(after: "target-4"))
+    }
+
+    func testNoJumpWhenTheOtherMembersAreDone() {
+        let layout = IOSWorkoutExerciseLayout(
+            rowsInDefaultOrder: [row("target-1", group: 1, sets: 3, logged: 2), row("target-2", group: 1, sets: 3, logged: 3)],
+            storedKeys: []
+        )
+        XCTAssertNil(layout.nextSupersetRowID(after: "target-1"))
+    }
+
+    private func row(_ id: String, group: Int? = nil, sets: Int, logged: Int) -> IOSWorkoutExerciseRow {
+        let numericID = Int64(id.split(separator: "-").last ?? "0") ?? 0
+        let target = ILProgressionTarget(sets: sets, reps: 8, weightKg: 50)
+        return IOSWorkoutExerciseRow(
+            id: id,
+            exercise: ILExercise(id: numericID, name: id),
+            target: ILWorkoutPlanTarget(id: numericID, supersetGroupId: group, target: target),
+            displayTarget: target,
+            sets: (0..<logged).map { index in
+                ILWorkoutSet(
+                    id: numericID * 10 + Int64(index),
+                    sessionId: 1,
+                    exerciseId: numericID,
+                    setNumber: index + 1,
+                    reps: 8,
+                    weightKg: 50,
+                    completedAt: 1_000,
+                    planTargetSnapshotId: numericID
+                )
+            },
+            previousWorkWeightKg: nil,
+            nextSetRecommendation: nil
+        )
+    }
+
     private func row(_ id: String, group: Int? = nil, planned: Bool = true) -> IOSWorkoutExerciseRow {
         let numericID = Int64(id.split(separator: "-").last ?? "0") ?? 0
         return IOSWorkoutExerciseRow(
