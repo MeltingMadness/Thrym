@@ -39,6 +39,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -548,7 +549,11 @@ fun ActiveWorkoutScreen(
                                 // The key keeps each card's input state with its exercise when
                                 // the block moves.
                                 key(expansionKey) {
-                                    val requester = cardRequesters.getOrPut(expansionKey) { BringIntoViewRequester() }
+                                    val requester = remember { BringIntoViewRequester() }
+                                    DisposableEffect(requester) {
+                                        cardRequesters[expansionKey] = requester
+                                        onDispose { cardRequesters.remove(expansionKey) }
+                                    }
                                     Box(modifier = Modifier.bringIntoViewRequester(requester)) {
                                         ExerciseCard(
                                             exerciseWithSets = exerciseWithSets,
