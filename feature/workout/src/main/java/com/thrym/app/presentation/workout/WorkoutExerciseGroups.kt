@@ -51,6 +51,23 @@ data class ExerciseRenderGroup(
 )
 
 /**
+ * The superset member to log next after a set of [key]: the following member with open planned
+ * sets, after the last member the first one again for the next round. Null outside a superset or
+ * when no other member has an open set.
+ */
+internal fun List<ExerciseRenderGroup>.nextSupersetMember(key: WorkoutExerciseKey): WorkoutExerciseKey? {
+    val group = firstOrNull { group ->
+        group.supersetGroupId != null && group.exercises.any { it.key == key }
+    } ?: return null
+    val index = group.exercises.indexOfFirst { it.key == key }
+    val count = group.exercises.size
+    return (1 until count)
+        .map { group.exercises[(index + it) % count] }
+        .firstOrNull { it.openSlotCount() > 0 }
+        ?.key
+}
+
+/**
  * Rows of the active workout in the default order: planned snapshots by `(orderIndex, id)`, then
  * ad-hoc exercises in insertion order. Built from the eagerly held plan targets, so a move never
  * works on a stale list.

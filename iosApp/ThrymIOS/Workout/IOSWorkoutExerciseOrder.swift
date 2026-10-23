@@ -80,6 +80,19 @@ struct IOSWorkoutExerciseLayout {
         return direction == .up ? index > 0 : index < groups.count - 1
     }
 
+    /// The superset member to log next after a set of `rowID`: the following member with open
+    /// planned sets, after the last member the first one again for the next round. Nil outside
+    /// a superset or when no other member has an open set.
+    func nextSupersetRowID(after rowID: String) -> String? {
+        guard let group = groups.first(where: { $0.supersetGroupID != nil && $0.rows.contains { $0.id == rowID } }),
+              let index = group.rows.firstIndex(where: { $0.id == rowID }) else { return nil }
+        let count = group.rows.count
+        return (1..<max(count, 1))
+            .map { group.rows[(index + $0) % count] }
+            .first { ($0.remainingPlannedSets ?? 0) > 0 }?
+            .id
+    }
+
     /// Ad-hoc exercises in default order: the ones added in this workout in the order they were
     /// added, then exercises known only from their sets in the order of their first set.
     static func adHocExerciseIDs(added: [Int64], sets: [ILWorkoutSet]) -> [Int64] {

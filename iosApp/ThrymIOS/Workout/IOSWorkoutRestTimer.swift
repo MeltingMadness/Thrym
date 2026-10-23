@@ -71,11 +71,11 @@ struct IOSWorkoutRestTimer: Codable, Equatable, Identifiable {
 /// Rules of the Liquid Glass rest dock. They match Android's dock, so both
 /// platforms show the same rows and open the pause at the same moments.
 enum IOSWorkoutRestDock {
-    /// The dock rows: every countdown, shortest remaining time on top, then the
-    /// most recently started count-up timer as the last row. Older count-up
-    /// timers keep running but share that one row. Remaining time orders like
-    /// the deadline, so the order only changes when a timer starts, moves or
-    /// ends, not every second. Ties go to the earlier start, then the row key.
+    /// The dock rows: every countdown, shortest remaining time on top, then every
+    /// count-up timer, the longest running first. Each exercise keeps its own row,
+    /// so a superset without an automatic pause shows both rests. Remaining time
+    /// orders like the deadline, so the order only changes when a timer starts,
+    /// moves or ends, not every second. Ties go to the earlier start, then the row key.
     static func dockTimers<Timers: Collection>(_ timers: Timers) -> [IOSWorkoutRestTimer]
     where Timers.Element == IOSWorkoutRestTimer {
         let countdowns = timers.filter(\.isCountdown).sorted { lhs, rhs in
@@ -83,8 +83,8 @@ enum IOSWorkoutRestDock {
                 ? startsEarlier(lhs, rhs)
                 : (lhs.deadlineEpochMillis ?? 0) < (rhs.deadlineEpochMillis ?? 0)
         }
-        let newestCountUp = timers.filter { !$0.isCountdown }.max(by: startsEarlier)
-        return countdowns + (newestCountUp.map { [$0] } ?? [])
+        let countUps = timers.filter { !$0.isCountdown }.sorted(by: startsEarlier)
+        return countdowns + countUps
     }
 
     /// Whether `started` opens the full-screen pause by itself: only a countdown,

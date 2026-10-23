@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -37,6 +39,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -57,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -76,6 +80,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thrym.core.designsystem.R
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.domain.model.AppPreferences
+import com.thrym.app.domain.model.SetType
 import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.LoadingScreen
@@ -162,6 +167,12 @@ fun ActiveWorkoutScreen(
     // Plain arrays, because arming must not restart the effects below.
     val finishScrollArmed = remember { booleanArrayOf(false) }
     val finishScrollArmedFor = remember { arrayOfNulls<List<ExerciseWithSets>>(1) }
+
+    // In a superset a work set moves on to the next member with open sets. Its card scrolls into
+    // view, and the logged exercise's pause stays in the dock instead of covering that card.
+    val cardRequesters = remember { mutableMapOf<String, BringIntoViewRequester>() }
+    var supersetJump by remember { mutableStateOf<Pair<String, Int>?>(null) }
+    val supersetPauseSkip = remember { arrayOfNulls<WorkoutExerciseKey>(1) }
 
     // Record messages still showing or waiting for their host.
     val recordNotices = remember { mutableListOf<Job>() }
@@ -320,6 +331,12 @@ fun ActiveWorkoutScreen(
                         moveAnchor[0] = anchor.copy(fromIndex = index)
                         listState.requestScrollToItem(index, -anchor.offset)
                     }
+                }
+                LaunchedEffect(supersetJump) {
+                    val target = supersetJump?.first ?: return@LaunchedEffect
+                    // Let the expanded card lay out before it scrolls into view.
+                    withFrameNanos { }
+                    cardRequesters[target]?.bringIntoView()
                 }
                 val previousFocusGroupKey = remember { arrayOfNulls<String>(1) }
                 // Keyed by the focus block, not its index: moving another block above it shifts
@@ -532,56 +549,71 @@ fun ActiveWorkoutScreen(
                                 // The key keeps each card's input state with its exercise when
                                 // the block moves.
                                 key(expansionKey) {
-                                    ExerciseCard(
-                                        exerciseWithSets = exerciseWithSets,
-                                        expanded = expanded,
-                                        onToggleExpanded = {
-                                            expansionOverrides = expansionOverrides + (expansionKey to !expanded)
-                                        },
-                                        nextSetRecommendation = state.nextSetRecommendations[exerciseWithSets.key],
-                                        tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
-                                        defaultWarmupFlag = preferences.defaultWarmupFlag,
-                                        intensitySystem = preferences.intensitySystem,
-                                        unitSystem = preferences.unitSystem,
-                                        plateCalculatorEnabled = preferences.plateCalculatorEnabled,
-                                        availablePlates = preferences.availablePlates,
-                                        barbellWeightKg = preferences.barbellWeightKg,
-                                        isLogging = (state.logInFlightByExercise[exerciseWithSets.key] ?: 0) > 0,
-                                        logSuccessSubmissions = state.logSuccessSubmissions,
-                                        updateInFlightBySet = state.updateInFlightBySet,
-                                        updateSuccessCountBySet = state.updateSuccessCountBySet,
-                                        setIntentions = state.setIntentions,
-                                        setIntentionsLoaded = state.setIntentionsLoaded,
-                                        setIntentionsFailed = state.setIntentionsFailed,
-                                        onLogSet = { reps, weight, setType, intensity, submissionId, intention ->
-                                            armFinishScroll()
-                                            viewModel.logSet(
-                                                key = exerciseWithSets.key,
-                                                exerciseId = exerciseWithSets.exercise.id,
-                                                reps = reps,
-                                                weightKg = weight,
-                                                setType = setType,
-                                                intensity = intensity,
-                                                submissionId = submissionId,
-                                                // A brand-new set has no stored answer to preserve:
-                                                // "no deliberate choice" becomes the explicit UNKNOWN,
-                                                // which stores no record.
-                                                intention = intention ?: SetIntention.UNKNOWN
-                                            )
-                                        },
-                                        onUpdateSet = { setId, reps, weight, intensity, intention ->
-                                            armFinishScroll()
-                                            viewModel.updateSet(setId, reps, weight, intensity, intention)
-                                        },
-                                        onDeleteSet = viewModel::deleteSet,
-                                        haptic = haptic,
-                                        // Superset members move with their block from the header.
-                                        moveControls = if (group.supersetGroupId == null) {
-                                            moveControls(groupIndex)
-                                        } else {
-                                            null
-                                        }
-                                    )
+                                    val requester = remember { BringIntoViewRequester() }
+                                    DisposableEffect(requester) {
+                                        cardRequesters[expansionKey] = requester
+                                        onDispose { cardRequesters.remove(expansionKey) }
+                                    }
+                                    Box(modifier = Modifier.bringIntoViewRequester(requester)) {
+                                        ExerciseCard(
+                                            exerciseWithSets = exerciseWithSets,
+                                            expanded = expanded,
+                                            onToggleExpanded = {
+                                                expansionOverrides = expansionOverrides + (expansionKey to !expanded)
+                                            },
+                                            nextSetRecommendation = state.nextSetRecommendations[exerciseWithSets.key],
+                                            tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
+                                            defaultWarmupFlag = preferences.defaultWarmupFlag,
+                                            intensitySystem = preferences.intensitySystem,
+                                            unitSystem = preferences.unitSystem,
+                                            plateCalculatorEnabled = preferences.plateCalculatorEnabled,
+                                            availablePlates = preferences.availablePlates,
+                                            barbellWeightKg = preferences.barbellWeightKg,
+                                            isLogging = (state.logInFlightByExercise[exerciseWithSets.key] ?: 0) > 0,
+                                            logSuccessSubmissions = state.logSuccessSubmissions,
+                                            updateInFlightBySet = state.updateInFlightBySet,
+                                            updateSuccessCountBySet = state.updateSuccessCountBySet,
+                                            setIntentions = state.setIntentions,
+                                            setIntentionsLoaded = state.setIntentionsLoaded,
+                                            setIntentionsFailed = state.setIntentionsFailed,
+                                            onLogSet = { reps, weight, setType, intensity, submissionId, intention ->
+                                                armFinishScroll()
+                                                if (setType != SetType.WARMUP) {
+                                                    exerciseGroups.nextSupersetMember(exerciseWithSets.key)?.let { next ->
+                                                        val nextKey = next.stableListKey()
+                                                        expansionOverrides = expansionOverrides + (nextKey to true)
+                                                        supersetPauseSkip[0] = exerciseWithSets.key
+                                                        supersetJump = nextKey to ((supersetJump?.second ?: 0) + 1)
+                                                    }
+                                                }
+                                                viewModel.logSet(
+                                                    key = exerciseWithSets.key,
+                                                    exerciseId = exerciseWithSets.exercise.id,
+                                                    reps = reps,
+                                                    weightKg = weight,
+                                                    setType = setType,
+                                                    intensity = intensity,
+                                                    submissionId = submissionId,
+                                                    // A brand-new set has no stored answer to preserve:
+                                                    // "no deliberate choice" becomes the explicit UNKNOWN,
+                                                    // which stores no record.
+                                                    intention = intention ?: SetIntention.UNKNOWN
+                                                )
+                                            },
+                                            onUpdateSet = { setId, reps, weight, intensity, intention ->
+                                                armFinishScroll()
+                                                viewModel.updateSet(setId, reps, weight, intensity, intention)
+                                            },
+                                            onDeleteSet = viewModel::deleteSet,
+                                            haptic = haptic,
+                                            // Superset members move with their block from the header.
+                                            moveControls = if (group.supersetGroupId == null) {
+                                                moveControls(groupIndex)
+                                            } else {
+                                                null
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -635,11 +667,13 @@ fun ActiveWorkoutScreen(
                 // A ends, B can open as if it had started alone; the window is a single frame.
                 val decision = decideRestDockStart(seenRestStarts, state.restTimers)
                 seenRestStarts = decision.seenStarts
+                val skipPauseFor = supersetPauseSkip[0]
+                supersetPauseSkip[0] = null
                 if (resolvePinnedRestRow(pauseRowKey, state.restTimers, System.currentTimeMillis()) == null) {
                     pauseOpen = false
                     pauseRowKey = null
                 }
-                if (liquidGlass) decision.openKey?.let { key ->
+                if (liquidGlass) decision.openKey?.takeIf { it != skipPauseFor }?.let { key ->
                     pauseRowKey = key.stableListKey()
                     pauseOpen = true
                 }

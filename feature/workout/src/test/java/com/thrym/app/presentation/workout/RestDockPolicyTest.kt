@@ -85,7 +85,7 @@ class RestDockPolicyTest {
     }
 
     @Test
-    fun `count ups collapse to newest and follow every countdown`() {
+    fun `every count up keeps its row after the countdowns, longest running first`() {
         val rows = buildRestDockRows(
             linkedMapOf(
                 a to timer(1_000, 0),
@@ -95,7 +95,7 @@ class RestDockPolicyTest {
             nowMillis = 4_000
         )
 
-        assertEquals(listOf(c, b), rows.map { it.exerciseKey })
+        assertEquals(listOf(c, a, b), rows.map { it.exerciseKey })
     }
 
     @Test

@@ -27,11 +27,12 @@ internal fun buildRestDockRows(
         .sortedWith(compareBy<RestDockRow> { it.remainingSeconds }
             .thenBy { it.timer.startTime }
             .thenBy { it.stableKey })
-    val newestCountUp = rows.filter { it.timer.durationSeconds <= 0 }
-        .sortedWith(compareByDescending<RestDockRow> { it.timer.startTime }
+    // Every count-up keeps its own row, the longest running first, so a superset without an
+    // automatic pause shows both rests.
+    val countUps = rows.filter { it.timer.durationSeconds <= 0 }
+        .sortedWith(compareBy<RestDockRow> { it.timer.startTime }
             .thenBy { it.stableKey })
-        .firstOrNull()
-    return if (newestCountUp == null) countdowns else countdowns + newestCountUp
+    return countdowns + countUps
 }
 
 /** Record every current start, including starts that did not open the pause. */
@@ -50,7 +51,7 @@ internal fun decideRestDockStart(
     )
 }
 
-/** A hidden count-up can remain pinned; only removal of its actual timer closes the pause. */
+/** A pinned row stays open until its actual timer is removed. */
 internal fun resolvePinnedRestRow(
     pinnedKey: String?,
     timers: Map<WorkoutExerciseKey, RestTimerUi>,
