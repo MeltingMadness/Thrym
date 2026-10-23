@@ -114,7 +114,6 @@ struct IOSWorkoutScreen: View {
     @Environment(\.thrymAppearance) private var appearance
     @Environment(IOSTrainingStore.self) private var store
     @EnvironmentObject private var settings: IOSSettingsViewModel
-    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @SceneStorage("thrym.workout.completedSessionID") private var completedSessionID = 0
@@ -148,6 +147,8 @@ struct IOSWorkoutScreen: View {
     @State private var isRestoringSet = false
     /// Counts the saves that completed the plan; each change scrolls to the finish card once.
     @State private var finishScrollRequest = 0
+    /// The superset member to scroll to after a log; the token repeats a jump to the same card.
+    @State private var supersetScrollRequest = IOSWorkoutCardScrollRequest(rowID: "", token: 0)
     /// Live record notice of the last log or edit; it hides after a few seconds.
     @State private var recordNotice: IOSWorkoutRecordNotice?
 
@@ -228,19 +229,12 @@ struct IOSWorkoutScreen: View {
             .task(id: activeSession?.id) {
                 await restorePresentationState()
             }
-            .onAppear { updateIdleTimer() }
-            .onDisappear {
-                UIApplication.shared.isIdleTimerDisabled = false
-            }
-            .onChange(of: settings.state.timerKeepScreenOn) { _, _ in updateIdleTimer() }
             .onChange(of: settings.state.deloadMode) { _, _ in reconcileRestTimerAfterTargetChange() }
             .onChange(of: activeSession?.id) { _, _ in
                 deletedSet = nil
                 undoToken = nil
                 recordNotice = nil
-                updateIdleTimer()
             }
-            .onChange(of: scenePhase) { _, _ in updateIdleTimer() }
     }
 
     /// Keeping the data branch separate from the sheet/lifecycle modifiers makes each
@@ -305,7 +299,6 @@ struct IOSWorkoutScreen: View {
                 exerciseOrder = nil
                 IOSWorkoutExerciseOrderPersistence.clear()
             }
-            updateIdleTimer()
             return
         }
 
@@ -323,7 +316,6 @@ struct IOSWorkoutScreen: View {
             restTimers = [:]
             IOSWorkoutRestTimerPersistence.clear()
         }
-        updateIdleTimer()
     }
 
     private var unavailableView: some View {
@@ -460,6 +452,11 @@ struct IOSWorkoutScreen: View {
             .padding(.horizontal)
             .padding(.vertical, 10)
             .background(.thinMaterial)
+            }
+        }
+        .onChange(of: supersetScrollRequest) { _, request in
+            withAnimation(reduceMotion || theme.reducedMotion ? nil : .snappy) {
+                proxy.scrollTo(IOSWorkoutCardScrollRequest.cardID(request.rowID), anchor: .top)
             }
         }
         .onChange(of: finishScrollRequest) { _, _ in
@@ -664,6 +661,7 @@ struct IOSWorkoutScreen: View {
                     onMoveDown: single ? { moveExercise(rowID: row.id, direction: .down) } : nil
                 )
                 .padding(.horizontal)
+                .id(IOSWorkoutCardScrollRequest.cardID(row.id))
             }
         }
     }
@@ -916,7 +914,13 @@ struct IOSWorkoutScreen: View {
             return false
         }
         store.errorMessage = nil
+        // In a superset a new work set moves on to the next member with open sets.
+        var nextSupersetRowID: String?
         if let session, let data = store.data {
+            if set.id == 0, resolvedIOSWorkoutSetType(set) != .warmup {
+                nextSupersetRowID = exerciseLayout(session: session, data: data)
+                    .nextSupersetRowID(after: iosWorkoutRestTimerRowKey(for: set))
+            }
             var announcements: [String] = []
             if let recordsBefore,
                let notice = showRecordNotice(exerciseID: set.exerciseId, sessionID: session.id, before: recordsBefore, data: data) {
@@ -944,7 +948,8 @@ struct IOSWorkoutScreen: View {
                 if row.isComplete {
                     dismissRestTimer(rowKey: rowKey)
                 } else {
-                    startRestTimer(sessionID: session.id, rowKey: rowKey)
+                    // The next superset exercise comes first, so its pause stays in the dock.
+                    startRestTimer(sessionID: session.id, rowKey: rowKey, mayOpenPause: nextSupersetRowID == nil)
                 }
             } else if resolvedIOSWorkoutSetType(set) != .warmup {
                 // Ad-hoc exercises have no immutable target to complete, so their
@@ -952,6 +957,12 @@ struct IOSWorkoutScreen: View {
                 // Android starts a timer for every non-warmup submission too.
                 startRestTimer(sessionID: session.id, rowKey: rowKey)
             }
+        }
+        if let nextSupersetRowID {
+            supersetScrollRequest = IOSWorkoutCardScrollRequest(
+                rowID: nextSupersetRowID,
+                token: supersetScrollRequest.token &+ 1
+            )
         }
         return true
     }
@@ -1191,7 +1202,7 @@ struct IOSWorkoutScreen: View {
         return "adhoc-\(set.exerciseId)"
     }
 
-    private func startRestTimer(sessionID: Int64, rowKey: String) {
+    private func startRestTimer(sessionID: Int64, rowKey: String, mayOpenPause: Bool = true) {
         let timer = IOSWorkoutRestTimer.make(
             sessionID: sessionID,
             rowKey: rowKey,
@@ -1200,7 +1211,7 @@ struct IOSWorkoutScreen: View {
                 settings.state.autoRestTimerEnabled ? settings.state.defaultRestTimeSeconds : 0
             )
         )
-        let opensPause = appearance == .liquidGlass &&
+        let opensPause = mayOpenPause && appearance == .liquidGlass &&
             IOSWorkoutRestDock.opensPause(starting: timer, running: restTimers)
         restTimers[rowKey] = timer
         IOSWorkoutRestTimerPersistence.upsert(timer)
@@ -1282,12 +1293,14 @@ struct IOSWorkoutScreen: View {
             forKey: adHocKey(for: sessionID)
         )
     }
+}
 
-    private func updateIdleTimer() {
-        UIApplication.shared.isIdleTimerDisabled = scenePhase == .active &&
-            activeSession != nil &&
-            settings.state.timerKeepScreenOn
-    }
+/// A scroll to one exercise card; a new token repeats a jump to the same card.
+struct IOSWorkoutCardScrollRequest: Equatable {
+    let rowID: String
+    let token: Int
+
+    static func cardID(_ rowID: String) -> String { "card-\(rowID)" }
 }
 
 private struct IOSWorkoutAlert: Identifiable {

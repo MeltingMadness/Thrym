@@ -52,6 +52,10 @@ struct RootView: View {
                 await training.command("progression.generate")
             }
         }
+        // As on Android, the setting keeps the screen on in the whole app, also during the
+        // full-screen pause and on other tabs.
+        .onAppear { updateIdleTimer() }
+        .onChange(of: settings.state.timerKeepScreenOn) { _, _ in updateIdleTimer() }
         .onChange(of: settings.state.deloadMode) { _, newValue in
             let active = newValue != "NONE"
             training.deloadModeActive = active
@@ -62,6 +66,7 @@ struct RootView: View {
             }
         }
         .onChange(of: scenePhase) { _, phase in
+            updateIdleTimer()
             if phase == .active {
                 training.refreshAnalytics(
                     timeZoneId: TimeZone.current.identifier,
@@ -102,6 +107,10 @@ struct RootView: View {
 
     private var preferredColorScheme: ColorScheme? {
         settings.state.themeMode == "DARK" ? .dark : settings.state.themeMode == "LIGHT" ? .light : nil
+    }
+
+    private func updateIdleTimer() {
+        UIApplication.shared.isIdleTimerDisabled = scenePhase == .active && settings.state.timerKeepScreenOn
     }
 
     private func finishOnboarding() {

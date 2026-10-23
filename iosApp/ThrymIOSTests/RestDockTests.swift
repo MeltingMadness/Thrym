@@ -35,13 +35,13 @@ final class RestDockTests: XCTestCase {
         XCTAssertEqual(IOSWorkoutRestDock.dockTimers([a, b]).map(\.rowKey), ["target-a", "target-b"])
     }
 
-    /// Count-up timers share one row: the newest, after all countdowns.
-    func testOnlyTheNewestCountUpTimerShowsAsLastRow() {
+    /// Every count-up timer keeps its own row after the countdowns, the longest running first.
+    func testEveryCountUpTimerShowsAfterTheCountdowns() {
         let older = timer("adhoc-1", startedAfter: 5, duration: 0)
         let newer = timer("adhoc-2", startedAfter: 30, duration: 0)
         let countdown = timer("target-1", startedAfter: 60, duration: 600)
-        XCTAssertEqual(IOSWorkoutRestDock.dockTimers([newer, countdown, older]).map(\.rowKey), ["target-1", "adhoc-2"])
-        XCTAssertEqual(IOSWorkoutRestDock.dockTimers([older, newer]).map(\.rowKey), ["adhoc-2"])
+        XCTAssertEqual(IOSWorkoutRestDock.dockTimers([newer, countdown, older]).map(\.rowKey), ["target-1", "adhoc-1", "adhoc-2"])
+        XCTAssertEqual(IOSWorkoutRestDock.dockTimers([newer, older]).map(\.rowKey), ["adhoc-1", "adhoc-2"])
     }
 
     // MARK: - Opening the pause
