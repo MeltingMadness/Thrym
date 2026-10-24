@@ -395,6 +395,12 @@ fun SettingsScreen(
                         checked = state.preferences.shareWeightHistoryAcrossContexts,
                         onCheckedChange = viewModel::updateShareWeightHistoryAcrossContexts
                     )
+                    ToggleRow(
+                        title = stringResource(id = R.string.settings_auto_apply_progression_title),
+                        subtitle = stringResource(id = R.string.settings_auto_apply_progression_subtitle),
+                        checked = state.preferences.autoApplyProgression,
+                        onCheckedChange = viewModel::updateAutoApplyProgression
+                    )
 
                     Spacer(modifier = Modifier.height(dims.spacingXs))
 

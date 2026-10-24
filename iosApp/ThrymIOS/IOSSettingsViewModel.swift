@@ -87,6 +87,10 @@ final class IOSSettingsViewModel: ObservableObject {
         feature.updateWeeklyGoalEnabled(enabled: enabled)
     }
 
+    func updateAutoApplyProgression(_ enabled: Bool) {
+        feature.updateAutoApplyProgression(enabled: enabled)
+    }
+
     /// Sets the weekly goal from the running week on; earlier weeks keep the goal they had.
     func updateWeeklyGoal(_ goal: Int) {
         feature.updateWeeklyGoal(
@@ -524,6 +528,8 @@ struct SettingsFormState {
     var weeklyGoalEnabled: Bool
     /// Weekly goal changes as `WeeklyGoalRules.encode` writes them, "0:3,20745:4".
     var weeklyGoalHistory: String
+    /// Increases from the coach go into the plan after a workout without a confirmation.
+    var autoApplyProgression: Bool
     var plateCalculatorEnabled: Bool
     var availablePlates: [Double]
     var barbellWeightKg: Double
@@ -555,6 +561,7 @@ struct SettingsFormState {
         deloadMode: String,
         weeklyGoalEnabled: Bool = true,
         weeklyGoalHistory: String = "",
+        autoApplyProgression: Bool = false,
         plateCalculatorEnabled: Bool,
         availablePlates: [Double],
         barbellWeightKg: Double,
@@ -585,6 +592,7 @@ struct SettingsFormState {
         self.deloadMode = deloadMode
         self.weeklyGoalEnabled = weeklyGoalEnabled
         self.weeklyGoalHistory = weeklyGoalHistory
+        self.autoApplyProgression = autoApplyProgression
         self.plateCalculatorEnabled = plateCalculatorEnabled
         self.availablePlates = availablePlates
         self.barbellWeightKg = barbellWeightKg
@@ -646,6 +654,7 @@ struct SettingsFormState {
         deloadMode = sharedState.deloadMode
         weeklyGoalEnabled = sharedState.weeklyGoalEnabled
         weeklyGoalHistory = sharedState.weeklyGoalHistory
+        autoApplyProgression = sharedState.autoApplyProgression
         plateCalculatorEnabled = sharedState.plateCalculatorEnabled
         availablePlates = sharedState.availablePlates.map { $0.doubleValue }
         barbellWeightKg = sharedState.barbellWeightKg

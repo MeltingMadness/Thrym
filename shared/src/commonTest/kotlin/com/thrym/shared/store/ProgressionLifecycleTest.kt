@@ -243,6 +243,50 @@ class ProgressionLifecycleTest {
         assertEquals("REJECTED", store.snapshot().progressionSuggestions.single().status)
     }
 
+    @Test
+    fun autoApplyTakesSafeIncreaseIntoPlan() = runTest {
+        val store = singleSessionStore()
+        val lifecycle = ProgressionLifecycle(store, nowEpochMillis = { 15_000L })
+        lifecycle.generateForFinishedSession(20L)
+        val suggestion = store.snapshot().progressionSuggestions.single()
+        assertEquals("LOAD_ADVANCED", suggestion.reasonCode)
+
+        val applied = lifecycle.autoApplySafeIncreases(20L)
+
+        assertEquals(setOf(suggestion.id), applied)
+        assertEquals(102.5, store.snapshot().planExercises.single().targetWeightKg)
+        val row = store.snapshot().progressionSuggestions.single()
+        assertEquals("ACCEPTED", row.status)
+        assertEquals(false, row.wasEdited)
+        assertEquals(emptySet(), lifecycle.autoApplySafeIncreases(20L))
+    }
+
+    @Test
+    fun autoApplyLeavesNonIncreaseForReview() = runTest {
+        val store = twoSessionStore(firstWeight = 100.0, secondWeight = 110.0)
+        val lifecycle = ProgressionLifecycle(store, nowEpochMillis = { 16_000L })
+        lifecycle.generateMissingOutcomes()
+        val pending = store.snapshot().progressionSuggestions.single { it.sourceSessionId == 21L }
+        assertEquals("PENDING", pending.status)
+
+        val applied = lifecycle.autoApplySafeIncreases(21L)
+
+        assertEquals(emptySet(), applied)
+        assertEquals(100.0, store.snapshot().planExercises.single().targetWeightKg)
+        assertEquals("PENDING", store.snapshot().progressionSuggestions.single { it.id == pending.id }.status)
+    }
+
+    @Test
+    fun autoApplyOnlyTouchesSuggestionsOfGivenSession() = runTest {
+        val store = singleSessionStore()
+        val lifecycle = ProgressionLifecycle(store, nowEpochMillis = { 17_000L })
+        lifecycle.generateForFinishedSession(20L)
+
+        assertEquals(emptySet(), lifecycle.autoApplySafeIncreases(99L))
+        assertEquals(100.0, store.snapshot().planExercises.single().targetWeightKg)
+        assertEquals("PENDING", store.snapshot().progressionSuggestions.single().status)
+    }
+
     private fun singleSessionStore(): SharedStateStore {
         val store = newStore()
         val config = linearConfig()

@@ -95,6 +95,16 @@ struct SettingsScreen: View {
                             get: { viewModel.state.shareWeightHistoryAcrossContexts },
                             set: viewModel.updateShareWeightHistoryAcrossContexts
                         ))
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Toggle("Steigerungen automatisch übernehmen", isOn: Binding(
+                                get: { viewModel.state.autoApplyProgression },
+                                set: viewModel.updateAutoApplyProgression
+                            ))
+                            Text("Nach dem Training landen mehr Gewicht oder mehr Wiederholungen vom Coach direkt im Plan. Ein Backoff wartet weiter auf deine Bestätigung.")
+                                .font(.geist(.footnote))
+                                .thrymSecondaryText()
+                        }
                     }
 
                     Section("Wochenziel") {

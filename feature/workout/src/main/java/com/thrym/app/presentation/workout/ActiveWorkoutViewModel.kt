@@ -19,6 +19,8 @@ import androidx.lifecycle.viewModelScope
 import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.IntensitySystem
 import com.thrym.app.domain.model.ProgressionConfig
+import com.thrym.app.domain.model.ProgressionOutcome
+import com.thrym.app.domain.model.ProgressionSuggestionStatus
 import com.thrym.app.domain.model.PreviousSessionScope
 import com.thrym.app.domain.model.SetType
 import com.thrym.app.domain.model.WorkoutPlanTarget
@@ -30,6 +32,7 @@ import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.repository.StatisticsRepository
 import com.thrym.app.domain.repository.WorkoutRepository
 import com.thrym.app.domain.util.AppLogger
+import com.thrym.shared.progression.ProgressionAutoApply
 import com.thrym.app.domain.util.RpeAutoregulation
 import com.thrym.app.domain.util.WorkoutNumericValidation
 import com.thrym.shared.readinessdata.SetIntention
@@ -1075,6 +1078,7 @@ class ActiveWorkoutViewModel(
     private suspend fun generateProgression(completedSessionId: Long) {
         try {
             val result = progressionRepository.generateOutcomesForSession(completedSessionId)
+            autoApplyIncreases(completedSessionId)
             operationState.update {
                 it.copy(
                     finishState = if (result.reviewItemCount > 0 || result.insertedCount > 0) {
@@ -1102,6 +1106,40 @@ class ActiveWorkoutViewModel(
                 AppLogger.w(
                     "ActiveWorkoutVM",
                     "Progressionsvorschlaege konnten nicht erzeugt werden: ${e.message}",
+                    e
+                )
+            }
+        }
+    }
+
+    /**
+     * "Steigerungen automatisch übernehmen": the session's increases go into the plan as with
+     * "Alle sicheren übernehmen" ([ProgressionAutoApply]); backoffs wait in the review. A failure
+     * leaves the suggestions pending, so the athlete can still decide them there.
+     */
+    private suspend fun autoApplyIncreases(completedSessionId: Long) {
+        try {
+            if (!appPreferencesRepository.preferences.first().autoApplyProgression) return
+            val selected = progressionRepository.observeReviewItems(completedSessionId).first()
+                .filter { suggestion ->
+                    suggestion.sourceTarget.sessionId == completedSessionId &&
+                        suggestion.status == ProgressionSuggestionStatus.PENDING &&
+                        ProgressionAutoApply.isSafeIncrease(suggestion.outcome.type.name, suggestion.outcome.reasonCode.name)
+                }
+                .distinctBy { Triple(it.sourceTarget.planId, it.sourceTarget.exerciseId, it.sourceTarget.orderIndex) }
+                .mapNotNull { suggestion ->
+                    (suggestion.outcome as? ProgressionOutcome.ProposeChange)?.let { suggestion.id to it.proposedTarget }
+                }
+                .toMap()
+            if (selected.isEmpty()) return
+            progressionRepository.acceptSuggestions(selected)
+            progressionRepository.reconcileOutstandingSuggestions()
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            runCatching {
+                AppLogger.w(
+                    "ActiveWorkoutVM",
+                    "Steigerungen konnten nicht automatisch uebernommen werden: ${e.message}",
                     e
                 )
             }
