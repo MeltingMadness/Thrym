@@ -37,9 +37,6 @@ struct IOSWorkoutExerciseCard: View {
                     HStack(spacing: 8) {
                         Text(row.exercise.displayName)
                             .font(.geist(.headline, weight: .semibold))
-                        if let badge = headerBadge {
-                            IOSWorkoutRecordMarker(badge: badge)
-                        }
                         if row.target != nil {
                             Text("Plan")
                                 .font(.geist(.caption, weight: .bold))
@@ -56,9 +53,14 @@ struct IOSWorkoutExerciseCard: View {
                                 .thrymAccentText()
                         }
                     }
-                    Text("\(row.exercise.primaryMuscleGroupDisplayName) · \(row.exercise.categoryDisplayName)")
-                        .font(.geist(.caption))
-                        .thrymSecondaryText()
+                    HStack(spacing: 6) {
+                        Text("\(row.exercise.primaryMuscleGroupDisplayName) · \(row.exercise.categoryDisplayName)")
+                            .font(.geist(.caption))
+                            .thrymSecondaryText()
+                        if let badge = headerBadge {
+                            IOSWorkoutRecordMarker(badge: badge)
+                        }
+                    }
                 }
                 Spacer(minLength: 8)
                 if let onMoveUp, let onMoveDown {
@@ -274,13 +276,12 @@ private struct IOSWorkoutSetRow: View {
                         .font(.geist(.caption))
                         .thrymSecondaryText()
                 }
+                if let badge {
+                    IOSWorkoutRecordMarker(badge: badge)
+                }
             }
 
             Spacer(minLength: 4)
-
-            if let badge {
-                IOSWorkoutRecordMarker(badge: badge)
-            }
 
             Menu {
                 Button("Bearbeiten", systemImage: "pencil") { onEdit() }

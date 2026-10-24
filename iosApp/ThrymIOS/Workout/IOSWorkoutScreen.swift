@@ -332,6 +332,8 @@ struct IOSWorkoutScreen: View {
     private func activeWorkout(session: ILWorkoutSession, data: ILTrainingData) -> some View {
         let layout = exerciseLayout(session: session, data: data)
         let rows = layout.rows
+        // Read here, in the body, so a new set of markers redraws the lazy list.
+        let badges = setBadges
         let liquidGlass = appearance == .liquidGlass
         let allPlannedSetsDone = rows.allPlannedSetsDone
         ScrollViewReader { proxy in
@@ -371,7 +373,7 @@ struct IOSWorkoutScreen: View {
                     .padding(.vertical, 30)
                 } else {
                     ForEach(layout.groups) { group in
-                        exerciseRenderGroup(group, layout: layout, sessionID: session.id)
+                        exerciseRenderGroup(group, layout: layout, sessionID: session.id, setBadges: badges)
                             .id(group.id)
                     }
                 }
@@ -605,7 +607,8 @@ struct IOSWorkoutScreen: View {
     private func exerciseRenderGroup(
         _ group: IOSWorkoutExerciseRenderGroup,
         layout: IOSWorkoutExerciseLayout,
-        sessionID: Int64
+        sessionID: Int64,
+        setBadges: [Int64: SessionSetBadge]
     ) -> some View {
         // Moving needs a neighbour; a workout with a single block shows no arrows.
         let movable = layout.groups.count > 1
