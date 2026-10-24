@@ -140,7 +140,7 @@ object StrengthMarks {
     private fun highestReached(kind: StrengthMarkKind, imperial: Boolean, sets: List<RecordSetInput>): Int? =
         ladder(kind, imperial).lastOrNull { mark -> sets.any { reaches(kind, imperial, it, mark) } }
 
-    private fun reaches(kind: StrengthMarkKind, imperial: Boolean, set: RecordSetInput, mark: Int): Boolean =
+    internal fun reaches(kind: StrengthMarkKind, imperial: Boolean, set: RecordSetInput, mark: Int): Boolean =
         when (kind) {
             StrengthMarkKind.REPS -> set.reps >= mark
             StrengthMarkKind.LOAD, StrengthMarkKind.ADDED_LOAD -> {

@@ -40,7 +40,8 @@ Runde Zahlen, die eine Übung zum ersten Mal erreicht, nur bei Langhantel- und E
 - Es zählen nur Arbeitssätze (keine Aufwärmsätze). lb-Marken gelten mit einer Toleranz von 0,2 lb, weil Gewichte in kg gespeichert sind.
 - Eine Marke ist neu, wenn kein Satz aus einem anderen Training sie schon erreicht hat. Das allererste Training einer Übung setzt keine Marke, weil es nichts zum Vergleichen gibt.
 - **Rekordtafel im Abschluss:** Je Übung steht vor den Rekorden eine Zeile „MARKE · 100 kg · Erstmals“. Marken zählen nicht zur Zahl der Rekorde im Kopf.
-- **Meldung im Training:** Erreicht ein Satz, der auch einen Rekord bringt, eine neue Marke, lautet der Titel „100-kg-Marke · Kniebeuge“ statt „1 neuer Rekord · Kniebeuge“. Eine Marke allein löst keine Meldung aus.
+- **Im Training:** Der erste Satz, der eine neue Marke erreicht, trägt den Marker „100 kg“ statt „PR“, der Übungskopf ebenso. Die Ansage für Screenreader lautet „100-kg-Marke · Kniebeuge“.
+- **Feier nach „Beenden“:** Eine neue Marke ist ein Höhepunkt („100-kg-Marke“ mit der Übung) und verdrängt die Rekorde ihrer Übung. Jubiläum, Comeback und Wochenziel sind ebenfalls Höhepunkte, mit denselben Texten wie im Faktenblock.
 - **Übungsstatistik:** Karte „Marken · kg“ (bzw. „+kg“, „Wdh“) mit den letzten vier erreichten Marken samt Monat und Jahr und der nächsten Marke gedimmt. Die nächste Marke steht nur hier, nie im Training.
 
 ## Umsetzung

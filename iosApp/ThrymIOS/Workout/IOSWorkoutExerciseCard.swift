@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 struct IOSWorkoutExerciseCard: View {
@@ -11,6 +12,8 @@ struct IOSWorkoutExerciseCard: View {
     let onDeleteSet: (ILWorkoutSet) -> Void
     let sessionID: Int64
     let onSaveSet: (ILWorkoutSet, ILSetIntention) async -> Bool
+    /// Record markers of the logged sets by set id; the header shows the strongest one.
+    var setBadges: [Int64: SessionSetBadge] = [:]
     /// Moving a single exercise; nil hides the arrows (superset members move with their header).
     var canMoveUp = false
     var canMoveDown = false
@@ -50,9 +53,14 @@ struct IOSWorkoutExerciseCard: View {
                                 .thrymAccentText()
                         }
                     }
-                    Text("\(row.exercise.primaryMuscleGroupDisplayName) · \(row.exercise.categoryDisplayName)")
-                        .font(.geist(.caption))
-                        .thrymSecondaryText()
+                    HStack(spacing: 6) {
+                        Text("\(row.exercise.primaryMuscleGroupDisplayName) · \(row.exercise.categoryDisplayName)")
+                            .font(.geist(.caption))
+                            .thrymSecondaryText()
+                        if let badge = headerBadge {
+                            IOSWorkoutRecordMarker(badge: badge)
+                        }
+                    }
                 }
                 Spacer(minLength: 8)
                 if let onMoveUp, let onMoveDown {
@@ -122,6 +130,7 @@ struct IOSWorkoutExerciseCard: View {
                             unitSystem: unitSystem,
                             addedLoad: row.exercise.tracksAddedLoad,
                             intensitySystem: effectiveIntensitySystem,
+                            badge: setBadges[set.id],
                             onEdit: { onEditSet(set) },
                             onDelete: { onDeleteSet(set) }
                         )
@@ -229,12 +238,21 @@ private struct IOSWorkoutCardSurface: ViewModifier {
     }
 }
 
+extension IOSWorkoutExerciseCard {
+    /// The first mark of the exercise's sets, else "PR" when any set holds a record.
+    var headerBadge: SessionSetBadge? {
+        let badges = row.sets.compactMap { setBadges[$0.id] }
+        return badges.first { $0.mark != nil } ?? badges.first
+    }
+}
+
 private struct IOSWorkoutSetRow: View {
     let set: ILWorkoutSet
     let unitSystem: String
     /// Bodyweight exercise: the weight is the added load ("Körpergewicht + 10 kg").
     let addedLoad: Bool
     let intensitySystem: String
+    var badge: SessionSetBadge?
     let onEdit: () -> Void
     let onDelete: () -> Void
 
@@ -258,6 +276,9 @@ private struct IOSWorkoutSetRow: View {
                         .font(.geist(.caption))
                         .thrymSecondaryText()
                 }
+                if let badge {
+                    IOSWorkoutRecordMarker(badge: badge)
+                }
             }
 
             Spacer(minLength: 4)
@@ -277,7 +298,14 @@ private struct IOSWorkoutSetRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Satz \(set.setNumber), \(resolvedIOSWorkoutSetType(set).displayName)")
-        .accessibilityValue("\(set.reps) Wiederholungen, \(iosSetLoadText(weightKg: set.weightKg, unitSystem: unitSystem, addedLoad: addedLoad))")
+        .accessibilityValue(
+            [
+                String(localized: "\(set.reps) Wiederholungen, \(iosSetLoadText(weightKg: set.weightKg, unitSystem: unitSystem, addedLoad: addedLoad))"),
+                badge.map(IOSWorkoutRecordMarker.accessibilityText)
+            ]
+                .compactMap { $0 }
+                .joined(separator: ", ")
+        )
         .contextMenu {
             Button("Bearbeiten", systemImage: "pencil") { onEdit() }
             Button("Löschen", systemImage: "trash", role: .destructive) { onDelete() }

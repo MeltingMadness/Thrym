@@ -218,33 +218,36 @@ enum IOSRecognition {
 
     /// The facts below the summary as text, at most two.
     static func factTexts(_ facts: CompletionFacts) -> [FactText] {
-        facts.rows.compactMap { kind -> FactText? in
-            switch kind {
-            case .weeklyGoal:
-                guard let goal = facts.weeklyGoal else { return nil }
-                let detail = [weekProgressText(goal), goal.streakWeeks >= 2 ? streakText(goal) : nil]
-                    .compactMap { $0 }
-                    .joined(separator: " · ")
-                return FactText(id: "goal", symbol: "calendar.badge.checkmark", title: String(localized: "Wochenziel erreicht"), detail: detail)
-            case .jubilee:
-                let since = date(epochDay: facts.firstTrainingEpochDay).formatted(date: .long, time: .omitted)
-                return FactText(
-                    id: "jubilee",
-                    symbol: "flag",
-                    title: String(localized: "Dein \(Int(facts.trainingNumber)). Training"),
-                    detail: String(localized: "Seit dem \(since)")
-                )
-            case .comeback:
-                guard let days = facts.pauseDays?.intValue else { return nil }
-                return FactText(
-                    id: "comeback",
-                    symbol: "arrow.uturn.backward",
-                    title: String(localized: "Wieder dabei"),
-                    detail: String(localized: "Nach \(days) Tagen Pause")
-                )
-            default:
-                return nil
-            }
+        facts.rows.compactMap { factText(facts, kind: $0) }
+    }
+
+    /// One fact as text, nil when the workout lacks it.
+    static func factText(_ facts: CompletionFacts, kind: CompletionFactKind) -> FactText? {
+        switch kind {
+        case .weeklyGoal:
+            guard let goal = facts.weeklyGoal else { return nil }
+            let detail = [weekProgressText(goal), goal.streakWeeks >= 2 ? streakText(goal) : nil]
+                .compactMap { $0 }
+                .joined(separator: " · ")
+            return FactText(id: "goal", symbol: "calendar.badge.checkmark", title: String(localized: "Wochenziel erreicht"), detail: detail)
+        case .jubilee:
+            let since = date(epochDay: facts.firstTrainingEpochDay).formatted(date: .long, time: .omitted)
+            return FactText(
+                id: "jubilee",
+                symbol: "flag",
+                title: String(localized: "Dein \(Int(facts.trainingNumber)). Training"),
+                detail: String(localized: "Seit dem \(since)")
+            )
+        case .comeback:
+            guard let days = facts.pauseDays?.intValue else { return nil }
+            return FactText(
+                id: "comeback",
+                symbol: "arrow.uturn.backward",
+                title: String(localized: "Wieder dabei"),
+                detail: String(localized: "Nach \(days) Tagen Pause")
+            )
+        default:
+            return nil
         }
     }
 }

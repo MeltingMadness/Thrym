@@ -46,4 +46,7 @@
     <!-- A record whose value says what it is needs no label: reps with their unit, e.g.
          "12 reps (+2)", and the weight of a bodyweight exercise, e.g. "Bodyweight + 12.5 kg (+2.5 kg)". -->
     <string name="workout_record_live_detail_unlabeled" translatable="false">%1$s (%2$s)</string>
+    <!-- Quiet record marker on a set row and its exercise during the workout. -->
+    <string name="workout_record_marker_pr" translatable="false">PR</string>
+    <string name="workout_record_marker_cd">new record</string>
 </resources>
