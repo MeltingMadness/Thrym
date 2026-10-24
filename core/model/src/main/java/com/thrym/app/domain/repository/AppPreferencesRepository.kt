@@ -37,6 +37,7 @@ interface AppPreferencesRepository {
     suspend fun updateBackupReminderEnabled(enabled: Boolean)
     suspend fun updateWeeklyGoalEnabled(enabled: Boolean)
     suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>)
+    suspend fun updateAutoApplyProgression(enabled: Boolean)
 
     /**
      * Persists the active workout rest timers for one session.

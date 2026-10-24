@@ -280,7 +280,12 @@ class IosTrainingFeature {
             "workout.finish" -> {
                 val sessionId = command.requiredLong("sessionId")
                 activeStore.finishWorkout(sessionId)
-                ProgressionLifecycle(activeStore).generateForFinishedSession(sessionId)
+                val lifecycle = ProgressionLifecycle(activeStore)
+                lifecycle.generateForFinishedSession(sessionId)
+                // The setting lives in the iOS settings, so the app passes it with the command.
+                if (command.optionalBool("autoApplyProgression") == true) {
+                    lifecycle.autoApplySafeIncreases(sessionId)
+                }
             }
 
             "workout.update" -> activeStore.updateSession(

@@ -75,7 +75,9 @@ data class AppPreferences(
     /** Shows the weekly goal and its streak; switching it off keeps [weeklyGoalHistory]. */
     val weeklyGoalEnabled: Boolean = true,
     /** Goal per week from its change on (see [WeeklyGoalRules]); empty means the default goal. */
-    val weeklyGoalHistory: List<WeeklyGoalChange> = emptyList()
+    val weeklyGoalHistory: List<WeeklyGoalChange> = emptyList(),
+    /** Applies the coach's increases to the plan after a workout (`ProgressionAutoApply`). */
+    val autoApplyProgression: Boolean = false
 ) {
     /** Goal of the week starting at [weekStart]. */
     fun weeklyGoalFor(weekStart: LocalDate): Int = WeeklyGoalRules.goalFor(weeklyGoalHistory, weekStart.toEpochDay())

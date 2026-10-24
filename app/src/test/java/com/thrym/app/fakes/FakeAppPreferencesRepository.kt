@@ -142,6 +142,10 @@ class FakeAppPreferencesRepository(
         state.value = state.value.copy(weeklyGoalHistory = history)
     }
 
+    override suspend fun updateAutoApplyProgression(enabled: Boolean) {
+        state.value = state.value.copy(autoApplyProgression = enabled)
+    }
+
     override suspend fun readRestTimerState(sessionId: Long): String? {
         restTimerReadGate?.await()
         return restTimerStates[sessionId]

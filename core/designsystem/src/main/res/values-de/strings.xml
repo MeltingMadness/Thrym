@@ -334,6 +334,8 @@
 
     <string name="settings_share_weight_history_title">Gewichte zwischen Einzel- und Meta-Plänen teilen</string>
     <string name="settings_share_weight_history_subtitle">Wenn aus, verwendet jeder Einzel- und Meta-Plan eine eigene Gewichtshistorie.</string>
+    <string name="settings_auto_apply_progression_title">Steigerungen automatisch übernehmen</string>
+    <string name="settings_auto_apply_progression_subtitle">Nach dem Training landen mehr Gewicht oder mehr Wiederholungen vom Coach direkt im Plan. Ein Backoff wartet weiter auf deine Bestätigung.</string>
 
     <string name="settings_reminder_enabled_title">Trainingserinnerungen</string>
     <string name="settings_reminder_enabled_subtitle">Geplante Erinnerungen als Benachrichtigung</string>

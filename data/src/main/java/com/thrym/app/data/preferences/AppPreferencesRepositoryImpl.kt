@@ -90,7 +90,8 @@ class AppPreferencesRepositoryImpl(
             lastSuccessfulExportEpochMillis = prefs[AppPreferenceKeys.LAST_SUCCESSFUL_EXPORT_EPOCH_MILLIS],
             backupReminderEnabled = prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] ?: false,
             weeklyGoalEnabled = prefs[AppPreferenceKeys.WEEKLY_GOAL_ENABLED] ?: true,
-            weeklyGoalHistory = WeeklyGoalRules.decode(prefs.stringOrNull(AppPreferenceKeys.WEEKLY_GOAL_HISTORY))
+            weeklyGoalHistory = WeeklyGoalRules.decode(prefs.stringOrNull(AppPreferenceKeys.WEEKLY_GOAL_HISTORY)),
+            autoApplyProgression = prefs[AppPreferenceKeys.AUTO_APPLY_PROGRESSION] ?: false
         )
     }
 
@@ -251,6 +252,12 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.WEEKLY_GOAL_HISTORY] = WeeklyGoalRules.encode(history)
+        }
+    }
+
+    override suspend fun updateAutoApplyProgression(enabled: Boolean) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.AUTO_APPLY_PROGRESSION] = enabled
         }
     }
 

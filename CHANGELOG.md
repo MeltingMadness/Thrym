@@ -2,6 +2,7 @@
 
 ## Unveröffentlicht
 
+- Progressions-Coach (Android und iOS): Neue Einstellung „Steigerungen automatisch übernehmen“ unter Training, standardmäßig aus. Ist sie an, landen mehr Gewicht oder mehr Wiederholungen vom Coach nach dem Training direkt im Plan. Ein Backoff oder ein wiederholtes Ziel wartet weiter unter „Progression prüfen“ auf deine Bestätigung.
 - Training (Android und iOS): Im Supersatz springt die Liste nach einem Satz zur nächsten Übung des Supersatzes, nach der letzten wieder zur ersten, solange sie offene Sätze hat. Die Pause der gerade geloggten Übung bleibt dabei im Dock.
 - iOS: „Timer darf Bildschirm aktiv halten“ hält den Bildschirm jetzt in der ganzen App wach wie auf Android. Bisher galt es nur auf dem Trainings-Tab und setzte während der Vollbild-Pause aus, sodass das Gerät sich nach der eingestellten Zeit sperrte.
 - Pläne (Android und iOS): Zwischen Trainingsplänen und Meta-Plänen wechselt ein breiter Umschalter unter dem Titel, je Art mit Symbol und Anzahl („Pläne 4 | Meta-Pläne 1“). In Liquid Glass ist er eine Glaspille mit hellem aktivem Segment, in Ember eine gedämpfte Pille mit Akzentfarbe. „+“ legt je nach Auswahl einen Plan oder einen Meta-Plan an. iOS: Der bisherige Umschalter in der Navigationsleiste schrumpfte unter iOS 26 zu einem abgeschnittenen Kreis „P M“. Android: Meta-Pläne stehen direkt im Tab statt auf einer eigenen Seite hinter „Verwalten“; ein Tipp öffnet den Editor, und der Umschalter bleibt auch ohne Pläne sichtbar.

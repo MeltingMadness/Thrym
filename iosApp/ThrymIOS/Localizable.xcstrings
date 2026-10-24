@@ -10237,6 +10237,22 @@
         }
       }
     },
+    "Nach dem Training landen mehr Gewicht oder mehr Wiederholungen vom Coach direkt im Plan. Ein Backoff wartet weiter auf deine Bestätigung.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach dem Training landen mehr Gewicht oder mehr Wiederholungen vom Coach direkt im Plan. Ein Backoff wartet weiter auf deine Bestätigung."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After a workout, more weight or reps from the coach go straight into the plan. A backoff still waits for your confirmation."
+          }
+        }
+      }
+    },
     "Nach einem abgeschlossenen Training mit aktivierter Progressionsregel erscheinen neue Hinweise hier.": {
       "localizations": {
         "de": {
@@ -13670,6 +13686,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Increase (%)"
+          }
+        }
+      }
+    },
+    "Steigerungen automatisch übernehmen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steigerungen automatisch übernehmen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply increases automatically"
           }
         }
       }

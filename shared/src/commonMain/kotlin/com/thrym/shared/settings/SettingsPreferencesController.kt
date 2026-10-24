@@ -46,6 +46,7 @@ interface SharedAppPreferencesRepository {
     suspend fun updateBackupReminderEnabled(enabled: Boolean)
     suspend fun updateWeeklyGoalEnabled(enabled: Boolean)
     suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>)
+    suspend fun updateAutoApplyProgression(enabled: Boolean)
 }
 
 interface SharedReminderScheduler {
@@ -186,6 +187,10 @@ class SettingsPreferencesController(
 
     fun updateWeeklyGoalEnabled(enabled: Boolean) {
         controllerScope.launch { appPreferencesRepository.updateWeeklyGoalEnabled(enabled) }
+    }
+
+    fun updateAutoApplyProgression(enabled: Boolean) {
+        controllerScope.launch { appPreferencesRepository.updateAutoApplyProgression(enabled) }
     }
 
     /**
