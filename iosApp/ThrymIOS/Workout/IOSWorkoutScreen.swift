@@ -149,8 +149,8 @@ struct IOSWorkoutScreen: View {
     @State private var finishScrollRequest = 0
     /// The superset member to scroll to after a log; the token repeats a jump to the same card.
     @State private var supersetScrollRequest = IOSWorkoutCardScrollRequest(rowID: "", token: 0)
-    /// Live record notice of the last log or edit; it hides after a few seconds.
-    @State private var recordNotice: IOSWorkoutRecordNotice?
+    /// Record markers of the logged sets by set id (`IOSWorkoutRecords.setBadges`).
+    @State private var setBadges: [Int64: SessionSetBadge] = [:]
 
     private var data: ILTrainingData? { store.data }
 
@@ -160,9 +160,6 @@ struct IOSWorkoutScreen: View {
         screenContent
             .safeAreaInset(edge: .top) {
                 VStack(spacing: 0) {
-                    if let recordNotice, recordNotice.sessionID == activeSession?.id {
-                        recordBanner(recordNotice)
-                    }
                     if let deletedSet, deletedSet.sessionId == activeSession?.id {
                         HStack {
                             Text("Satz \(deletedSet.setNumber) gelöscht")
@@ -233,7 +230,6 @@ struct IOSWorkoutScreen: View {
             .onChange(of: activeSession?.id) { _, _ in
                 deletedSet = nil
                 undoToken = nil
-                recordNotice = nil
             }
     }
 
@@ -471,6 +467,10 @@ struct IOSWorkoutScreen: View {
         }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewportHeight = $0 }
+        // The record markers follow the logged sets, not every tick of a rest timer.
+        .task(id: setBadgeKey(session: session, rows: rows)) {
+            updateSetBadges(sessionID: session.id, rows: rows)
+        }
         .fullScreenCover(item: pausePresentation) { presented in
             // While the cover slides away after its timer ended, it keeps the last value.
             let timer = restTimers[presented.id] ?? presented.timer
@@ -491,11 +491,7 @@ struct IOSWorkoutScreen: View {
                 },
                 onClose: { pauseRowKey = nil }
             ) {
-                // A record set before the rest opens the pause right away; show it there too,
-                // below the top row, so "Zum Training" and the actions stay free.
-                if let recordNotice, recordNotice.sessionID == activeSession?.id {
-                    recordBanner(recordNotice, cornerRadius: 22)
-                }
+                EmptyView()
             }
             .background { restCompletionWatchers }
         }
@@ -655,6 +651,7 @@ struct IOSWorkoutScreen: View {
                     onDeleteSet: deleteSet,
                     sessionID: sessionID,
                     onSaveSet: saveSet,
+                    setBadges: setBadges,
                     canMoveUp: canMoveUp,
                     canMoveDown: canMoveDown,
                     onMoveUp: single ? { moveExercise(rowID: row.id, direction: .up) } : nil,
@@ -664,6 +661,24 @@ struct IOSWorkoutScreen: View {
                 .id(IOSWorkoutCardScrollRequest.cardID(row.id))
             }
         }
+    }
+
+    private func setBadgeKey(session: ILWorkoutSession, rows: [IOSWorkoutExerciseRow]) -> String {
+        let sets = rows.flatMap(\.sets).map { "\($0.id):\($0.weightKg):\($0.reps):\(resolvedIOSWorkoutSetType($0).rawValue)" }
+        return "\(session.id)|\(settings.state.unitSystem)|\(sets.joined(separator: ","))"
+    }
+
+    private func updateSetBadges(sessionID: Int64, rows: [IOSWorkoutExerciseRow]) {
+        guard let data = store.data else {
+            setBadges = [:]
+            return
+        }
+        setBadges = IOSWorkoutRecords.setBadges(
+            sessionID: sessionID,
+            exercises: rows.filter { !$0.sets.isEmpty }.map(\.exercise),
+            data: data,
+            unitSystem: settings.state.unitSystem
+        )
     }
 
     private func workoutHeader(session: ILWorkoutSession) -> some View {
@@ -967,9 +982,10 @@ struct IOSWorkoutScreen: View {
         return true
     }
 
-    /// Live record notice after a log or an edit that beat an earlier best of another workout:
-    /// the banner (also in the pause) and one success haptic; the caller announces it. The
-    /// first workout of an exercise, ties and lowered edits stay quiet and return nil.
+    /// A log or an edit that beat an earlier best of another workout: one success haptic, and
+    /// the caller announces the returned notice to VoiceOver. The set row shows the record as a
+    /// marker (`SessionSetBadges`); there is no banner. The first workout of an exercise, ties
+    /// and lowered edits stay quiet and return nil.
     private func showRecordNotice(
         exerciseID: Int64,
         sessionID: Int64,
@@ -1002,7 +1018,6 @@ struct IOSWorkoutScreen: View {
             unitSystem: settings.state.unitSystem,
             mark: mark
         ) else { return nil }
-        withAnimation(noticeAnimation) { recordNotice = notice }
         let feedback = UINotificationFeedbackGenerator()
         feedback.prepare()
         feedback.notificationOccurred(.success)
@@ -1019,23 +1034,6 @@ struct IOSWorkoutScreen: View {
         AccessibilityNotification.Announcement(announcement).post()
     }
 
-    private var noticeAnimation: Animation? {
-        reduceMotion || theme.reducedMotion ? nil : .snappy
-    }
-
-    private func recordBanner(_ notice: IOSWorkoutRecordNotice, cornerRadius: CGFloat = 0) -> some View {
-        IOSWorkoutRecordBanner(notice: notice, cornerRadius: cornerRadius) {
-            dismissRecordNotice(id: notice.id)
-        }
-        .transition(reduceMotion || theme.reducedMotion ? .identity : .move(edge: .top).combined(with: .opacity))
-    }
-
-    /// Hides the notice on a tap or when its time is up, unless a newer one replaced it.
-    private func dismissRecordNotice(id: UUID) {
-        guard recordNotice?.id == id else { return }
-        withAnimation(noticeAnimation) { recordNotice = nil }
-    }
-
     private func deleteSet(_ set: ILWorkoutSet) {
         guard !store.isBusy, !isRestoringSet else { return }
         let intention = store.intention(forSetId: set.id)
@@ -1045,8 +1043,6 @@ struct IOSWorkoutScreen: View {
                 localErrorMessage = store.errorMessage ?? String(localized: "Der Satz konnte nicht gelöscht werden.")
             } else if activeSession?.id == set.sessionId {
                 store.errorMessage = nil
-                // Undo has priority over a record notice, as on Android.
-                recordNotice = nil
                 deletedSet = set
                 deletedIntention = intention
                 undoToken = UUID()
@@ -1095,7 +1091,6 @@ struct IOSWorkoutScreen: View {
                 }
                 showingFinishConfirmation = false
                 store.errorMessage = nil
-                recordNotice = nil
                 restTimers = [:]
                 IOSWorkoutRestTimerPersistence.clear(sessionID: session.id)
                 adHocExerciseIDs = []
@@ -1112,7 +1107,6 @@ struct IOSWorkoutScreen: View {
             let success = await store.command("workout.cancel", fields: ["sessionId": session.id])
             if success {
                 store.errorMessage = nil
-                recordNotice = nil
                 restTimers = [:]
                 IOSWorkoutRestTimerPersistence.clear(sessionID: session.id)
                 exerciseOrder = nil

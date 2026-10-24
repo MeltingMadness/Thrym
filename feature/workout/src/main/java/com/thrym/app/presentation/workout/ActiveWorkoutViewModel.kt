@@ -37,6 +37,8 @@ import com.thrym.shared.workout.RecordSetInput
 import com.thrym.shared.workout.SessionExerciseOrder
 import com.thrym.shared.workout.SessionOrderMove
 import com.thrym.shared.workout.SessionRecords
+import com.thrym.shared.workout.SessionSetBadge
+import com.thrym.shared.workout.SessionSetBadges
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -101,6 +103,14 @@ class ActiveWorkoutViewModel(
      * [TrainingMilestones.completionFacts]; null until loaded.
      */
     val completionFacts: StateFlow<CompletionFacts?> = _completionFacts.asStateFlow()
+
+    private val _completionLoaded = MutableStateFlow(false)
+
+    /**
+     * True once [loadCompletionRecords] has finished, also after a failure. The celebration waits
+     * for it, so it neither flashes the summary first nor waits forever.
+     */
+    val completionLoaded: StateFlow<Boolean> = _completionLoaded.asStateFlow()
 
     private val sessionPhase = workoutRepository.observeSessionById(sessionId)
         .map<WorkoutSession?, ActiveWorkoutSessionPhase> { session ->
@@ -259,6 +269,59 @@ class ActiveWorkoutViewModel(
             )
         }.toMap()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    /** Sets of earlier workouts per exercise for the record markers; they do not change during the workout. */
+    private val markerHistory = MutableStateFlow<Map<Long, List<RecordSetInput>>>(emptyMap())
+    private val markerHistoryRequested = HashSet<Long>()
+
+    /**
+     * Record markers of this workout's sets, keyed by set id, see [SessionSetBadges]. The sets
+     * of earlier workouts load once per exercise; the markers then follow every log, edit and
+     * deletion, so a marker disappears when an edit takes the record away.
+     */
+    val setBadges: StateFlow<Map<Long, SessionSetBadge>> = combine(
+        exercisesWithSets,
+        markerHistory,
+        appPreferencesRepository.preferences.map { it.unitSystem }.distinctUntilChanged()
+    ) { rows, history, unitSystem ->
+        val byExercise = rows.groupBy { it.exercise.id }
+        val missing = byExercise.filter { (id, group) ->
+            id !in history && group.any { row -> row.sets.any { it.reps > 0 } }
+        }.keys.filter { markerHistoryRequested.add(it) }
+        if (missing.isNotEmpty()) loadMarkerHistory(missing)
+        byExercise.flatMap { (exerciseId, group) ->
+            val earlier = history[exerciseId] ?: return@flatMap emptyList()
+            val exercise = group.first().exercise
+            val current = group.flatMap { it.sets }.distinctBy { it.id }.map { it.toRecordInput(sessionFinished = false) }
+            SessionSetBadges.forExercise(
+                sessionId = sessionId,
+                sets = earlier + current,
+                category = exercise.category.name,
+                unitSystem = unitSystem.toSharedUnit(),
+                addedLoad = exercise.tracksAddedLoad
+            )
+        }.associateBy { it.setId }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    private fun loadMarkerHistory(exerciseIds: List<Long>) {
+        viewModelScope.launch {
+            val loaded = exerciseIds.mapNotNull { exerciseId ->
+                try {
+                    exerciseId to statisticsRepository.getSetsForExerciseList(exerciseId)
+                        .filter { it.sessionId != sessionId }
+                        .map { it.toRecordInput(sessionFinished = true) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Without history the exercise simply shows no markers; the next change retries.
+                    markerHistoryRequested.remove(exerciseId)
+                    AppLogger.w("ActiveWorkoutVM", "Verlauf fuer Rekord-Marker nicht geladen: ${e.message}", e)
+                    null
+                }
+            }
+            if (loaded.isNotEmpty()) markerHistory.update { it + loaded }
+        }
+    }
 
     internal fun previousSessionScope(
         planId: Long,
@@ -798,6 +861,8 @@ class ActiveWorkoutViewModel(
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 AppLogger.w("ActiveWorkoutVM", "Rekorde fuer die Zusammenfassung nicht geladen: ${e.message}", e)
+            } finally {
+                _completionLoaded.value = true
             }
         }
     }

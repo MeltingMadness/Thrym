@@ -2032,6 +2032,46 @@
         }
       }
     },
+    "%lld weitere in der Zusammenfassung": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld weiterer in der Zusammenfassung"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld weitere in der Zusammenfassung"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more in the summary"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more in the summary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld · %@": {
       "localizations": {
         "de": {
@@ -7503,6 +7543,22 @@
         }
       }
     },
+    "Geschafft!": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geschafft!"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done!"
+          }
+        }
+      }
+    },
     "Geschafft.": {
       "localizations": {
         "de": {
@@ -8192,6 +8248,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "High soreness"
+          }
+        }
+      }
+    },
+    "Höhepunkte": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Höhepunkte"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highlights"
           }
         }
       }
@@ -10500,6 +10572,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "New plan"
+          }
+        }
+      }
+    },
+    "Neuer Rekord": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neuer Rekord"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New PR"
           }
         }
       }
@@ -17207,6 +17295,22 @@
         }
       }
     },
+    "Zur Zusammenfassung": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zur Zusammenfassung"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To summary"
+          }
+        }
+      }
+    },
     "Zurück": {
       "localizations": {
         "de": {
@@ -17610,6 +17714,22 @@
         }
       },
       "shouldTranslate": false
+    },
+    "neuer Rekord": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "neuer Rekord"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "new record"
+          }
+        }
+      }
     },
     "neutral": {
       "localizations": {

@@ -156,21 +156,7 @@ enum IOSWorkoutRecords {
         shownAt: Date = Date()
     ) -> IOSWorkoutRecordNotice? {
         guard let first = lines.first else { return nil }
-        let gain = first.previous.map {
-            "(\(iosRecordDeltaText(type: first.type, delta: first.value - $0, unitSystem: unitSystem)))"
-        }
-        let value: [String]
-        switch first.type {
-        case "MAX_REPS":
-            value = [iosRecordRepsText(first.value)]
-        case "MAX_WEIGHT" where first.addedLoad:
-            value = [iosRecordValueText(type: first.type, value: first.value, unitSystem: unitSystem, addedLoad: true)]
-        default:
-            value = [iosRecordLabel(first.type), iosRecordValueText(type: first.type, value: first.value, unitSystem: unitSystem)]
-        }
-        let detail = (value + [gain])
-            .compactMap { $0 }
-            .joined(separator: " ")
+        let detail = detailText(first, unitSystem: unitSystem)
         return IOSWorkoutRecordNotice(
             id: UUID(),
             sessionID: sessionID,
@@ -180,6 +166,69 @@ enum IOSWorkoutRecords {
             detail: detail,
             shownAt: shownAt
         )
+    }
+
+    /// Record markers of the logged sets of the workout `sessionID`, by set id
+    /// (`SessionSetBadges` in `:shared`): the set holding a beaten record gets "PR", the first
+    /// set reaching a round mark gets the mark.
+    static func setBadges(
+        sessionID: Int64,
+        exercises: [ILExercise],
+        data: ILTrainingData,
+        unitSystem: String
+    ) -> [Int64: SessionSetBadge] {
+        var result: [Int64: SessionSetBadge] = [:]
+        var seen = Set<Int64>()
+        for exercise in exercises where seen.insert(exercise.id).inserted {
+            let badges = SessionSetBadges.shared.forExercise(
+                sessionId: sessionID,
+                sets: recordInputs(exerciseID: exercise.id, data: data),
+                category: exercise.category,
+                unitSystem: IOSRecognition.unitSystem(unitSystem),
+                addedLoad: exercise.tracksAddedLoad
+            )
+            for badge in badges { result[badge.setId] = badge }
+        }
+        return result
+    }
+
+    /// One record with its gain: "Gewicht 102,5 kg (+2,5 kg)", "12 Wdh. (+2)",
+    /// "Körpergewicht + 12,5 kg (+2,5 kg)".
+    static func detailText(_ line: IOSWorkoutRecordLine, unitSystem: String) -> String {
+        let gain = line.previous.map {
+            "(\(iosRecordDeltaText(type: line.type, delta: line.value - $0, unitSystem: unitSystem)))"
+        }
+        let value: [String]
+        switch line.type {
+        case "MAX_REPS":
+            value = [iosRecordRepsText(line.value)]
+        case "MAX_WEIGHT" where line.addedLoad:
+            value = [iosRecordValueText(type: line.type, value: line.value, unitSystem: unitSystem, addedLoad: true)]
+        default:
+            value = [iosRecordLabel(line.type), iosRecordValueText(type: line.type, value: line.value, unitSystem: unitSystem)]
+        }
+        return (value + [gain])
+            .compactMap { $0 }
+            .joined(separator: " ")
+    }
+
+    /// The shared summary behind `summary`, for rules that read it (`CompletionHighlights`).
+    static func sharedSummary(_ summary: IOSWorkoutRecordSummary) -> SessionRecordSummary {
+        SessionRecordSummary(exercises: summary.exercises.map { exercise in
+            SessionExerciseRecords(
+                exerciseId: exercise.exerciseID,
+                firstTime: exercise.firstTime,
+                lines: exercise.lines.map { line in
+                    SessionRecordLine(
+                        type: line.type,
+                        value: line.value,
+                        previous: line.previous.map { KotlinDouble(double: $0) },
+                        setId: line.set.map { KotlinLong(longLong: $0.id) }
+                    )
+                },
+                bestSetId: exercise.bestSet.map { KotlinLong(longLong: $0.id) }
+            )
+        })
     }
 
     private static func setsByID(_ sets: [ILWorkoutSet]) -> [Int64: ILWorkoutSet] {

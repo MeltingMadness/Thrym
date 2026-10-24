@@ -47,6 +47,7 @@ import com.thrym.app.presentation.common.HapticFeedbackHelper
 import com.thrym.app.presentation.common.label
 import com.thrym.app.presentation.common.setLoadText
 import com.thrym.shared.readinessdata.SetIntention
+import com.thrym.shared.workout.SessionSetBadge
 import androidx.compose.material3.Surface
 import com.thrym.app.presentation.theme.AthleticNumber
 import com.thrym.app.presentation.theme.ButtonSize
@@ -58,6 +59,8 @@ import com.thrym.app.presentation.theme.semanticText
 @Composable
 internal fun LoggedSetRow(
     set: com.thrym.app.domain.model.WorkoutSet,
+    /** Record marker of the set, "PR" or a reached mark; null without a record. */
+    badge: SessionSetBadge? = null,
     /** Position shown in the badge; plan rows pass their slot so gaps after a delete do not show. */
     displayNumber: Int = set.setNumber,
     /**
@@ -185,6 +188,7 @@ internal fun LoggedSetRow(
                             style = AthleticNumber,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        badge?.let { RecordMarker(it) }
                         if (set.isWarmup) {
                             Text(
                                 text = stringResource(UxR.string.workout_parenthesized_label, stringResource(R.string.workout_warmup_chip)),

@@ -135,7 +135,7 @@ Der Tages-Check-in (Schlaf, Energie, Stress auf 1 bis 5, an das Datum gebunden) 
 
 Jede Etappe ist ein eigener PR auf beiden Plattformen, mit Tests in `:shared` und Doku.
 
-1. **Rekord-Marker und Feier.** PR-Marker am Satz statt der Rekordmeldung; die Abschluss-Sequenz mit den Schritten 1 und 4 (Höhepunkte aus den bestehenden Rekorden, Marken und Fakten).
+1. **Rekord-Marker und Feier.** PR-Marker am Satz statt der Rekordmeldung; die Abschluss-Sequenz mit den Schritten 1 und 4 (Höhepunkte aus den bestehenden Rekorden, Marken und Fakten). *Umgesetzt im Branch `thrym/gamification-1-records-celebration`; Doku in `docs/design-system.md`.*
 2. **XP und Level.** `GamificationEngine` in `:shared` (XP je Training, Level, Kapitel, Sterne), XP- und Level-Schritt in der Sequenz, Level-Ring auf der Startseite, Stand „schon gefeiert“ je Gerät.
 3. **Abzeichen und Erfolge.** Abzeichenregeln, Umschalter „Trainings | Erfolge“ im Verlauf, „Letzte Erfolge“ auf der Startseite, Teilen-Bild.
 4. **Tagesform je Einheit.** Check-in-Blatt beim Start, `sessionCheckIns` mit Migration und Backup-Schemasprung, Vergleich mit der Leistung, Abbau von Tages-Check-in und Bereitschafts-Ring.

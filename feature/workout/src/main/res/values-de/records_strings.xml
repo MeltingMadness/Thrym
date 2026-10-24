@@ -31,4 +31,5 @@
         <item quantity="one">%1$d neuer Rekord · %2$s</item>
         <item quantity="other">%1$d neue Rekorde · %2$s</item>
     </plurals>
+    <string name="workout_record_marker_cd">neuer Rekord</string>
 </resources>
