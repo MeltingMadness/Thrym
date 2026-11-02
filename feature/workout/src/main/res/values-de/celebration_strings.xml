@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_celebration_skip">Überspringen</string>
+    <string name="workout_celebration_next">Weiter</string>
+    <string name="workout_celebration_to_summary">Zur Zusammenfassung</string>
+    <string name="workout_celebration_step_cd">Schritt %1$d von %2$d</string>
+    <string name="workout_celebration_done_title">Geschafft!</string>
+    <string name="workout_celebration_highlights_title">Höhepunkte</string>
+    <string name="workout_celebration_record_title">Neuer Rekord</string>
+    <plurals name="workout_celebration_more">
+        <item quantity="one">%1$d weiterer in der Zusammenfassung</item>
+        <item quantity="other">%1$d weitere in der Zusammenfassung</item>
+    </plurals>
+</resources>

@@ -51,11 +51,20 @@ struct IOSWorkoutCompletionScreen: View {
     /// The workout whose records already played the success haptic, so a rebuilt or
     /// restored screen does not celebrate twice.
     @SceneStorage("thrym.workout.recordsCelebratedSessionID") private var recordsCelebratedSessionID = 0
+    /// The workout whose celebration already played, so it shows once.
+    @SceneStorage("thrym.workout.celebratedSessionID") private var celebratedSessionID = 0
+    /// Whether the records, marks and facts are computed; until then the celebration waits.
+    @State private var loaded = false
+    @State private var highlights = CompletionHighlightSelection(shown: [], more: 0)
     private var sets: [ILWorkoutSet] { store.data?.workoutSets.filter { $0.sessionId == session.id && $0.reps > 0 } ?? [] }
     private var remaining: Int { rows.compactMap(\.remainingPlannedSets).reduce(0, +) }
+    private var celebrating: Bool { celebratedSessionID != Int(session.id) && (!loaded || !highlights.isEmpty) }
+
     var body: some View {
         Group {
-            if appearance == .liquidGlass {
+            if celebrating {
+                celebration
+            } else if appearance == .liquidGlass {
                 glassBody
             } else {
                 emberBody
@@ -67,7 +76,32 @@ struct IOSWorkoutCompletionScreen: View {
         }
     }
 
+    @ViewBuilder
+    private var celebration: some View {
+        if loaded, let recordSummary {
+            IOSWorkoutCelebration(
+                session: session,
+                sets: sets,
+                facts: facts,
+                highlights: highlights.shown.compactMap {
+                    IOSWorkoutRecords.highlightText($0, summary: recordSummary, facts: facts, unitSystem: unitSystem)
+                },
+                more: Int(highlights.more),
+                unitSystem: unitSystem
+            ) {
+                recordsCelebratedSessionID = Int(session.id)
+                celebratedSessionID = Int(session.id)
+            }
+        } else {
+            // A blank page until the data is there, so the summary does not flash first.
+            theme.palette(for: colorScheme).background
+                .ignoresSafeArea()
+                .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+
     private func updateRecords() {
+        defer { loaded = true }
         guard let data = store.data else {
             recordSummary = nil
             return
@@ -81,7 +115,10 @@ struct IOSWorkoutCompletionScreen: View {
             unitSystem: unitSystem
         )
         facts = IOSRecognition.completionFacts(sessionID: session.id, sessions: data.workoutSessions, settings: settings.state)
-        if summary.recordCount > 0, recordsCelebratedSessionID != Int(session.id) {
+        highlights = IOSWorkoutRecords.highlights(summary: summary, marks: marks, facts: facts)
+        // The celebration plays its own haptic.
+        if summary.recordCount > 0, recordsCelebratedSessionID != Int(session.id),
+           celebratedSessionID == Int(session.id) || highlights.isEmpty {
             recordsCelebratedSessionID = Int(session.id)
             let feedback = UINotificationFeedbackGenerator()
             feedback.prepare()

@@ -1,6 +1,7 @@
 package com.thrym.app.presentation.workout
 
 import com.thrym.shared.recognition.CompletionFacts
+import com.thrym.shared.recognition.CompletionHighlights
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -92,7 +94,7 @@ internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, err
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<ExerciseWithSets>, recordInputs: List<RecordSetInput>?, facts: CompletionFacts?, unitSystem: UnitSystem,
-    finishState: WorkoutFinishState, onClose: () -> Unit, onDetails: () -> Unit, onPlanEditor: () -> Unit,
+    loaded: Boolean, finishState: WorkoutFinishState, onClose: () -> Unit, onDetails: () -> Unit, onPlanEditor: () -> Unit,
     onProgression: () -> Unit, onRetryProgression: () -> Unit) {
     var showPlanChanges by rememberSaveable(session.id) { mutableStateOf(false) }
     var planApplied by rememberSaveable(session.id) { mutableStateOf(false) }
@@ -110,9 +112,34 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
     val marks = remember(recordInputs, categories, unitSystem) {
         recordInputs?.let { inputs -> sessionMarksByExercise(session.id, inputs, categories, unitSystem) }.orEmpty()
     }
-    // One haptic the first time the board shows records, not again after rotation or a restore.
+    // The celebration comes first, once per workout and only with something to celebrate. It
+    // waits for the records and facts, so the summary never flashes up before it.
+    val highlights = remember(recordSummary, marks, facts) { CompletionHighlights.select(recordSummary, marks, facts) }
+    var celebrationDone by rememberSaveable(session.id) { mutableStateOf(false) }
+    // One haptic the first time the board shows records, not again after rotation or a restore,
+    // and none when the celebration already had one.
     val haptic = rememberHapticFeedback()
     var recordsCelebrated by rememberSaveable(session.id) { mutableStateOf(false) }
+    if (!celebrationDone) {
+        if (!loaded) {
+            Surface(Modifier.fillMaxSize(), color = if (isLiquidGlass()) Color.Transparent else MaterialTheme.colorScheme.background) {}
+            return
+        }
+        if (!highlights.isEmpty) {
+            WorkoutCelebration(
+                session = session,
+                rows = rows,
+                facts = facts,
+                selection = highlights,
+                unitSystem = unitSystem,
+                onFinish = {
+                    recordsCelebrated = true
+                    celebrationDone = true
+                }
+            )
+            return
+        }
+    }
     LaunchedEffect(recordSummary) {
         if (!recordsCelebrated && (recordSummary?.recordCount ?: 0) > 0) {
             recordsCelebrated = true

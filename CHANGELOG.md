@@ -2,6 +2,7 @@
 
 ## Unveröffentlicht
 
+- Rekorde und Feier (Android und iOS): Im Training trägt ein Satz mit neuem Rekord einen kleinen Pokal „PR“, bei einer zum ersten Mal erreichten Marke die Marke („100 kg“); der Übungskopf zeigt denselben Marker. Die Rekordmeldung oben entfällt, Haptik und Screenreader-Ansage bleiben. Nach „Beenden“ zeigt Thrym, wenn das Training Höhepunkte hat, einmal „Geschafft!“ mit den Kennzahlen und dann höchstens drei Höhepunkte (Rekorde, Marken, Jubiläum, Comeback, Wochenziel), bevor die bekannte Zusammenfassung kommt. Jeder Schritt lässt sich antippen, „Überspringen“ führt direkt zur Zusammenfassung; bei reduzierter Bewegung ohne Animation.
 - Progressions-Coach (Android und iOS): Neue Einstellung „Steigerungen automatisch übernehmen“ unter Training, standardmäßig aus. Ist sie an, landen mehr Gewicht oder mehr Wiederholungen vom Coach nach dem Training direkt im Plan. Ein Backoff oder ein wiederholtes Ziel wartet weiter unter „Progression prüfen“ auf deine Bestätigung.
 - Training (Android und iOS): Im Supersatz springt die Liste nach einem Satz zur nächsten Übung des Supersatzes, nach der letzten wieder zur ersten, solange sie offene Sätze hat. Die Pause der gerade geloggten Übung bleibt dabei im Dock.
 - iOS: „Timer darf Bildschirm aktiv halten“ hält den Bildschirm jetzt in der ganzen App wach wie auf Android. Bisher galt es nur auf dem Trainings-Tab und setzte während der Vollbild-Pause aus, sodass das Gerät sich nach der eingestellten Zeit sperrte.

@@ -51,6 +51,7 @@
 		5E2AC9B49488759F6D6D13C3 /* BodyweightLoadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7895A2550F6ED77BA59949FE /* BodyweightLoadTests.swift */; };
 		5EC635BE001AEBD56C864D1C /* ThrymCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2359EA6854A042AFE4135A8C /* ThrymCard.swift */; };
 		626FB6DF1330A4D64555E2C3 /* ThrymWeeklyMuscleVolume.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0128D750AEA5D9C781C284DA /* ThrymWeeklyMuscleVolume.swift */; };
+		67F7961B5BEFA9C2B130D1CA /* IOSWorkoutCelebration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A14CA8FC6E562F9A1983E89 /* IOSWorkoutCelebration.swift */; };
 		681D867FEABAF5CD430DAFC0 /* IOSDashboardGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1A20B4255E767E6B53EDA5 /* IOSDashboardGlass.swift */; };
 		69E5BA086F1027852CE94E3A /* IOSMetaPlanEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFBCEB9E5A7EB3D48561850 /* IOSMetaPlanEditorScreen.swift */; };
 		6D4718E6C37028AAA5148B9D /* ExerciseDisplayNameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */; };
@@ -60,6 +61,7 @@
 		83EFD6FCDC75BAB5C3B7CA58 /* IOSWorkoutSuperset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 776FF4C0E45990C16F2728D2 /* IOSWorkoutSuperset.swift */; };
 		8436ECBCD7C2E0A7E34D37A9 /* IOSHistoryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B21EECD6390D3A31BBA78E9 /* IOSHistoryScreen.swift */; };
 		84AAFA20CF75D4386C505FCB /* ThrymLiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89590DC86A5380D96E31FBB3 /* ThrymLiquidGlass.swift */; };
+		86942CD0F80DBD697364BF0A /* IOSWorkoutRecordMarker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD52C1B25B9E20DCCB71DD27 /* IOSWorkoutRecordMarker.swift */; };
 		8C79BC323D0EC1F76130807E /* Geist-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5520C40CCE8B86DFAAFF21F1 /* Geist-SemiBold.ttf */; };
 		9060EB2531467B89CBFEF653 /* BackupBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7838DB869BCC15E07679638E /* BackupBridgeTests.swift */; };
 		9155D65323CBCC2FDBDA47B2 /* IOSWorkoutExerciseOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A94F09FE9DDE2A4B0E63C7 /* IOSWorkoutExerciseOrder.swift */; };
@@ -150,6 +152,7 @@
 		776FF4C0E45990C16F2728D2 /* IOSWorkoutSuperset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutSuperset.swift; sourceTree = "<group>"; };
 		7838DB869BCC15E07679638E /* BackupBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupBridgeTests.swift; sourceTree = "<group>"; };
 		7895A2550F6ED77BA59949FE /* BodyweightLoadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyweightLoadTests.swift; sourceTree = "<group>"; };
+		7A14CA8FC6E562F9A1983E89 /* IOSWorkoutCelebration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutCelebration.swift; sourceTree = "<group>"; };
 		7AB25F0213A19405327A65A9 /* IOSOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSOnboardingView.swift; sourceTree = "<group>"; };
 		7CF45EE706088987B53B2E57 /* Geist-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Black.ttf; sourceTree = "<group>"; };
 		7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Exercises.xcstrings; sourceTree = "<group>"; };
@@ -166,6 +169,7 @@
 		9957C7624D0FE9A175D74E7D /* IOSHistorySupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistorySupport.swift; sourceTree = "<group>"; };
 		A09CC16E080C74D0846BCB6B /* IOSWorkoutRecordsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutRecordsCard.swift; sourceTree = "<group>"; };
 		ACBEFC0D1E525226E333CCE8 /* IOSWorkoutPlateVisualizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutPlateVisualizer.swift; sourceTree = "<group>"; };
+		AD52C1B25B9E20DCCB71DD27 /* IOSWorkoutRecordMarker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutRecordMarker.swift; sourceTree = "<group>"; };
 		B06C029EB28B9B8DFA8EB257 /* ThrymApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymApp.swift; sourceTree = "<group>"; };
 		B62C98E75DEF5F8EBE10F5FE /* Geist-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Medium.ttf; sourceTree = "<group>"; };
 		B88909E7F012EDD309E39DEE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -325,6 +329,7 @@
 		D25050EF8BFCD4C91FEE3984 /* Workout */ = {
 			isa = PBXGroup;
 		children = (
+			7A14CA8FC6E562F9A1983E89 /* IOSWorkoutCelebration.swift */,
 			D62D6C79390AED96C5CE64DD /* IOSWorkoutCompletionScreen.swift */,
 			EB00E307D3548D90E540F3DF /* IOSWorkoutExerciseCard.swift */,
 			C9A94F09FE9DDE2A4B0E63C7 /* IOSWorkoutExerciseOrder.swift */,
@@ -334,6 +339,7 @@
 			BDB3991D700CD049F4D8846D /* IOSWorkoutGlass.swift */,
 			304F02263B0983D46806548F /* IOSWorkoutNextSetCoach.swift */,
 			ACBEFC0D1E525226E333CCE8 /* IOSWorkoutPlateVisualizer.swift */,
+			AD52C1B25B9E20DCCB71DD27 /* IOSWorkoutRecordMarker.swift */,
 			BD3C072E257021CD604607DE /* IOSWorkoutRecords.swift */,
 			A09CC16E080C74D0846BCB6B /* IOSWorkoutRecordsCard.swift */,
 			61E8938B6497E648E5132A9F /* IOSWorkoutRestTimer.swift */,
@@ -596,6 +602,7 @@
 				45E45BC954D143A102E6FFC3 /* IOSExerciseStatisticsGlass.swift in Sources */, 
 				CA780A7F21BBB24698E62B1B /* IOSExerciseStatisticsScreen.swift in Sources */, 
 				4E8E8D657128A78649180D91 /* IOSStatisticsScreen.swift in Sources */, 
+				67F7961B5BEFA9C2B130D1CA /* IOSWorkoutCelebration.swift in Sources */, 
 				467E9088798B4F91B92BC2FB /* IOSWorkoutCompletionScreen.swift in Sources */, 
 				C93BCDFF2B67C400BF140E7D /* IOSWorkoutExerciseCard.swift in Sources */, 
 				9155D65323CBCC2FDBDA47B2 /* IOSWorkoutExerciseOrder.swift in Sources */, 
@@ -605,6 +612,7 @@
 				DC4B7B772C7F3455EECB3D76 /* IOSWorkoutGlass.swift in Sources */, 
 				3A17CDA0D882CA60C7918F94 /* IOSWorkoutNextSetCoach.swift in Sources */, 
 				A359F9A2E3DD08D667DECB2F /* IOSWorkoutPlateVisualizer.swift in Sources */, 
+				86942CD0F80DBD697364BF0A /* IOSWorkoutRecordMarker.swift in Sources */, 
 				1E03B3CDF1F42D84640EB6C1 /* IOSWorkoutRecords.swift in Sources */, 
 				4B443243084A46AFA2758B3F /* IOSWorkoutRecordsCard.swift in Sources */, 
 				15940760C4BFBEF6E77765E1 /* IOSWorkoutRestTimer.swift in Sources */, 

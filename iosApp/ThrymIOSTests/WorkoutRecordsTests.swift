@@ -75,6 +75,39 @@ final class WorkoutRecordsTests: XCTestCase {
         XCTAssertEqual(summary.firstTimeExercises.map(\.exerciseID), [2])
     }
 
+    func testSetBadgesMarkTheSetHoldingARecord() {
+        let data = trainingData(current: [
+            ILWorkoutSet(id: 11, sessionId: 2, exerciseId: 1, setNumber: 1, reps: 5, weightKg: 85, completedAt: 210),
+            ILWorkoutSet(id: 12, sessionId: 2, exerciseId: 2, setNumber: 1, reps: 8, weightKg: 50, completedAt: 220)
+        ])
+
+        let badges = IOSWorkoutRecords.setBadges(sessionID: 2, exercises: [bench, rowing, bench], data: data, unitSystem: "METRIC")
+
+        // Rowing is new today: a first workout is no record.
+        XCTAssertEqual(Array(badges.keys), [11])
+        XCTAssertEqual(badges[11]?.setId, 11)
+    }
+
+    func testHighlightsNameTheExerciseAndTheRecordWithItsGain() throws {
+        let data = trainingData(current: [
+            ILWorkoutSet(id: 11, sessionId: 2, exerciseId: 1, setNumber: 1, reps: 5, weightKg: 85, completedAt: 210),
+            ILWorkoutSet(id: 12, sessionId: 2, exerciseId: 2, setNumber: 1, reps: 8, weightKg: 50, completedAt: 220)
+        ])
+        let session = try XCTUnwrap(data.workoutSessions.first { $0.id == 2 })
+        let rows = [row(bench, sets: data.sets(for: 2).filter { $0.exerciseId == 1 }), row(rowing, sets: data.sets(for: 2).filter { $0.exerciseId == 2 })]
+        let summary = IOSWorkoutRecords.summary(session: session, rows: rows, data: data)
+
+        let selection = IOSWorkoutRecords.highlights(summary: summary, marks: [:], facts: nil)
+
+        // One highlight per exercise, its weight record; the first workout of rowing is no win.
+        XCTAssertEqual(selection.shown.map(\.kind), [.record])
+        XCTAssertEqual(selection.more, 0)
+        let text = try XCTUnwrap(IOSWorkoutRecords.highlightText(selection.shown[0], summary: summary, facts: nil, unitSystem: "METRIC"))
+        XCTAssertTrue(text.warm)
+        XCTAssertTrue(text.detail.hasPrefix("Bank eng · "))
+        XCTAssertEqual(text.detail, "Bank eng · \(IOSWorkoutRecords.detailText(summary.exercises[0].lines[0], unitSystem: "METRIC"))")
+    }
+
     func testSummaryLeavesOutRowsWithoutLoggedReps() throws {
         let data = trainingData(current: [ILWorkoutSet(id: 11, sessionId: 2, exerciseId: 1, setNumber: 1, reps: 0, weightKg: 85, completedAt: 210)])
         let session = try XCTUnwrap(data.workoutSessions.first { $0.id == 2 })

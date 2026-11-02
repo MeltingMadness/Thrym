@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Celebration after finishing a workout, before the summary. -->
+    <string name="workout_celebration_skip">Skip</string>
+    <string name="workout_celebration_next">Next</string>
+    <string name="workout_celebration_to_summary">To summary</string>
+    <string name="workout_celebration_step_cd">Step %1$d of %2$d</string>
+    <string name="workout_celebration_done_title">Done!</string>
+    <string name="workout_celebration_highlights_title">Highlights</string>
+    <string name="workout_celebration_record_title">New PR</string>
+    <plurals name="workout_celebration_more">
+        <item quantity="one">%1$d more in the summary</item>
+        <item quantity="other">%1$d more in the summary</item>
+    </plurals>
+</resources>

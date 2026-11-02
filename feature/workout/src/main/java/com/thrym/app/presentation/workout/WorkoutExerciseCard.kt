@@ -1,5 +1,6 @@
 package com.thrym.app.presentation.workout
 
+import com.thrym.shared.workout.SessionSetBadge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -99,6 +100,8 @@ internal fun ExerciseCard(
     setIntentions: Map<Long, SetIntention>,
     setIntentionsLoaded: Boolean,
     setIntentionsFailed: Boolean,
+    /** Record markers of this workout's sets by set id, see `SessionSetBadges`. */
+    setBadges: Map<Long, SessionSetBadge> = emptyMap(),
     onLogSet: (Int, Double, SetType, String, Long, SetIntention?) -> Unit,
     onUpdateSet: (Long, Int, Double, String, SetIntention?) -> Unit,
     onDeleteSet: (Long) -> Unit,
@@ -159,12 +162,19 @@ internal fun ExerciseCard(
                     .padding(vertical = dims.spacingXs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = exerciseName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = exerciseName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    // The exercise carries the strongest marker of its sets: a mark before "PR".
+                    // It sits under the name so that a long name does not break inside a word.
+                    val exerciseBadges = loggedSets.mapNotNull { setBadges[it.id] }
+                    (exerciseBadges.firstOrNull { it.mark != null } ?: exerciseBadges.firstOrNull())?.let {
+                        RecordMarker(it, Modifier.padding(top = 2.dp))
+                    }
+                }
                 val progressText = if (targetSetCount > 0) {
                     stringResource(R.string.workout_exercise_progress, targetSetCount - openSlots, targetSetCount)
                 } else if (loggedSets.isNotEmpty()) {
@@ -279,6 +289,7 @@ internal fun ExerciseCard(
                         if (matchingSet != null) {
                             LoggedSetRow(
                                 set = matchingSet,
+                                badge = setBadges[matchingSet.id],
                                 displayNumber = setIndex,
                                 intention = setIntentions[matchingSet.id],
                                 intentionFailed = setIntentionsFailed,
@@ -358,6 +369,7 @@ internal fun ExerciseCard(
                     loggedSets.filterIndexed { index, _ -> index !in matched.filterNotNull() }.forEach { set ->
                         LoggedSetRow(
                             set = set,
+                            badge = setBadges[set.id],
                             intention = setIntentions[set.id],
                             intentionFailed = setIntentionsFailed,
                             intensitySystem = rowIntensitySystem,
@@ -418,6 +430,7 @@ internal fun ExerciseCard(
                     loggedSets.forEach { set ->
                         LoggedSetRow(
                             set = set,
+                            badge = setBadges[set.id],
                             intention = setIntentions[set.id],
                             intentionFailed = setIntentionsFailed,
                             intensitySystem = rowIntensitySystem,

@@ -69,7 +69,11 @@ fun UiStrings.weekProgressDescription(status: WeeklyGoalStatus): String = listOf
 data class CompletionFactText(val kind: CompletionFactKind, val title: String, val detail: String)
 
 /** The completion facts as text, at most two rows (see [CompletionFacts.rows]). */
-fun UiStrings.completionFactTexts(facts: CompletionFacts): List<CompletionFactText> = facts.rows.mapNotNull { kind ->
+fun UiStrings.completionFactTexts(facts: CompletionFacts): List<CompletionFactText> =
+    facts.rows.mapNotNull { completionFactText(facts, it) }
+
+/** One fact as text, or null when [facts] does not hold it. */
+fun UiStrings.completionFactText(facts: CompletionFacts, kind: CompletionFactKind): CompletionFactText? =
     when (kind) {
         CompletionFactKind.WEEKLY_GOAL -> facts.weeklyGoal?.let { goal ->
             CompletionFactText(
@@ -98,7 +102,6 @@ fun UiStrings.completionFactTexts(facts: CompletionFacts): List<CompletionFactTe
             )
         }
     }
-}
 
 fun WeekStart.toSharedWeekStart(): com.thrym.shared.model.WeekStart = com.thrym.shared.model.WeekStart.valueOf(name)
 
