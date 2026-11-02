@@ -162,17 +162,19 @@ internal fun ExerciseCard(
                     .padding(vertical = dims.spacingXs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = exerciseName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f, fill = false)
-                )
-                // The exercise carries the strongest marker of its sets: a mark before "PR".
-                val exerciseBadges = loggedSets.mapNotNull { setBadges[it.id] }
-                exerciseBadges.firstOrNull { it.mark != null }?.let { RecordMarker(it, Modifier.padding(start = dims.spacingXs)) }
-                    ?: exerciseBadges.firstOrNull()?.let { RecordMarker(it, Modifier.padding(start = dims.spacingXs)) }
-                Spacer(Modifier.weight(1f))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = exerciseName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    // The exercise carries the strongest marker of its sets: a mark before "PR".
+                    // It sits under the name so that a long name does not break inside a word.
+                    val exerciseBadges = loggedSets.mapNotNull { setBadges[it.id] }
+                    (exerciseBadges.firstOrNull { it.mark != null } ?: exerciseBadges.firstOrNull())?.let {
+                        RecordMarker(it, Modifier.padding(top = 2.dp))
+                    }
+                }
                 val progressText = if (targetSetCount > 0) {
                     stringResource(R.string.workout_exercise_progress, targetSetCount - openSlots, targetSetCount)
                 } else if (loggedSets.isNotEmpty()) {

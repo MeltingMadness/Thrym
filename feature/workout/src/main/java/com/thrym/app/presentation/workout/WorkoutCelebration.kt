@@ -52,6 +52,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -110,7 +111,8 @@ internal fun WorkoutCelebration(
     LaunchedEffect(step) {
         if (step == CELEBRATION_STEPS - 1) haptic.confirm()
     }
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    // Liquid Glass shows the aurora behind the whole screen, like the summary that follows.
+    Surface(Modifier.fillMaxSize(), color = if (isLiquidGlass()) Color.Transparent else MaterialTheme.colorScheme.background) {
         Column(
             Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)
         ) {

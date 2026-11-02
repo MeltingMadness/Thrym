@@ -188,7 +188,6 @@ internal fun LoggedSetRow(
                             style = AthleticNumber,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        badge?.let { RecordMarker(it) }
                         if (set.isWarmup) {
                             Text(
                                 text = stringResource(UxR.string.workout_parenthesized_label, stringResource(R.string.workout_warmup_chip)),
@@ -198,6 +197,9 @@ internal fun LoggedSetRow(
                             )
                         }
                     }
+
+                    // Under the value, so that a long value does not wrap next to it.
+                    badge?.let { RecordMarker(it, Modifier.padding(top = 2.dp)) }
 
                     // Only a known answer is shown; a set without a record stays UNKNOWN
                     // instead of displaying "Nicht angegeben" as if it were data.

@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -121,7 +122,7 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
     var recordsCelebrated by rememberSaveable(session.id) { mutableStateOf(false) }
     if (!celebrationDone) {
         if (!loaded) {
-            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {}
+            Surface(Modifier.fillMaxSize(), color = if (isLiquidGlass()) Color.Transparent else MaterialTheme.colorScheme.background) {}
             return
         }
         if (!highlights.isEmpty) {
