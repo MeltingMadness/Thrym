@@ -2,6 +2,7 @@ package com.thrym.app.presentation.dashboard
 
 import com.thrym.app.presentation.common.toSharedWeekStart
 import com.thrym.shared.recognition.TrainingMilestones
+import com.thrym.shared.gamification.LevelProgress
 import com.thrym.shared.recognition.WeeklyGoalEngine
 import com.thrym.shared.recognition.WeeklyGoalSession
 import com.thrym.shared.recognition.WeeklyGoalStatus
@@ -28,6 +29,7 @@ import com.thrym.app.domain.util.MuscleVolumeCalculator
 import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.domain.repository.DeloadRepository
 import com.thrym.app.domain.repository.ExerciseRepository
+import com.thrym.app.domain.repository.GamificationRepository
 import com.thrym.app.domain.repository.MetaTrainingPlanRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.repository.StatisticsRepository
@@ -48,6 +50,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -161,6 +164,8 @@ data class DashboardUiState(
     val weeklyGoal: WeeklyGoalStatus? = null,
     /** Days since the last workout when they make a pause (21 or more), else null. */
     val pauseDays: Int? = null,
+    /** Level on the hero's journey; null while loading or when the game elements are switched off. */
+    val level: LevelProgress? = null,
     val unitSystem: UnitSystem = UnitSystem.METRIC,
     /**
      * Exercises by id for plan previews; plan rows do not always carry the name. The state keeps
@@ -201,6 +206,7 @@ class DashboardViewModel(
     private val deloadRepository: DeloadRepository,
     private val readinessProjectionSource: ReadinessProjectionSource,
     private val readinessRepository: ReadinessRepository,
+    private val gamificationRepository: GamificationRepository,
     private val strings: UiStrings
 ) : ViewModel() {
 
@@ -735,6 +741,17 @@ class DashboardViewModel(
                     lastEpochDay = lastWorkout?.startTime?.toLocalDate()?.toEpochDay(),
                     todayEpochDay = now.toEpochDay()
                 )
+                val level = if (preferences.gamificationEnabled) {
+                    try {
+                        gamificationRepository.evaluate().progress
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        AppLogger.w("DashboardVM", "Level nicht berechnet: ${e.message}", e)
+                        null
+                    }
+                } else {
+                    null
+                }
                 val lastWorkoutExerciseCount = if (lastWorkout != null) {
                     workoutRepository.getExerciseIdsForSession(lastWorkout.id).size
                 } else 0
@@ -810,6 +827,7 @@ class DashboardViewModel(
                         volumeThisWeekKg = volumeByWeek.lastOrNull()?.second ?: 0.0,
                         weeklyGoal = weeklyGoal,
                         pauseDays = pauseDays,
+                        level = level,
                         unitSystem = preferences.unitSystem,
                         recentRecords = recordsWithExercises,
                         lastWorkout = lastWorkout,

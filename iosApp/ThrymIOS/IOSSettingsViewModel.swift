@@ -91,6 +91,10 @@ final class IOSSettingsViewModel: ObservableObject {
         feature.updateAutoApplyProgression(enabled: enabled)
     }
 
+    func updateGamificationEnabled(_ enabled: Bool) {
+        feature.updateGamificationEnabled(enabled: enabled)
+    }
+
     /// Sets the weekly goal from the running week on; earlier weeks keep the goal they had.
     func updateWeeklyGoal(_ goal: Int) {
         feature.updateWeeklyGoal(
@@ -292,6 +296,7 @@ final class IOSSettingsViewModel: ObservableObject {
                         : (error.map(ilSharedMessage) ?? String(localized: "Backup konnte nicht importiert werden."))
                 )
                 if didImport {
+                    IOSGamification.resetCelebrated()
                     self.refreshRecoveryBackup()
                 }
             }
@@ -333,6 +338,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 guard let self else { return }
                 self.isBusy = false
                 if let recovery {
+                    IOSGamification.resetCelebrated()
                     self.recoveryBackup = recovery
                     self.activeAlert = SettingsAlert(
                         title: String(localized: "Trainingsdaten wiederhergestellt"),
@@ -530,6 +536,7 @@ struct SettingsFormState {
     var weeklyGoalHistory: String
     /// Increases from the coach go into the plan after a workout without a confirmation.
     var autoApplyProgression: Bool
+    var gamificationEnabled: Bool
     var plateCalculatorEnabled: Bool
     var availablePlates: [Double]
     var barbellWeightKg: Double
@@ -562,6 +569,7 @@ struct SettingsFormState {
         weeklyGoalEnabled: Bool = true,
         weeklyGoalHistory: String = "",
         autoApplyProgression: Bool = false,
+        gamificationEnabled: Bool = true,
         plateCalculatorEnabled: Bool,
         availablePlates: [Double],
         barbellWeightKg: Double,
@@ -593,6 +601,7 @@ struct SettingsFormState {
         self.weeklyGoalEnabled = weeklyGoalEnabled
         self.weeklyGoalHistory = weeklyGoalHistory
         self.autoApplyProgression = autoApplyProgression
+        self.gamificationEnabled = gamificationEnabled
         self.plateCalculatorEnabled = plateCalculatorEnabled
         self.availablePlates = availablePlates
         self.barbellWeightKg = barbellWeightKg
@@ -655,6 +664,7 @@ struct SettingsFormState {
         weeklyGoalEnabled = sharedState.weeklyGoalEnabled
         weeklyGoalHistory = sharedState.weeklyGoalHistory
         autoApplyProgression = sharedState.autoApplyProgression
+        gamificationEnabled = sharedState.gamificationEnabled
         plateCalculatorEnabled = sharedState.plateCalculatorEnabled
         availablePlates = sharedState.availablePlates.map { $0.doubleValue }
         barbellWeightKg = sharedState.barbellWeightKg

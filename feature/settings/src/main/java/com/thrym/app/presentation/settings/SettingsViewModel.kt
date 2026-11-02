@@ -199,6 +199,10 @@ class SettingsViewModel(
         preferencesController.updateWeeklyGoalEnabled(enabled)
     }
 
+    fun updateGamificationEnabled(enabled: Boolean) {
+        preferencesController.updateGamificationEnabled(enabled)
+    }
+
     fun updateAutoApplyProgression(enabled: Boolean) {
         preferencesController.updateAutoApplyProgression(enabled)
     }
@@ -263,6 +267,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             runBusy {
                 backupRepository.importBackup(uri, preview.sha256)
+                appPreferencesRepository.writeCelebratedXp(null)
                 recoverImportedProgressions()
             }
                 .onSuccess { progressionRecovered ->
@@ -311,6 +316,7 @@ class SettingsViewModel(
             showRecoveryRestoreDialog.value = false
             runBusy {
                 backupRepository.restoreLatestRecovery()
+                appPreferencesRepository.writeCelebratedXp(null)
                 recoverImportedProgressions()
             }
                 .onSuccess { progressionRecovered ->

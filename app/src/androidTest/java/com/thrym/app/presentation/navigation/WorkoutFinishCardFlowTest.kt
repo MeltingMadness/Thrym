@@ -161,6 +161,10 @@ class WorkoutFinishCardFlowTest {
         awaitEnabled(sheetFinish)
         ui.onAllNodes(sheetFinish and isEnabled()).onFirst().performClick()
 
+        // Every finished workout opens with the celebration; the summary comes after it.
+        val skipCelebration = text(WorkoutR.string.workout_celebration_skip)
+        awaitText(skipCelebration)
+        ui.onNodeWithText(skipCelebration).performClick()
         awaitText(text(R.string.workout_summary_headline_complete))
         awaitText(text(WorkoutR.string.workout_records_first_title))
         // The card was announced once, when the last set completed the plan.

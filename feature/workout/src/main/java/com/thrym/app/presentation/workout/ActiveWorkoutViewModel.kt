@@ -2,6 +2,7 @@ package com.thrym.app.presentation.workout
 
 import com.thrym.app.presentation.common.toSharedWeekStart
 import com.thrym.app.presentation.common.toSharedUnit
+import com.thrym.shared.gamification.SessionCelebration
 import com.thrym.shared.recognition.CompletionFacts
 import com.thrym.shared.recognition.StrengthMarks
 import com.thrym.shared.recognition.MilestoneSession
@@ -28,6 +29,7 @@ import com.thrym.app.domain.model.WorkoutSession
 import com.thrym.app.domain.model.WorkoutSet
 import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.domain.repository.ExerciseRepository
+import com.thrym.app.domain.repository.GamificationRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.repository.StatisticsRepository
 import com.thrym.app.domain.repository.WorkoutRepository
@@ -60,6 +62,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
@@ -73,6 +76,7 @@ class ActiveWorkoutViewModel(
     private val statisticsRepository: StatisticsRepository,
     private val progressionRepository: ProgressionRepository,
     private val appPreferencesRepository: AppPreferencesRepository,
+    private val gamificationRepository: GamificationRepository,
     private val strings: UiStrings
 ) : ViewModel() {
 
@@ -91,6 +95,10 @@ class ActiveWorkoutViewModel(
     private val mutationMutex = Mutex()
     private var lastDeletedSet: Pair<WorkoutSet, SetIntention>? = null
     private val _completionRecordInputs = MutableStateFlow<List<RecordSetInput>?>(null)
+    private val _completionCelebration = MutableStateFlow<SessionCelebration?>(null)
+
+    /** XP and level-up of the finished workout; null until loaded, without XP or when switched off. */
+    val completionCelebration: StateFlow<SessionCelebration?> = _completionCelebration.asStateFlow()
 
     /**
      * Every set of the finished session's exercises, from all sessions, loaded once the session
@@ -852,6 +860,20 @@ class ActiveWorkoutViewModel(
                     weekStart = preferences.weekStart.toSharedWeekStart(),
                     goalHistory = preferences.weeklyGoalHistory.takeIf { preferences.weeklyGoalEnabled }
                 )
+                if (preferences.gamificationEnabled && _completionCelebration.value == null) {
+                    // Increases applied automatically count, so they wait until the coach is done.
+                    withTimeoutOrNull(COACH_WAIT_MILLIS) {
+                        operationState.first {
+                            it.finishState != WorkoutFinishState.Completing && it.finishState != WorkoutFinishState.Generating
+                        }
+                    }
+                    try {
+                        _completionCelebration.value = gamificationRepository.celebrate(sessionId)
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        AppLogger.w("ActiveWorkoutVM", "XP nicht berechnet: ${e.message}", e)
+                    }
+                }
                 val exerciseIds = workoutRepository.getSetsForSessionList(sessionId)
                     .filter { it.reps > 0 }
                     .map { it.exerciseId }
@@ -1211,6 +1233,8 @@ class ActiveWorkoutViewModel(
         private const val GENERATION_FAILURE_MESSAGE = "progression_generation_failed"
     }
 }
+
+private const val COACH_WAIT_MILLIS = 3_000L
 
 private fun WorkoutSession.toMilestoneSession(): MilestoneSession = MilestoneSession(
     id = id,

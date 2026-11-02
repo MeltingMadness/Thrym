@@ -123,7 +123,7 @@ object SessionRecords {
             if (other.isEmpty()) {
                 return@mapNotNull SessionExerciseRecords(exerciseId, firstTime = true, lines = emptyList(), bestSetId = bestSetId)
             }
-            val types = if (exerciseId in addedLoad) TYPE_ORDER.filter { it in ADDED_LOAD_TYPES } else TYPE_ORDER
+            val types = typesFor(exerciseId in addedLoad)
             val lines = types.mapNotNull { type ->
                 val value = sessionBest(type, current) ?: return@mapNotNull null
                 val previous = historyBest(type, other)
@@ -167,7 +167,11 @@ object SessionRecords {
         }
     }
 
-    private fun sessionBest(type: String, sets: List<RecordSetInput>): Double? = when (type) {
+    /** The record types that count for an exercise, see [summarize]. */
+    internal fun typesFor(addedLoad: Boolean): List<String> =
+        if (addedLoad) TYPE_ORDER.filter { it in ADDED_LOAD_TYPES } else TYPE_ORDER
+
+    internal fun sessionBest(type: String, sets: List<RecordSetInput>): Double? = when (type) {
         MAX_VOLUME -> volumeOf(sets)
         else -> sets.maxOfOrNull { perSetValue(type, it) }
     }?.takeIf { it.isFinite() && it > 0.0 }

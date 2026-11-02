@@ -91,7 +91,8 @@ class AppPreferencesRepositoryImpl(
             backupReminderEnabled = prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] ?: false,
             weeklyGoalEnabled = prefs[AppPreferenceKeys.WEEKLY_GOAL_ENABLED] ?: true,
             weeklyGoalHistory = WeeklyGoalRules.decode(prefs.stringOrNull(AppPreferenceKeys.WEEKLY_GOAL_HISTORY)),
-            autoApplyProgression = prefs[AppPreferenceKeys.AUTO_APPLY_PROGRESSION] ?: false
+            autoApplyProgression = prefs[AppPreferenceKeys.AUTO_APPLY_PROGRESSION] ?: false,
+            gamificationEnabled = prefs[AppPreferenceKeys.GAMIFICATION_ENABLED] ?: true
         )
     }
 
@@ -258,6 +259,21 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateAutoApplyProgression(enabled: Boolean) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.AUTO_APPLY_PROGRESSION] = enabled
+        }
+    }
+
+    override suspend fun updateGamificationEnabled(enabled: Boolean) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.GAMIFICATION_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun readCelebratedXp(): Long? =
+        context.appPreferencesDataStore.data.first()[AppPreferenceKeys.CELEBRATED_XP]
+
+    override suspend fun writeCelebratedXp(xp: Long?) {
+        context.appPreferencesDataStore.edit { prefs ->
+            if (xp == null) prefs.remove(AppPreferenceKeys.CELEBRATED_XP) else prefs[AppPreferenceKeys.CELEBRATED_XP] = xp
         }
     }
 

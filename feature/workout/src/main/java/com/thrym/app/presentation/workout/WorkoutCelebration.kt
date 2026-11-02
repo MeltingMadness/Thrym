@@ -79,6 +79,7 @@ import com.thrym.app.presentation.theme.semanticText
 import com.thrym.app.presentation.theme.thrymMotion
 import com.thrym.core.designsystem.R
 import com.thrym.feature.workout.R as WorkoutR
+import com.thrym.shared.gamification.SessionCelebration
 import com.thrym.shared.recognition.CompletionFactKind
 import com.thrym.shared.recognition.CompletionFacts
 import com.thrym.shared.recognition.CompletionHighlight
@@ -86,30 +87,40 @@ import com.thrym.shared.recognition.CompletionHighlightKind
 import com.thrym.shared.recognition.CompletionHighlightSelection
 import kotlinx.coroutines.delay
 
-private const val CELEBRATION_STEPS = 2
+private enum class CelebrationStep { DONE, XP, LEVEL, HIGHLIGHTS }
 
 /**
  * The celebration after "Beenden", before the known summary: "Geschafft" with the key numbers,
- * then at most three highlights (see `CompletionHighlights`). A tap on the content or "Weiter"
- * goes on, "Überspringen" and Back go straight to the summary. With reduced motion the steps
- * change without animation. The caller shows it once per workout and only with highlights.
+ * the XP, the level-up if one is due and at most three highlights (see `CompletionHighlights`).
+ * A tap on the content or "Weiter" goes on, "Überspringen" and Back go straight to the summary.
+ * With reduced motion the steps change without animation and without confetti. The caller shows
+ * it once per workout.
  */
 @Composable
 internal fun WorkoutCelebration(
     session: WorkoutSession,
     rows: List<ExerciseWithSets>,
     facts: CompletionFacts?,
+    celebration: SessionCelebration?,
     selection: CompletionHighlightSelection,
     unitSystem: UnitSystem,
     onFinish: () -> Unit
 ) {
+    val steps = remember(celebration, selection) {
+        buildList {
+            add(CelebrationStep.DONE)
+            if (celebration != null) add(CelebrationStep.XP)
+            if (celebration?.levelUp != null) add(CelebrationStep.LEVEL)
+            if (!selection.isEmpty) add(CelebrationStep.HIGHLIGHTS)
+        }
+    }
     var step by rememberSaveable(session.id) { mutableIntStateOf(0) }
     val reducedMotion = thrymMotion.reduced
     val haptic = rememberHapticFeedback()
-    val advance = { if (step < CELEBRATION_STEPS - 1) step += 1 else onFinish() }
+    val advance = { if (step < steps.lastIndex) step += 1 else onFinish() }
     BackHandler(onBack = onFinish)
     LaunchedEffect(step) {
-        if (step == CELEBRATION_STEPS - 1) haptic.confirm()
+        if (steps[step] == CelebrationStep.LEVEL || (step == steps.lastIndex && step > 0)) haptic.confirm()
     }
     // Liquid Glass shows the aurora behind the whole screen, like the summary that follows.
     Surface(Modifier.fillMaxSize(), color = if (isLiquidGlass()) Color.Transparent else MaterialTheme.colorScheme.background) {
@@ -117,7 +128,7 @@ internal fun WorkoutCelebration(
             Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                StepIndicator(step, Modifier.weight(1f))
+                StepIndicator(step, steps.size, Modifier.weight(1f))
                 TextButton(onClick = onFinish, colors = ThrymInteractiveColors.textButton()) {
                     Text(stringResource(WorkoutR.string.workout_celebration_skip))
                 }
@@ -129,7 +140,7 @@ internal fun WorkoutCelebration(
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = advance)
             ) {
                 AnimatedContent(
-                    targetState = step,
+                    targetState = steps[step],
                     transitionSpec = {
                         if (reducedMotion) {
                             EnterTransition.None togetherWith ExitTransition.None
@@ -140,15 +151,17 @@ internal fun WorkoutCelebration(
                     label = "celebrationStep"
                 ) { current ->
                     when (current) {
-                        0 -> DoneStep(session, rows, facts, unitSystem)
-                        else -> HighlightsStep(selection, rows, facts, unitSystem, reducedMotion)
+                        CelebrationStep.DONE -> DoneStep(session, rows, facts, unitSystem)
+                        CelebrationStep.XP -> celebration?.let { XpStep(it, reducedMotion) }
+                        CelebrationStep.LEVEL -> celebration?.levelUp?.let { LevelStep(it, facts, reducedMotion) }
+                        CelebrationStep.HIGHLIGHTS -> HighlightsStep(selection, rows, facts, unitSystem, reducedMotion)
                     }
                 }
             }
             Button(onClick = advance, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
                 Text(
                     stringResource(
-                        if (step < CELEBRATION_STEPS - 1) WorkoutR.string.workout_celebration_next else WorkoutR.string.workout_celebration_to_summary
+                        if (step < steps.lastIndex) WorkoutR.string.workout_celebration_next else WorkoutR.string.workout_celebration_to_summary
                     )
                 )
             }
@@ -157,10 +170,10 @@ internal fun WorkoutCelebration(
 }
 
 @Composable
-private fun StepIndicator(step: Int, modifier: Modifier = Modifier) {
-    val description = stringResource(WorkoutR.string.workout_celebration_step_cd, step + 1, CELEBRATION_STEPS)
+private fun StepIndicator(step: Int, count: Int, modifier: Modifier = Modifier) {
+    val description = stringResource(WorkoutR.string.workout_celebration_step_cd, step + 1, count)
     Row(modifier.semantics { contentDescription = description }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        repeat(CELEBRATION_STEPS) { index ->
+        repeat(count) { index ->
             Box(
                 Modifier
                     .width(24.dp)

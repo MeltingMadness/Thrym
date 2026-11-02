@@ -884,6 +884,10 @@ private class FakePreferencesRepository : AppPreferencesRepository {
         state.value = state.value.copy(weeklyGoalHistory = history)
     }
 
+    override suspend fun updateGamificationEnabled(enabled: Boolean) {
+        state.value = state.value.copy(gamificationEnabled = enabled)
+    }
+
     override suspend fun updateAutoApplyProgression(enabled: Boolean) {
         state.value = state.value.copy(autoApplyProgression = enabled)
     }

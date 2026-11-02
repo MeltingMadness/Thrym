@@ -107,6 +107,18 @@ struct SettingsScreen: View {
                         }
                     }
 
+                    Section("Erfolge") {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Toggle("Spielelemente anzeigen", isOn: Binding(
+                                get: { viewModel.state.gamificationEnabled },
+                                set: viewModel.updateGamificationEnabled
+                            ))
+                            Text("Level, XP und die Feier nach dem Training. Die Rekord-Marker an deinen Sätzen bleiben.")
+                                .font(.geist(.footnote))
+                                .thrymSecondaryText()
+                        }
+                    }
+
                     Section("Wochenziel") {
                         Toggle("Wochenziel anzeigen", isOn: Binding(
                             get: { viewModel.state.weeklyGoalEnabled },

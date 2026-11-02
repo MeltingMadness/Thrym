@@ -44,6 +44,8 @@ internal object AppPreferenceKeys {
     /** Goal changes as `epochDay:goal`, comma-separated (see `WeeklyGoalRules.encode`). */
     val WEEKLY_GOAL_HISTORY = stringPreferencesKey("weekly_goal_history")
     val AUTO_APPLY_PROGRESSION = booleanPreferencesKey("auto_apply_progression")
+    val GAMIFICATION_ENABLED = booleanPreferencesKey("gamification_enabled")
+    val CELEBRATED_XP = longPreferencesKey("celebrated_xp")
     val ACTIVE_WORKOUT_EXERCISE_ORDER = stringPreferencesKey("active_workout_exercise_order")
 
     fun restTimerState(sessionId: Long) =

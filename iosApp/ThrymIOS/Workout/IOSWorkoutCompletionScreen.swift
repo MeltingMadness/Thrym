@@ -56,9 +56,12 @@ struct IOSWorkoutCompletionScreen: View {
     /// Whether the records, marks and facts are computed; until then the celebration waits.
     @State private var loaded = false
     @State private var highlights = CompletionHighlightSelection(shown: [], more: 0)
+    /// XP and level-up of this workout; nil without XP or when the game elements are switched off.
+    @State private var xpCelebration: SessionCelebration?
     private var sets: [ILWorkoutSet] { store.data?.workoutSets.filter { $0.sessionId == session.id && $0.reps > 0 } ?? [] }
     private var remaining: Int { rows.compactMap(\.remainingPlannedSets).reduce(0, +) }
-    private var celebrating: Bool { celebratedSessionID != Int(session.id) && (!loaded || !highlights.isEmpty) }
+    private var showsCelebration: Bool { settings.state.gamificationEnabled && (xpCelebration != nil || !highlights.isEmpty) }
+    private var celebrating: Bool { celebratedSessionID != Int(session.id) && (!loaded || showsCelebration) }
 
     var body: some View {
         Group {
@@ -83,6 +86,7 @@ struct IOSWorkoutCompletionScreen: View {
                 session: session,
                 sets: sets,
                 facts: facts,
+                celebration: xpCelebration,
                 highlights: highlights.shown.compactMap {
                     IOSWorkoutRecords.highlightText($0, summary: recordSummary, facts: facts, unitSystem: unitSystem)
                 },
@@ -116,9 +120,12 @@ struct IOSWorkoutCompletionScreen: View {
         )
         facts = IOSRecognition.completionFacts(sessionID: session.id, sessions: data.workoutSessions, settings: settings.state)
         highlights = IOSWorkoutRecords.highlights(summary: summary, marks: marks, facts: facts)
+        if settings.state.gamificationEnabled, xpCelebration == nil, celebratedSessionID != Int(session.id) {
+            xpCelebration = IOSGamification.celebrate(sessionID: session.id, data: data, settings: settings.state)
+        }
         // The celebration plays its own haptic.
         if summary.recordCount > 0, recordsCelebratedSessionID != Int(session.id),
-           celebratedSessionID == Int(session.id) || highlights.isEmpty {
+           celebratedSessionID == Int(session.id) || !showsCelebration {
             recordsCelebratedSessionID = Int(session.id)
             let feedback = UINotificationFeedbackGenerator()
             feedback.prepare()

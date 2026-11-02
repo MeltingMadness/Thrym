@@ -47,6 +47,7 @@ interface SharedAppPreferencesRepository {
     suspend fun updateWeeklyGoalEnabled(enabled: Boolean)
     suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>)
     suspend fun updateAutoApplyProgression(enabled: Boolean)
+    suspend fun updateGamificationEnabled(enabled: Boolean)
 }
 
 interface SharedReminderScheduler {
@@ -187,6 +188,10 @@ class SettingsPreferencesController(
 
     fun updateWeeklyGoalEnabled(enabled: Boolean) {
         controllerScope.launch { appPreferencesRepository.updateWeeklyGoalEnabled(enabled) }
+    }
+
+    fun updateGamificationEnabled(enabled: Boolean) {
+        controllerScope.launch { appPreferencesRepository.updateGamificationEnabled(enabled) }
     }
 
     fun updateAutoApplyProgression(enabled: Boolean) {

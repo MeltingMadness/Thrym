@@ -237,6 +237,12 @@ fun DashboardScreen(
                 }
             }
 
+            state.level?.let { level ->
+                item(key = "level_ring") {
+                    LevelCard(level, Modifier.fillMaxWidth())
+                }
+            }
+
             if (liquidGlass) {
                 item(key = "week_strip") {
                     GlassWeekStrip(
