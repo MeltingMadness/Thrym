@@ -867,7 +867,12 @@ class ActiveWorkoutViewModel(
                             it.finishState != WorkoutFinishState.Completing && it.finishState != WorkoutFinishState.Generating
                         }
                     }
-                    _completionCelebration.value = gamificationRepository.celebrate(sessionId)
+                    try {
+                        _completionCelebration.value = gamificationRepository.celebrate(sessionId)
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        AppLogger.w("ActiveWorkoutVM", "XP nicht berechnet: ${e.message}", e)
+                    }
                 }
                 val exerciseIds = workoutRepository.getSetsForSessionList(sessionId)
                     .filter { it.reps > 0 }

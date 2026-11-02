@@ -76,7 +76,7 @@ internal fun XpStep(celebration: SessionCelebration, reducedMotion: Boolean) {
                 stringResource(WorkoutR.string.workout_celebration_xp_label),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = accent
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 stringResource(WorkoutR.string.workout_celebration_xp_gain, formatXp(celebration.xp.toLong())),
@@ -189,7 +189,7 @@ internal fun LevelStep(levelUp: LevelUp, facts: CompletionFacts?, reducedMotion:
                 ),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = accent
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             val circle = if (isChapter) 220.dp else 180.dp
             Box(
