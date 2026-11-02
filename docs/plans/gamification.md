@@ -135,8 +135,8 @@ Der Tages-Check-in (Schlaf, Energie, Stress auf 1 bis 5, an das Datum gebunden) 
 
 Jede Etappe ist ein eigener PR auf beiden Plattformen, mit Tests in `:shared` und Doku.
 
-1. **Rekord-Marker und Feier.** PR-Marker am Satz statt der Rekordmeldung; die Abschluss-Sequenz mit den Schritten 1 und 4 (Höhepunkte aus den bestehenden Rekorden, Marken und Fakten). *Umgesetzt im Branch `thrym/gamification-1-records-celebration`; Doku in `docs/design-system.md`.*
-2. **XP und Level.** `GamificationEngine` in `:shared` (XP je Training, Level, Kapitel, Sterne), XP- und Level-Schritt in der Sequenz, Level-Ring auf der Startseite, Stand „schon gefeiert“ je Gerät.
+1. **Rekord-Marker und Feier.** PR-Marker am Satz statt der Rekordmeldung; die Abschluss-Sequenz mit den Schritten 1 und 4 (Höhepunkte aus den bestehenden Rekorden, Marken und Fakten). *Umgesetzt; Doku in `docs/design-system.md`.*
+2. **XP und Level.** `GamificationEngine` in `:shared` (XP je Training, Level, Kapitel, Sterne), XP- und Level-Schritt in der Sequenz, Level-Ring auf der Startseite, Stand „schon gefeiert“ je Gerät. *Umgesetzt im Branch `thrym/gamification-2-level`; Doku in `docs/features/level-und-xp.md`. Der Bereitschafts-Ring und die Tagesform bleiben bis Etappe 4.*
 3. **Abzeichen und Erfolge.** Abzeichenregeln, Umschalter „Trainings | Erfolge“ im Verlauf, „Letzte Erfolge“ auf der Startseite, Teilen-Bild.
 4. **Tagesform je Einheit.** Check-in-Blatt beim Start, `sessionCheckIns` mit Migration und Backup-Schemasprung, Vergleich mit der Leistung, Abbau von Tages-Check-in und Bereitschafts-Ring.
 5. **Kraftstufen und Rückblicke.** Profil, Kraftstufen, Monats- und Jahresrückblick.
@@ -146,13 +146,12 @@ Etappe 4 hängt nicht von 1 bis 3 ab und kann vorgezogen werden. Der Bereitschaf
 ## Technik
 
 - **Shared:** neues Paket `com.thrym.shared.gamification` mit `XpRules`, `LevelCurve`, `Chapters`, `Badges` und `GamificationEngine.evaluate(history) → GamificationState` (XP gesamt, Level, Kapitel, Fortschritt, Abzeichenstufen, Ereignisse je Training). Eingabe sind dieselben schlanken Daten wie für Wochenziel und Marken: Startzeiten, Arbeitssätze, Rekorde, Marken und Progressionsentscheidungen. Reine Funktionen, getestet in `commonTest`.
-- **Gefeiert-Stand:** je Gerät die zuletzt gefeierte XP-Summe und Abzeichenstufen (Android DataStore, iOS UserDefaults). Nur daran entscheidet sich, ob die Sequenz einen Aufstieg zeigt. Nach einem Backup-Import wird der Stand auf den importierten Wert gesetzt, damit kein Feuerwerk über Jahre nachgeholt wird.
+- **Gefeiert-Stand:** je Gerät die zuletzt gefeierte XP-Summe und Abzeichenstufen (Android DataStore, iOS UserDefaults). Nur daran entscheidet sich, ob die Sequenz einen Aufstieg zeigt. Nach einem Backup-Import oder einer Wiederherstellung wird der Stand gelöscht; ohne Stand vergleicht die Feier nur mit dem Stand vor dem Training, damit kein Feuerwerk über Jahre nachgeholt wird.
 - **Leistung:** Die Berechnung über den ganzen Verlauf muss auch bei 1.000 Trainings schnell bleiben; sie läuft im Hintergrund und wird je Training inkrementell fortgeschrieben.
 - **Texte:** alle Kapitel- und Abzeichennamen in Englisch und Deutsch (Tabelle oben).
-- **Abschalten:** Einstellung „Spielelemente anzeigen“ (Standard an, siehe offene Punkte).
+- **Abschalten:** Einstellung „Spielelemente anzeigen“ (Standard an). Aus blendet Level, XP und die ganze Feier aus; XP zählen weiter, die Rekord-Marker bleiben. Abzeichen kommen in Etappe 3 dazu.
 
 ## Offene Punkte
 
 1. **XP-Werte:** die Tabelle oben ist ein Vorschlag; Feinschliff, sobald die Engine echte Verläufe durchrechnen kann.
-2. **Abschalten:** Soll „Spielelemente anzeigen“ alles ausblenden (Level, Abzeichen, Feier) oder nur die Feier?
-3. **Profil im Backup:** Körpergewicht, Alter und Geschlecht gehören eher ins Backup (additives Feld) als in die Einstellungen, die bei einem Gerätewechsel verloren gehen.
+2. **Profil im Backup:** Körpergewicht, Alter und Geschlecht gehören eher ins Backup (additives Feld) als in die Einstellungen, die bei einem Gerätewechsel verloren gehen.

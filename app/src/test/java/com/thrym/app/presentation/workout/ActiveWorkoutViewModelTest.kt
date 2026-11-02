@@ -130,9 +130,12 @@ class ActiveWorkoutViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(statistics: StatisticsRepository = statsRepo): ActiveWorkoutViewModel {
+    private fun createViewModel(
+        statistics: StatisticsRepository = statsRepo,
+        gamification: com.thrym.app.domain.repository.GamificationRepository = com.thrym.app.fakes.FakeGamificationRepository()
+    ): ActiveWorkoutViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statistics, progressionRepo, prefsRepo, com.thrym.app.fakes.FakeGamificationRepository(), strings = com.thrym.app.fakes.TestUiStrings)
+        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statistics, progressionRepo, prefsRepo, gamification, strings = com.thrym.app.fakes.TestUiStrings)
     }
 
     /** A set of [testExercise] (or [exerciseId]) as the statistics repository returns it for the record rules. */
@@ -727,6 +730,66 @@ class ActiveWorkoutViewModelTest {
             inputs.getValue(today.id).completedAtEpochMillis
         )
         coVerify(exactly = 0) { stats.getRecordsForExercisesList(any()) }
+    }
+
+    private fun celebrationOf(xp: Long) = com.thrym.shared.gamification.SessionCelebration(
+        xp = xp.toInt(),
+        entries = listOf(com.thrym.shared.gamification.XpEntry(com.thrym.shared.gamification.XpSource.TRAINING, 1, xp.toInt())),
+        before = com.thrym.shared.gamification.LevelCurve.progress(0L),
+        after = com.thrym.shared.gamification.LevelCurve.progress(xp),
+        levelUp = null
+    )
+
+    @Test
+    fun `loadCompletionRecords holt die Feier des Trainings nur einmal`() = runTest {
+        val gamification = com.thrym.app.fakes.FakeGamificationRepository(celebration = celebrationOf(100L))
+        val vm = createViewModel(gamification = gamification)
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        workoutRepo.finishWorkout(sessionId)
+
+        vm.loadCompletionRecords()
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.loadCompletionRecords()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(100, vm.completionCelebration.value?.xp)
+        assertEquals(listOf(sessionId), gamification.celebratedSessions)
+    }
+
+    @Test
+    fun `ausgeschaltete Spielelemente holen keine Feier`() = runTest {
+        prefsRepo.updateGamificationEnabled(false)
+        val gamification = com.thrym.app.fakes.FakeGamificationRepository(celebration = celebrationOf(100L))
+        val vm = createViewModel(gamification = gamification)
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        workoutRepo.finishWorkout(sessionId)
+
+        vm.loadCompletionRecords()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(vm.completionCelebration.value)
+        assertEquals(emptyList<Long>(), gamification.celebratedSessions)
+    }
+
+    @Test
+    fun `eine fehlgeschlagene Feier laesst die Rekorde laden`() = runTest {
+        val gamification = object : com.thrym.app.domain.repository.GamificationRepository by com.thrym.app.fakes.FakeGamificationRepository() {
+            override suspend fun celebrate(sessionId: Long) = throw IllegalStateException("xp boom")
+        }
+        val vm = createViewModel(gamification = gamification)
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        workoutRepo.finishWorkout(sessionId)
+
+        withMockedAppLoggerWarnings {
+            vm.loadCompletionRecords()
+            testDispatcher.scheduler.advanceUntilIdle()
+        }
+
+        assertNull(vm.completionCelebration.value)
+        assertNotNull(vm.completionRecordInputs.value)
     }
 
     @Test

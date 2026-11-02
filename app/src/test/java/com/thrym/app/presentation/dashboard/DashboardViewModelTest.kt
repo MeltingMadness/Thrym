@@ -108,7 +108,8 @@ class DashboardViewModelTest {
 
     private fun createViewModel(
         statistics: StatisticsRepository = statsRepo,
-        strings: com.thrym.app.presentation.common.UiStrings = TestUiStrings
+        strings: com.thrym.app.presentation.common.UiStrings = TestUiStrings,
+        gamification: com.thrym.app.domain.repository.GamificationRepository = com.thrym.app.fakes.FakeGamificationRepository()
     ) = DashboardViewModel(
         workoutRepo,
         statistics,
@@ -120,7 +121,7 @@ class DashboardViewModelTest {
         FakeDeloadRepository(),
         readinessSource,
         readinessRepo,
-        com.thrym.app.fakes.FakeGamificationRepository(),
+        gamification,
         strings = strings
     )
 
@@ -1551,6 +1552,36 @@ class DashboardViewModelTest {
 
         assertNull(vm.uiState.value.weeklyGoal)
         assertEquals(30, vm.uiState.value.pauseDays)
+    }
+
+    @Test
+    fun `die Startseite zeigt das Level und ausgeschaltet keines`() = runTest {
+        val progress = com.thrym.shared.gamification.LevelCurve.progress(400L)
+        val gamification = com.thrym.app.fakes.FakeGamificationRepository(
+            state = com.thrym.shared.gamification.GamificationState(400L, progress, emptyList())
+        )
+
+        val on = createViewModel(gamification = gamification)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(progress, on.uiState.value.level)
+
+        preferencesRepo.updateGamificationEnabled(false)
+        val off = createViewModel(gamification = gamification)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNull(off.uiState.value.level)
+    }
+
+    @Test
+    fun `ein Fehler beim Level laesst die Startseite stehen`() = runTest {
+        val gamification = object : com.thrym.app.domain.repository.GamificationRepository by com.thrym.app.fakes.FakeGamificationRepository() {
+            override suspend fun evaluate() = throw IllegalStateException("xp boom")
+        }
+
+        val vm = createViewModel(gamification = gamification)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(vm.uiState.value.level)
+        assertEquals(false, vm.uiState.value.isLoading)
     }
 
     private class FailingDeloadPreferencesRepository(

@@ -214,21 +214,25 @@ private struct IOSConfetti: View {
         Color(red: 0.655, green: 0.545, blue: 0.980),
         Color(red: 0.220, green: 0.741, blue: 0.973)
     ]
-    private static let pieces: [Piece] = (0..<36).map { index in
-        // A small fixed sequence, so that the pieces do not depend on a random source.
-        let a = Double((index * 37 + 11) % 97) / 97
-        let b = Double((index * 53 + 29) % 89) / 89
-        let c = Double((index * 71 + 3) % 83) / 83
-        return Piece(
-            x: a,
-            delay: b * 0.35,
-            sway: 0.02 + c * 0.05,
-            spin: 180 + a * 540,
-            width: 6 + b * 4,
-            height: 10 + c * 6,
-            color: colors[index % colors.count]
-        )
-    }
+    private static let pieces: [Piece] = {
+        // A fixed sequence (linear congruential), the same fall on every level-up.
+        var state: UInt64 = 7
+        func next() -> Double {
+            state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+            return Double(state >> 33) / Double(UInt64(1) << 31)
+        }
+        return (0..<36).map { index in
+            Piece(
+                x: next(),
+                delay: next() * 0.35,
+                sway: 0.02 + next() * 0.05,
+                spin: 180 + next() * 540,
+                width: 6 + next() * 4,
+                height: 10 + next() * 6,
+                color: colors[index % colors.count]
+            )
+        }
+    }()
 
     @State private var start = Date()
 

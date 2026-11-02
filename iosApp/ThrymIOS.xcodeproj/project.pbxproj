@@ -85,6 +85,7 @@
 		C92D55D45FDFF5281B9C6786 /* Geist-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 22EB9C83245895F54F157452 /* Geist-Regular.ttf */; };
 		C93BCDFF2B67C400BF140E7D /* IOSWorkoutExerciseCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB00E307D3548D90E540F3DF /* IOSWorkoutExerciseCard.swift */; };
 		CA780A7F21BBB24698E62B1B /* IOSExerciseStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD989975A164D1C326800EAE /* IOSExerciseStatisticsScreen.swift */; };
+		CC9C39DB931D4BF819F28DF6 /* GamificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E8FEC7346C5AE94410788C9 /* GamificationTests.swift */; };
 		CF5FD2FE5FF5913D23D26A99 /* OnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C158090446DDCF2302BD51E /* OnboardingTests.swift */; };
 		D0D50C557E77322A8F8E6567 /* Exercises.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */; };
 		D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */; };
@@ -113,6 +114,7 @@
 		08B61A56EC5B76B344A0B6AB /* IOSWorkoutFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutFormatting.swift; sourceTree = "<group>"; };
 		0ABA7C6DB97959D825730545 /* IOSDashboardDeloadCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardDeloadCard.swift; sourceTree = "<group>"; };
 		0AD65B83BB36D7689497F892 /* Readiness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Readiness.swift; sourceTree = "<group>"; };
+		0E8FEC7346C5AE94410788C9 /* GamificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamificationTests.swift; sourceTree = "<group>"; };
 		0EB30A3F5B5AAEA3BEA856FD /* ExerciseDisplayName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDisplayName.swift; sourceTree = "<group>"; };
 		0F5AED01379FA5A130354C58 /* Geist-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Bold.ttf; sourceTree = "<group>"; };
 		10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringCatalogTests.swift; sourceTree = "<group>"; };
@@ -427,6 +429,7 @@
 			7895A2550F6ED77BA59949FE /* BodyweightLoadTests.swift */,
 			D9874E75EFD4E071277479B2 /* DashboardWeekStripTests.swift */,
 			F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */,
+			0E8FEC7346C5AE94410788C9 /* GamificationTests.swift */,
 			00A68B1AAFF337FCFDA4931F /* HistoryWeekTests.swift */,
 			4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */,
 			5624491CC5906B319AE6AC57 /* LocalDayGuardTests.swift */,
@@ -656,6 +659,7 @@
 				5E2AC9B49488759F6D6D13C3 /* BodyweightLoadTests.swift in Sources */, 
 				2851A4E549A9EC0DD9E63BED /* DashboardWeekStripTests.swift in Sources */, 
 				6D4718E6C37028AAA5148B9D /* ExerciseDisplayNameTests.swift in Sources */, 
+				CC9C39DB931D4BF819F28DF6 /* GamificationTests.swift in Sources */, 
 				6DA78A548D7F2D8A288EA295 /* HistoryWeekTests.swift in Sources */, 
 				746A98C55667640D4AF4E007 /* IndividualSetTargetsTests.swift in Sources */, 
 				D7DACE2D51AC653ECDA8F8FF /* LocalDayGuardTests.swift in Sources */, 
