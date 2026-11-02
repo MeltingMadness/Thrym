@@ -60,6 +60,54 @@
         }
       }
     },
+    "%@ XP bis Kapitel %lld": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP bis Kapitel %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP to chapter %lld"
+          }
+        }
+      }
+    },
+    "%@ XP bis Stufe %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP bis Stufe %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP to tier %@"
+          }
+        }
+      }
+    },
+    "%@ XP bis zur nächsten Tat": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP bis zur nächsten Tat"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP to the next deed"
+          }
+        }
+      }
+    },
     "%@ kg": {
       "localizations": {
         "de": {
@@ -724,6 +772,46 @@
         }
       }
     },
+    "%lld Marken": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Marke"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Marken"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld mark"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld marks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld Meta-Pläne": {
       "localizations": {
         "de": {
@@ -837,6 +925,86 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld progression suggestions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Rekorde": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Rekord"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Rekorde"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld record"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld records"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Steigerungen": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Steigerung"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Steigerungen"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld increase"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld increases"
                 }
               }
             }
@@ -1057,6 +1225,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld workouts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Trainings bis hierhin": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Training bis hierhin"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Trainings bis hierhin"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld workout so far"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld workouts so far"
                 }
               }
             }
@@ -4588,6 +4796,22 @@
         }
       }
     },
+    "Comeback": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comeback"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comeback"
+          }
+        }
+      }
+    },
     "Core": {
       "localizations": {
         "de": {
@@ -4652,6 +4876,38 @@
         }
       }
     },
+    "Das Bockgespann zieht den Wagen, Berge bersten.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Bockgespann zieht den Wagen, Berge bersten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The goats pull the chariot and mountains burst."
+          }
+        }
+      }
+    },
+    "Das Federkleid": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Federkleid"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Feather Cloak"
+          }
+        }
+      }
+    },
     "Das Fehlerlimit muss zwischen 1 und 6 liegen.": {
       "localizations": {
         "de": {
@@ -4664,6 +4920,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "The stall limit must be between 1 and 6."
+          }
+        }
+      }
+    },
+    "Das Festmahl": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Festmahl"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Feast"
           }
         }
       }
@@ -5192,6 +5464,110 @@
         }
       }
     },
+    "Der Hammer": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Hammer"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Hammer"
+          }
+        }
+      }
+    },
+    "Der Hammer ist daheim, die Taten gehen weiter.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Hammer ist daheim, die Taten gehen weiter."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The hammer is home and the deeds go on."
+          }
+        }
+      }
+    },
+    "Der Hammer ist zurück.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Hammer ist zurück."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The hammer is back."
+          }
+        }
+      }
+    },
+    "Der Hammer liegt im Schoß der Braut, Thor greift zu.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Hammer liegt im Schoß der Braut, Thor greift zu."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The hammer lies in the bride's lap and Thor takes it."
+          }
+        }
+      }
+    },
+    "Der Hammer liegt nur noch %lld Rasten tief.": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Der Hammer liegt nur noch %lld Rast tief."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Der Hammer liegt nur noch %lld Rasten tief."
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The hammer lies only %lld league deep now."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The hammer lies only %lld leagues deep now."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Der Meta-Plan konnte nicht gelöscht werden.": {
       "localizations": {
         "de": {
@@ -5284,6 +5660,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "The increment must be greater than 0."
+          }
+        }
+      }
+    },
+    "Der Ruf": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Ruf"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Call"
           }
         }
       }
@@ -5396,6 +5788,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "This suggestion may be out of date."
+          }
+        }
+      }
+    },
+    "Der Wagen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Wagen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Chariot"
           }
         }
       }
@@ -5576,6 +5984,22 @@
         }
       }
     },
+    "Die List": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die List"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Ruse"
+          }
+        }
+      }
+    },
     "Die Notiz wird dauerhaft aus diesem Training entfernt.": {
       "localizations": {
         "de": {
@@ -5702,6 +6126,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "The set numbers don't allow a reliable evaluation."
+          }
+        }
+      }
+    },
+    "Die Spur": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Spur"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Trail"
           }
         }
       }
@@ -6170,6 +6610,22 @@
         }
       }
     },
+    "ERFAHRUNG": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ERFAHRUNG"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EXPERIENCE"
+          }
+        }
+      }
+    },
     "Eigengewicht": {
       "localizations": {
         "de": {
@@ -6198,6 +6654,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "A %@ percent back-off wouldn't safely lower the weight any further."
+          }
+        }
+      }
+    },
+    "Ein Ochse, acht Lachse, drei Fässer Met.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Ochse, acht Lachse, drei Fässer Met."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One ox, eight salmon, three barrels of mead."
           }
         }
       }
@@ -6470,6 +6942,22 @@
       },
       "shouldTranslate": false
     },
+    "Emblem %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emblem %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emblem %@"
+          }
+        }
+      }
+    },
     "Energie": {
       "localizations": {
         "de": {
@@ -6578,6 +7066,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tracked muscles"
+          }
+        }
+      }
+    },
+    "Erfolge": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erfolge"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Achievements"
           }
         }
       }
@@ -8011,6 +8515,62 @@
         }
       }
     },
+    "Hammer heimgeholt": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hammer heimgeholt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hammer reclaimed"
+          }
+        }
+      }
+    },
+    "Hammer noch %lld Rasten tief": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Hammer noch %lld Rast tief"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Hammer noch %lld Rasten tief"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Hammer still %lld league deep"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Hammer still %lld leagues deep"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Hantel und Platten": {
       "localizations": {
         "de": {
@@ -8348,6 +8908,22 @@
         }
       }
     },
+    "In der Halle des Riesenkönigs.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In der Halle des Riesenkönigs."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the hall of the giant king."
+          }
+        }
+      }
+    },
     "In welcher Einheit trainierst du?": {
       "localizations": {
         "de": {
@@ -8444,6 +9020,22 @@
         }
       }
     },
+    "Jötunheim": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jötunheim"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jotunheim"
+          }
+        }
+      }
+    },
     "KW %lld": {
       "comment": "Calendar week label in the history, e.g. \"KW 41\" / \"Week 41\".",
       "localizations": {
@@ -8473,6 +9065,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cable"
+          }
+        }
+      }
+    },
+    "Kapitel %lld von %lld": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapitel %lld von %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chapter %lld of %lld"
           }
         }
       }
@@ -9231,6 +9839,22 @@
         }
       }
     },
+    "Level, XP und die Feier nach dem Training. Die Rekord-Marker an deinen Sätzen bleiben.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Level, XP und die Feier nach dem Training. Die Rekord-Marker an deinen Sätzen bleiben."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Level, XP and the celebration after a workout. The record markers on your sets stay."
+          }
+        }
+      }
+    },
     "Linear": {
       "localizations": {
         "de": {
@@ -9318,6 +9942,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset local training data?"
+          }
+        }
+      }
+    },
+    "Loki leiht Freyjas Federgewand und sucht.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loki leiht Freyjas Federgewand und sucht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loki borrows Freyja's feather cloak and searches."
           }
         }
       }
@@ -10265,6 +10905,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Muscle volume"
+          }
+        }
+      }
+    },
+    "NEUE STUFE": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEUE STUFE"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEW TIER"
+          }
+        }
+      }
+    },
+    "NEUES KAPITEL": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEUES KAPITEL"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEW CHAPTER"
           }
         }
       }
@@ -13570,6 +14242,22 @@
         }
       }
     },
+    "Spielelemente anzeigen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spielelemente anzeigen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show game elements"
+          }
+        }
+      }
+    },
     "Später": {
       "localizations": {
         "de": {
@@ -14306,6 +14994,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Theme mode"
+          }
+        }
+      }
+    },
+    "Thor erwacht, der Hammer ist fort.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thor erwacht, der Hammer ist fort."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thor wakes up and the hammer is gone."
+          }
+        }
+      }
+    },
+    "Thor reist als Braut verkleidet.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thor reist als Braut verkleidet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thor travels disguised as the bride."
+          }
+        }
+      }
+    },
+    "Thrym verrät: acht Rasten tief, nur gegen Freyja als Braut.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thrym verrät: acht Rasten tief, nur gegen Freyja als Braut."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thrym reveals it: eight leagues deep, and only for Freyja as his bride."
           }
         }
       }
@@ -15879,6 +16615,22 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "WEITERE TAT": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WEITERE TAT"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FURTHER DEED"
           }
         }
       }
@@ -17791,6 +18543,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "not rated"
+          }
+        }
+      }
+    },
+    "noch %@ XP": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "noch %@ XP"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP to go"
           }
         }
       }
