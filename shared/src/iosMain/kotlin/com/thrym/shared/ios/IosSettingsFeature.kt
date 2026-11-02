@@ -158,6 +158,7 @@ class IosSettingsFeature {
     fun updateBackupReminderEnabled(enabled: Boolean) = controller.updateBackupReminderEnabled(enabled)
     fun updateWeeklyGoalEnabled(enabled: Boolean) = controller.updateWeeklyGoalEnabled(enabled)
     fun updateAutoApplyProgression(enabled: Boolean) = controller.updateAutoApplyProgression(enabled)
+    fun updateGamificationEnabled(enabled: Boolean) = controller.updateGamificationEnabled(enabled)
     fun updateWeeklyGoal(goal: Int, currentWeekStartEpochDay: Long) =
         controller.updateWeeklyGoal(goal, currentWeekStartEpochDay)
 
@@ -401,6 +402,7 @@ class IosSettingsState(
     /** Goal changes as `WeeklyGoalRules.encode` writes them; decode with `WeeklyGoalRules.decode`. */
     val weeklyGoalHistory: String,
     val autoApplyProgression: Boolean,
+    val gamificationEnabled: Boolean,
     val versionName: String,
     val versionCode: Int,
 )
@@ -460,6 +462,9 @@ internal class IosAppPreferencesRepository(
         persist { it.copy(weeklyGoalHistory = history) }
     override suspend fun updateAutoApplyProgression(enabled: Boolean) =
         persist { it.copy(autoApplyProgression = enabled) }
+
+    override suspend fun updateGamificationEnabled(enabled: Boolean) =
+        persist { it.copy(gamificationEnabled = enabled) }
 
     private fun persist(transform: (AppPreferences) -> AppPreferences) {
         val updated = transform(mutablePreferences.value)
@@ -531,6 +536,7 @@ internal class IosAppPreferencesRepository(
             weeklyGoalEnabled = userDefaults.boolOrDefault(Keys.weeklyGoalEnabled, defaults.weeklyGoalEnabled),
             weeklyGoalHistory = WeeklyGoalRules.decode(userDefaults.stringForKey(Keys.weeklyGoalHistory)),
             autoApplyProgression = userDefaults.boolOrDefault(Keys.autoApplyProgression, defaults.autoApplyProgression),
+            gamificationEnabled = userDefaults.boolOrDefault(Keys.gamificationEnabled, defaults.gamificationEnabled),
         )
     }
 
@@ -596,6 +602,7 @@ internal class IosAppPreferencesRepository(
         userDefaults.setBool(preferences.weeklyGoalEnabled, Keys.weeklyGoalEnabled)
         userDefaults.setObject(WeeklyGoalRules.encode(preferences.weeklyGoalHistory), Keys.weeklyGoalHistory)
         userDefaults.setBool(preferences.autoApplyProgression, Keys.autoApplyProgression)
+        userDefaults.setBool(preferences.gamificationEnabled, Keys.gamificationEnabled)
     }
 
     private object Keys {
@@ -626,6 +633,7 @@ internal class IosAppPreferencesRepository(
         const val weeklyGoalEnabled = "settings.weeklyGoalEnabled"
         const val weeklyGoalHistory = "settings.weeklyGoalHistory"
         const val autoApplyProgression = "settings.autoApplyProgression"
+        const val gamificationEnabled = "settings.gamificationEnabled"
     }
 
     private fun loadAvailablePlates(defaults: List<Double>): List<Double> {
@@ -883,6 +891,7 @@ private fun SettingsPreferencesState.toIosState(buildInfo: BuildInfo): IosSettin
     weeklyGoalEnabled = preferences.weeklyGoalEnabled,
     weeklyGoalHistory = WeeklyGoalRules.encode(preferences.weeklyGoalHistory),
     autoApplyProgression = preferences.autoApplyProgression,
+    gamificationEnabled = preferences.gamificationEnabled,
     versionName = buildInfo.versionName,
     versionCode = buildInfo.versionCode,
 )

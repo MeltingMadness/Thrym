@@ -9,6 +9,13 @@ import com.thrym.app.data.local.entity.ProgressionSuggestionEntity
 import com.thrym.app.data.local.entity.WorkoutPlanTargetEntity
 import kotlinx.coroutines.flow.Flow
 
+/** What the XP need to know about an accepted suggestion. */
+data class AcceptedProgressionOutcome(
+    val sourceSessionId: Long,
+    val outcomeType: String,
+    val reasonCode: String
+)
+
 @Dao
 interface ProgressionDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
@@ -25,6 +32,9 @@ interface ProgressionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun replaceAllSuggestions(values: List<ProgressionSuggestionEntity>)
+
+    @Query("SELECT sourceSessionId, outcomeType, reasonCode FROM progression_suggestions WHERE status = 'ACCEPTED'")
+    suspend fun getAcceptedOutcomes(): List<AcceptedProgressionOutcome>
 
     @Query("SELECT * FROM workout_plan_targets WHERE sessionId = :sessionId ORDER BY orderIndex, id")
     fun observeTargetsForSession(sessionId: Long): Flow<List<WorkoutPlanTargetEntity>>

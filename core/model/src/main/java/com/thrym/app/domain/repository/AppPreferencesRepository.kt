@@ -38,6 +38,7 @@ interface AppPreferencesRepository {
     suspend fun updateWeeklyGoalEnabled(enabled: Boolean)
     suspend fun updateWeeklyGoalHistory(history: List<WeeklyGoalChange>)
     suspend fun updateAutoApplyProgression(enabled: Boolean)
+    suspend fun updateGamificationEnabled(enabled: Boolean)
 
     /**
      * Persists the active workout rest timers for one session.
@@ -60,4 +61,13 @@ interface AppPreferencesRepository {
     suspend fun readWorkoutExerciseOrder(): String? = null
 
     suspend fun writeWorkoutExerciseOrder(encoded: String?) = Unit
+
+    /**
+     * The XP sum this device celebrated last (see `GamificationEngine.celebration`). It is no
+     * setting and not part of the backup; `null` means nothing was celebrated yet or a backup was
+     * just imported.
+     */
+    suspend fun readCelebratedXp(): Long? = null
+
+    suspend fun writeCelebratedXp(xp: Long?) = Unit
 }

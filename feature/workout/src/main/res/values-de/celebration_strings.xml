@@ -11,4 +11,34 @@
         <item quantity="one">%1$d weiterer in der Zusammenfassung</item>
         <item quantity="other">%1$d weitere in der Zusammenfassung</item>
     </plurals>
+    <string name="workout_celebration_xp_label">ERFAHRUNG</string>
+    <string name="workout_celebration_xp_left">noch %1$s XP</string>
+    <string name="workout_celebration_xp_training">Training</string>
+    <string name="workout_celebration_xp_comeback">Comeback</string>
+    <string name="workout_celebration_xp_weekly_goal">Wochenziel erreicht</string>
+    <plurals name="workout_celebration_xp_marks">
+        <item quantity="one">%d Marke</item>
+        <item quantity="other">%d Marken</item>
+    </plurals>
+    <plurals name="workout_celebration_xp_records">
+        <item quantity="one">%d Rekord</item>
+        <item quantity="other">%d Rekorde</item>
+    </plurals>
+    <plurals name="workout_celebration_xp_increases">
+        <item quantity="one">%d Steigerung</item>
+        <item quantity="other">%d Steigerungen</item>
+    </plurals>
+    <string name="workout_celebration_level_tier">NEUE STUFE</string>
+    <string name="workout_celebration_level_chapter">NEUES KAPITEL</string>
+    <string name="workout_celebration_level_star">WEITERE TAT</string>
+    <plurals name="workout_celebration_hammer_rising">
+        <item quantity="one">Der Hammer liegt nur noch %d Rast tief.</item>
+        <item quantity="other">Der Hammer liegt nur noch %d Rasten tief.</item>
+    </plurals>
+    <string name="workout_celebration_hammer_home">Der Hammer ist zurück.</string>
+    <string name="workout_celebration_star_line">Der Hammer ist daheim, die Taten gehen weiter.</string>
+    <plurals name="workout_celebration_trainings_so_far">
+        <item quantity="one">%d Training bis hierhin</item>
+        <item quantity="other">%d Trainings bis hierhin</item>
+    </plurals>
 </resources>

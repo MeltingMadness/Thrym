@@ -120,6 +120,7 @@ class DashboardViewModelTest {
         FakeDeloadRepository(),
         readinessSource,
         readinessRepo,
+        com.thrym.app.fakes.FakeGamificationRepository(),
         strings = strings
     )
 
@@ -915,6 +916,7 @@ class DashboardViewModelTest {
             deloadRepo,
             readinessSource,
             readinessRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -969,6 +971,7 @@ class DashboardViewModelTest {
             FakeDeloadRepository(),
             readinessSource,
             readinessRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -998,6 +1001,7 @@ class DashboardViewModelTest {
             FakeDeloadRepository(),
             readinessSource,
             readinessRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -1025,6 +1029,7 @@ class DashboardViewModelTest {
             FakeDeloadRepository(),
             readinessSource,
             readinessRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -1252,6 +1257,7 @@ class DashboardViewModelTest {
                 workoutRepo, statsRepo, exerciseRepo, preferences, planRepo,
                 metaPlanRepo, progressionRepository, FakeDeloadRepository(),
                 readinessSource, readinessRepo,
+                com.thrym.app.fakes.FakeGamificationRepository(),
                 strings = com.thrym.app.fakes.TestUiStrings
             )
             testDispatcher.scheduler.advanceUntilIdle()

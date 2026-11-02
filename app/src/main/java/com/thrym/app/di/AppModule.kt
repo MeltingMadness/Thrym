@@ -18,6 +18,7 @@ import com.thrym.app.data.repository.DeloadRepositoryImpl
 import com.thrym.app.data.repository.ExerciseRepositoryImpl
 import com.thrym.app.data.repository.IncidentReportRepositoryImpl
 import com.thrym.app.data.repository.MetaTrainingPlanRepositoryImpl
+import com.thrym.app.data.repository.GamificationRepositoryImpl
 import com.thrym.app.data.repository.ProgressionRepositoryImpl
 import com.thrym.app.data.repository.ReadinessProjectionSourceImpl
 import com.thrym.app.data.repository.ReadinessRepositoryImpl
@@ -31,6 +32,7 @@ import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.domain.repository.IncidentReportRepository
 import com.thrym.app.domain.repository.MetaTrainingPlanRepository
 import com.thrym.app.domain.repository.OnboardingRepository
+import com.thrym.app.domain.repository.GamificationRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.repository.ReadinessProjectionSource
 import com.thrym.app.domain.repository.ReadinessRepository
@@ -122,6 +124,7 @@ val appModule = module {
     }
     single { ProgressionEngine() }
     single<ProgressionRepository> { ProgressionRepositoryImpl(get(), get(), get(), get(), get(), get()) }
+    single<GamificationRepository> { GamificationRepositoryImpl(get(), get(), get(), get(), get()) }
     single<ReadinessRepository> { ReadinessRepositoryImpl(get(), get(), get()) }
     single<ReadinessProjectionSource> { ReadinessProjectionSourceImpl(get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }

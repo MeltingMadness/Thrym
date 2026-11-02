@@ -515,6 +515,15 @@ fun SettingsScreen(
             }
 
             item {
+                PreferenceCard(title = stringResource(id = R.string.settings_gamification)) {
+                    ToggleRow(
+                        title = stringResource(id = R.string.settings_gamification_show),
+                        subtitle = stringResource(id = R.string.settings_gamification_hint),
+                        checked = state.preferences.gamificationEnabled,
+                        onCheckedChange = viewModel::updateGamificationEnabled
+                    )
+                }
+
                 PreferenceCard(title = stringResource(id = R.string.settings_weekly_goal)) {
                     ToggleRow(
                         title = stringResource(id = R.string.settings_weekly_goal_show),

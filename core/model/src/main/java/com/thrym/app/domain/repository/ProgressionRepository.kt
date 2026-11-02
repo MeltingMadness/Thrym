@@ -26,6 +26,9 @@ interface ProgressionRepository {
         finalTargetsBySuggestionId: Map<Long, ProgressionTarget>
     ): ProgressionDecisionResult
     suspend fun rejectSuggestion(suggestionId: Long)
+
+    /** The source workout, once per accepted increase ([ProgressionAutoApply]), for the XP. */
+    suspend fun getAcceptedIncreaseSessionIds(): List<Long> = emptyList()
 }
 
 const val RECENT_DECISIONS_LIMIT = 50

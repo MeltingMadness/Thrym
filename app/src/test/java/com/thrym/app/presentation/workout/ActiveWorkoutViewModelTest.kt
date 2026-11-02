@@ -132,7 +132,7 @@ class ActiveWorkoutViewModelTest {
 
     private fun createViewModel(statistics: StatisticsRepository = statsRepo): ActiveWorkoutViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statistics, progressionRepo, prefsRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statistics, progressionRepo, prefsRepo, com.thrym.app.fakes.FakeGamificationRepository(), strings = com.thrym.app.fakes.TestUiStrings)
     }
 
     /** A set of [testExercise] (or [exerciseId]) as the statistics repository returns it for the record rules. */
@@ -424,6 +424,7 @@ class ActiveWorkoutViewModelTest {
             stats,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -453,6 +454,7 @@ class ActiveWorkoutViewModelTest {
             stats,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -489,6 +491,7 @@ class ActiveWorkoutViewModelTest {
             stats,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -794,7 +797,7 @@ class ActiveWorkoutViewModelTest {
 
         // Create ViewModel with planId
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, com.thrym.app.fakes.FakeGamificationRepository(), strings = com.thrym.app.fakes.TestUiStrings)
 
         val collector = backgroundScope.launch { vm.uiState.collect() }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -974,6 +977,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
@@ -1050,6 +1054,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
@@ -1130,6 +1135,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
@@ -1211,6 +1217,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
@@ -1308,6 +1315,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
@@ -1463,6 +1471,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1541,6 +1550,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1641,7 +1651,7 @@ class ActiveWorkoutViewModelTest {
         )
 
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, com.thrym.app.fakes.FakeGamificationRepository(), strings = com.thrym.app.fakes.TestUiStrings)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1710,7 +1720,7 @@ class ActiveWorkoutViewModelTest {
         )
 
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, com.thrym.app.fakes.FakeGamificationRepository(), strings = com.thrym.app.fakes.TestUiStrings)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1770,6 +1780,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1839,7 +1850,7 @@ class ActiveWorkoutViewModelTest {
     @Test
     fun `hinzugefuegte Uebungen ueberleben Prozesstod ueber SavedStateHandle`() = runTest {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, com.thrym.app.fakes.FakeGamificationRepository(), strings = com.thrym.app.fakes.TestUiStrings)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1851,7 +1862,7 @@ class ActiveWorkoutViewModelTest {
 
         // Simulate process death + recreation: a new ViewModel instance is created
         // with the same (restored) SavedStateHandle, before any sets exist.
-        val restoredVm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.thrym.app.fakes.TestUiStrings)
+        val restoredVm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, com.thrym.app.fakes.FakeGamificationRepository(), strings = com.thrym.app.fakes.TestUiStrings)
         val restoredCollector = backgroundScope.launch { restoredVm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1912,6 +1923,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1931,6 +1943,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val restoredCollector = backgroundScope.launch { restoredVm.uiState.collect { } }
@@ -1991,6 +2004,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -2243,6 +2257,7 @@ class ActiveWorkoutViewModelTest {
             statsRepo,
             gatedProgressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -2538,6 +2553,7 @@ class ActiveWorkoutViewModelTest {
             stats,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -2754,6 +2770,7 @@ class ActiveWorkoutViewModelTest {
             blockingStats,
             progressionRepo,
             prefsRepo,
+            com.thrym.app.fakes.FakeGamificationRepository(),
             strings = com.thrym.app.fakes.TestUiStrings
         )
 
@@ -2922,6 +2939,7 @@ class ActiveWorkoutViewModelTest {
         statsRepo,
         progressionRepository,
         prefsRepo,
+        com.thrym.app.fakes.FakeGamificationRepository(),
         strings = com.thrym.app.fakes.TestUiStrings
     )
 

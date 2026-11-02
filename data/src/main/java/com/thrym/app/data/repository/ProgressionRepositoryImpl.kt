@@ -2,6 +2,7 @@ package com.thrym.app.data.repository
 
 import com.thrym.shared.progression.isProgressionWorkSet
 
+import com.thrym.shared.progression.ProgressionAutoApply
 import com.thrym.app.data.db.TransactionRunner
 import com.thrym.app.data.local.dao.ProgressionDao
 import com.thrym.app.data.local.dao.TrainingPlanDao
@@ -236,6 +237,11 @@ class ProgressionRepositoryImpl(
         }
         ProgressionDecisionResult.Accepted(rows.mapTo(linkedSetOf()) { it.id })
     }
+
+    override suspend fun getAcceptedIncreaseSessionIds(): List<Long> =
+        progressionDao.getAcceptedOutcomes()
+            .filter { ProgressionAutoApply.isSafeIncrease(it.outcomeType, it.reasonCode) }
+            .map { it.sourceSessionId }
 
     override suspend fun rejectSuggestion(suggestionId: Long) {
         val row = progressionDao.getSuggestionsByIds(setOf(suggestionId)).singleOrNull() ?: return

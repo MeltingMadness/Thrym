@@ -12,4 +12,36 @@
         <item quantity="one">%1$d more in the summary</item>
         <item quantity="other">%1$d more in the summary</item>
     </plurals>
+    <string name="workout_celebration_xp_label">EXPERIENCE</string>
+    <string name="workout_celebration_xp_gain" translatable="false">+%1$s</string>
+    <string name="workout_celebration_xp_unit" translatable="false">XP</string>
+    <string name="workout_celebration_xp_left">%1$s XP to go</string>
+    <string name="workout_celebration_xp_training">Workout</string>
+    <string name="workout_celebration_xp_comeback">Comeback</string>
+    <string name="workout_celebration_xp_weekly_goal">Weekly goal reached</string>
+    <plurals name="workout_celebration_xp_marks">
+        <item quantity="one">%d mark</item>
+        <item quantity="other">%d marks</item>
+    </plurals>
+    <plurals name="workout_celebration_xp_records">
+        <item quantity="one">%d record</item>
+        <item quantity="other">%d records</item>
+    </plurals>
+    <plurals name="workout_celebration_xp_increases">
+        <item quantity="one">%d increase</item>
+        <item quantity="other">%d increases</item>
+    </plurals>
+    <string name="workout_celebration_level_tier">NEW TIER</string>
+    <string name="workout_celebration_level_chapter">NEW CHAPTER</string>
+    <string name="workout_celebration_level_star">FURTHER DEED</string>
+    <plurals name="workout_celebration_hammer_rising">
+        <item quantity="one">The hammer lies only %d league deep now.</item>
+        <item quantity="other">The hammer lies only %d leagues deep now.</item>
+    </plurals>
+    <string name="workout_celebration_hammer_home">The hammer is back.</string>
+    <string name="workout_celebration_star_line">The hammer is home and the deeds go on.</string>
+    <plurals name="workout_celebration_trainings_so_far">
+        <item quantity="one">%d workout so far</item>
+        <item quantity="other">%d workouts so far</item>
+    </plurals>
 </resources>

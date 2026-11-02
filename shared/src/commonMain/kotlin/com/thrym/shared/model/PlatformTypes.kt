@@ -112,7 +112,9 @@ data class AppPreferences(
     /** Goal per week from its change on; empty means the default goal throughout. */
     val weeklyGoalHistory: List<WeeklyGoalChange> = emptyList(),
     /** Applies the coach's increases to the plan after a workout ([com.thrym.shared.progression.ProgressionAutoApply]). */
-    val autoApplyProgression: Boolean = false
+    val autoApplyProgression: Boolean = false,
+    /** Shows level, XP and the celebration after a workout; the XP keep counting when it is off. */
+    val gamificationEnabled: Boolean = true
 ) {
     /** Goal of the week starting at [weekStartEpochDay]. */
     fun weeklyGoalFor(weekStartEpochDay: Long): Int = WeeklyGoalRules.goalFor(weeklyGoalHistory, weekStartEpochDay)

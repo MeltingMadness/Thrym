@@ -1,5 +1,6 @@
 package com.thrym.app.presentation.workout
 
+import com.thrym.shared.gamification.SessionCelebration
 import com.thrym.shared.recognition.CompletionFacts
 import com.thrym.shared.recognition.CompletionHighlights
 import androidx.compose.foundation.BorderStroke
@@ -93,7 +94,7 @@ internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, err
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<ExerciseWithSets>, recordInputs: List<RecordSetInput>?, facts: CompletionFacts?, unitSystem: UnitSystem,
+internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<ExerciseWithSets>, recordInputs: List<RecordSetInput>?, facts: CompletionFacts?, celebration: SessionCelebration?, gamificationEnabled: Boolean, unitSystem: UnitSystem,
     loaded: Boolean, finishState: WorkoutFinishState, onClose: () -> Unit, onDetails: () -> Unit, onPlanEditor: () -> Unit,
     onProgression: () -> Unit, onRetryProgression: () -> Unit) {
     var showPlanChanges by rememberSaveable(session.id) { mutableStateOf(false) }
@@ -125,11 +126,12 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
             Surface(Modifier.fillMaxSize(), color = if (isLiquidGlass()) Color.Transparent else MaterialTheme.colorScheme.background) {}
             return
         }
-        if (!highlights.isEmpty) {
+        if (gamificationEnabled && (celebration != null || !highlights.isEmpty)) {
             WorkoutCelebration(
                 session = session,
                 rows = rows,
                 facts = facts,
+                celebration = celebration,
                 selection = highlights,
                 unitSystem = unitSystem,
                 onFinish = {
