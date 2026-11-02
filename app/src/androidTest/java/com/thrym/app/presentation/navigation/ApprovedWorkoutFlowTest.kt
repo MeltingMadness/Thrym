@@ -15,6 +15,7 @@ import com.thrym.app.domain.repository.*
 import com.thrym.app.presentation.theme.ThrymTheme
 import com.thrym.core.designsystem.R
 import com.thrym.feature.plans.R as PlansR
+import com.thrym.feature.workout.R as WorkoutR
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import android.content.Context
@@ -92,6 +93,10 @@ class ApprovedWorkoutFlowTest {
         val finishAnyway = text(R.string.workout_finish_confirm_partial)
         awaitEnabled(hasText(finishAnyway))
         ui.onNodeWithText(finishAnyway).performClick()
+        // Every finished workout opens with the celebration; the summary comes after it.
+        val skipCelebration = text(WorkoutR.string.workout_celebration_skip)
+        awaitText(skipCelebration)
+        ui.onNodeWithText(skipCelebration).performClick()
         awaitText(text(R.string.workout_summary_headline_partial))
         capture("android-summary")
         runBlocking {

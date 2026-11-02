@@ -452,6 +452,12 @@ class NavigationSmokeTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText(finishConfirm).performClick()
+        // Jedes beendete Training beginnt mit der Feier; die Zusammenfassung kommt danach.
+        val skipCelebration = text(WorkoutR.string.workout_celebration_skip)
+        waitOrDump(30_000L) {
+            composeRule.onAllNodesWithText(skipCelebration).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(skipCelebration).performClick()
         waitOrDump(30_000L) {
             composeRule.onAllNodesWithText(text(R.string.workout_summary_headline_complete)).fetchSemanticsNodes().isNotEmpty()
         }
