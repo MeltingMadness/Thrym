@@ -52,6 +52,6 @@ Eine geplante Übung bekommt einen positiven Hinweis, wenn im letzten relevanten
 
 - Rotation und Überspringen: `MetaTrainingPlanRepository` / `MetaTrainingPlanDao`
 - Startdialog: `feature/dashboard/.../PlanSelectionSheet.kt`
-- Pläne-Tab mit Umschalter: `feature/plans/.../TrainingPlanListScreen.kt`, `PlansGlass.kt` (`PlansModeSwitcher`), `MetaPlanListCard.kt`; iOS `iosApp/ThrymIOS/Plans/IOSPlansScreen.swift` (`IOSPlansModeSwitcher`)
+- Pläne-Tab mit Umschalter: `feature/plans/.../TrainingPlanListScreen.kt`, `PlansGlass.kt` (`PlansModeSwitcher`), `MetaPlanListCard.kt`; iOS `iosApp/ThrymIOS/Plans/IOSPlansScreen.swift` mit `ThrymModeSwitcher` (`iosApp/ThrymIOS/Design/ThrymModeSwitcher.swift`)
 - Editor: `feature/plans/.../MetaPlanEditor*`, iOS `IOSMetaPlanEditorScreen.swift`
 - Tests (Emulator): `app/src/androidTest/.../MetaPlanSkipDaoTest.kt`, `WorkoutSetDaoContextScopeTest.kt`
