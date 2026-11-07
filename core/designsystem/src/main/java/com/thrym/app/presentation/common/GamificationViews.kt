@@ -70,7 +70,7 @@ fun formatXp(xp: Long): String = NumberFormat.getIntegerInstance().format(xp)
 fun levelTitle(progress: LevelProgress): String {
     val name = stringResource(chapterNameRes(progress.chapter))
     return if (progress.stars > 0) {
-        stringResource(R.string.gamification_level_title_stars, name, progress.stars)
+        stringResource(R.string.gamification_level_title_stars, name, formatXp(progress.stars.toLong()))
     } else {
         stringResource(R.string.gamification_level_title, name, tierNumeral(progress.tier))
     }

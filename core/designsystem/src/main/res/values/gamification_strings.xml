@@ -18,7 +18,7 @@
     <string name="gamification_scene_7">One ox, eight salmon, three barrels of mead.</string>
     <string name="gamification_scene_8">The hammer lies in the bride\'s lap and Thor takes it.</string>
     <string name="gamification_level_title" translatable="false">%1$s %2$s</string>
-    <string name="gamification_level_title_stars" translatable="false">%1$s · %2$d ★</string>
+    <string name="gamification_level_title_stars" translatable="false">%1$s · %2$s ★</string>
     <string name="gamification_chapter_of">Chapter %1$d of %2$d</string>
     <plurals name="gamification_hammer_depth">
         <item quantity="one">Hammer still %d league deep</item>
