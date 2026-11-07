@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -28,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.res.stringResource
@@ -65,13 +67,15 @@ import com.thrym.shared.recognition.TrainingMilestones
 
 /**
  * The achievements of the history: the current stand, the eight chapters of the hero's journey
- * and how XP are earned, with the user's own total per source.
+ * and how XP are earned, with the user's own total per source. [listState] comes from the
+ * screen, so the list keeps its position while the history shows the workouts.
  */
 @Composable
 internal fun AchievementsView(
     content: AchievementsContent,
     glass: Boolean,
     onRetry: () -> Unit,
+    listState: LazyListState,
     modifier: Modifier = Modifier
 ) {
     when (content) {
@@ -96,15 +100,21 @@ internal fun AchievementsView(
             }
         }
 
-        is AchievementsContent.Ready -> AchievementsList(content, glass, modifier)
+        is AchievementsContent.Ready -> AchievementsList(content, glass, listState, modifier)
     }
 }
 
 @Composable
-private fun AchievementsList(content: AchievementsContent.Ready, glass: Boolean, modifier: Modifier) {
+private fun AchievementsList(
+    content: AchievementsContent.Ready,
+    glass: Boolean,
+    listState: LazyListState,
+    modifier: Modifier
+) {
     val dims = thrymDimens
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
+        state = listState,
         contentPadding = PaddingValues(horizontal = if (glass) 16.dp else dims.spacingMd, vertical = dims.spacingSm),
         verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
     ) {
@@ -239,7 +249,8 @@ private fun SectionHeader(title: String, intro: String? = null) {
 
 /**
  * One chapter: emblem, number, name and how far it is. The current chapter carries a tint of its
- * accent; a chapter still ahead shows a dimmed, grey emblem and no scene yet.
+ * accent; a chapter still ahead shows a dimmed, grey emblem, its number and threshold in the
+ * secondary text color and no scene yet.
  */
 @Composable
 private fun ChapterRow(chapter: JourneyChapter) {
@@ -297,7 +308,11 @@ private fun ChapterRow(chapter: JourneyChapter) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            Text(text = detail, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = detail,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (locked) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified
+            )
             if (!locked) {
                 Text(
                     text = stringResource(chapterSceneRes(chapter.chapter)),
@@ -309,7 +324,10 @@ private fun ChapterRow(chapter: JourneyChapter) {
     }
 }
 
-/** After the last chapter: the deeds that follow, one star each. */
+/**
+ * After the last chapter: the deeds that follow, one star each. Built like a chapter row, with a
+ * star in place of the emblem and without a highlight.
+ */
 @Composable
 private fun FurtherDeedsRow(progress: LevelProgress) {
     val accent = chapterAccent(LevelCurve.CHAPTERS)
@@ -326,7 +344,7 @@ private fun FurtherDeedsRow(progress: LevelProgress) {
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = stringResource(HistoryR.string.achievements_stars, progress.stars),
+                text = stringResource(HistoryR.string.achievements_stars, formatXp(progress.stars.toLong())).uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = accent
@@ -372,7 +390,7 @@ private fun XpSourceRow(total: XpTotal) {
             )
             if (total.count > 0) {
                 Text(
-                    text = stringResource(HistoryR.string.achievements_count, total.count),
+                    text = stringResource(HistoryR.string.achievements_count, formatXp(total.count.toLong())),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

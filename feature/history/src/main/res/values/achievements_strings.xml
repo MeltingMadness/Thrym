@@ -16,7 +16,7 @@
     <string name="achievements_chapter_tier">Tier %1$s of %2$s</string>
     <string name="achievements_chapter_from">From %1$s XP</string>
     <string name="achievements_further_deeds">Further deeds</string>
-    <string name="achievements_stars" translatable="false">%1$d ★</string>
+    <string name="achievements_stars" translatable="false">%1$s ★</string>
 
     <!-- Achievements: how you earn XP. The rule numbers are the engine's constants, all above one. -->
     <string name="achievements_xp_title">How you earn XP</string>
@@ -33,6 +33,6 @@
     <string name="achievements_rule_weekly_goal">%1$d XP when you reach your weekly goal</string>
     <string name="achievements_rule_comeback">%1$d XP for your first workout after a %2$d-day break</string>
     <string name="achievements_xp_amount" translatable="false">%1$s XP</string>
-    <string name="achievements_count" translatable="false">%1$d×</string>
+    <string name="achievements_count" translatable="false">%1$s×</string>
     <string name="achievements_xp_footer">At most %1$d XP per workout. More sets earn nothing, more progress does.</string>
 </resources>

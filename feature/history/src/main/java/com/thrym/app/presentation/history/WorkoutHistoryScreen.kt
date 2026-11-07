@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -65,6 +67,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -153,6 +156,12 @@ fun WorkoutHistoryScreen(
     // The request already counts in the frame it arrives in, so the old mode never flashes.
     val display = resolveHistoryMode(requestedMode ?: selectedMode, achievements.gamificationEnabled)
 
+    // Above the modes, so that each keeps its scroll position when the switcher changes them.
+    val workoutListState = rememberLazyListState()
+    val timeChipsScroll = rememberScrollState()
+    val planChipsScroll = rememberScrollState()
+    val achievementsListState = rememberLazyListState()
+
     LaunchedEffect(state.error) {
         state.error?.let {
             snackbarHostState.showSnackbar(it)
@@ -187,12 +196,23 @@ fun WorkoutHistoryScreen(
 
             when (display.mode) {
                 null -> Unit
-                HistoryMode.ACHIEVEMENTS -> AchievementsView(
-                    content = achievements.content,
-                    glass = glass,
-                    onRetry = achievementsViewModel::retry,
-                    modifier = Modifier.weight(1f)
-                )
+                HistoryMode.ACHIEVEMENTS -> {
+                    // Each time the achievements show, after a mode switch, a tab switch or a
+                    // return to the app, they are computed again: not every change of the XP,
+                    // such as an edited set or an accepted increase, reaches a flow the view
+                    // model observes.
+                    LifecycleResumeEffect(Unit) {
+                        achievementsViewModel.refresh()
+                        onPauseOrDispose { }
+                    }
+                    AchievementsView(
+                        content = achievements.content,
+                        glass = glass,
+                        onRetry = achievementsViewModel::retry,
+                        listState = achievementsListState,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 HistoryMode.WORKOUTS -> {
                     if (glass) {
                         GlassHistorySearchField(
@@ -209,7 +229,9 @@ fun WorkoutHistoryScreen(
                         filter = state.filter,
                         plans = state.plans,
                         onPlanSelected = viewModel::setPlanFilter,
-                        onTimeRangeSelected = viewModel::setTimeRange
+                        onTimeRangeSelected = viewModel::setTimeRange,
+                        timeChipsScroll = timeChipsScroll,
+                        planChipsScroll = planChipsScroll
                     )
 
                     when (resolveHistoryContentState(pagedWorkouts.loadState.refresh, pagedWorkouts.itemCount)) {
@@ -263,6 +285,7 @@ fun WorkoutHistoryScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f),
+                                state = workoutListState,
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = dims.spacingSm),
                                 verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                             ) {
@@ -301,6 +324,7 @@ fun WorkoutHistoryScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f),
+                                state = workoutListState,
                                 contentPadding = PaddingValues(dims.spacingMd),
                                 verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                             ) {
@@ -413,7 +437,9 @@ private fun HistoryFilterBar(
     filter: HistoryFilter,
     plans: List<TrainingPlan>,
     onPlanSelected: (Long?) -> Unit,
-    onTimeRangeSelected: (HistoryTimeRange) -> Unit
+    onTimeRangeSelected: (HistoryTimeRange) -> Unit,
+    timeChipsScroll: ScrollState,
+    planChipsScroll: ScrollState
 ) {
     val dims = thrymDimens
     Column(
@@ -424,6 +450,7 @@ private fun HistoryFilterBar(
     ) {
         FilterRow(
             label = stringResource(HistoryR.string.history_filter_time_label),
+            scrollState = timeChipsScroll,
             chips = HistoryTimeRange.entries.map { range ->
                 HistoryFilterChip(
                     text = stringResource(timeRangeLabelRes(range)),
@@ -434,6 +461,7 @@ private fun HistoryFilterBar(
         )
         FilterRow(
             label = stringResource(HistoryR.string.history_filter_plan_label),
+            scrollState = planChipsScroll,
             chips = buildList {
                 add(
                     HistoryFilterChip(
@@ -460,12 +488,13 @@ private fun HistoryFilterBar(
 @Composable
 private fun FilterRow(
     label: String,
+    scrollState: ScrollState,
     chips: List<HistoryFilterChip>
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
+            .horizontalScroll(scrollState),
         horizontalArrangement = Arrangement.spacedBy(thrymDimens.spacingXs),
         verticalAlignment = Alignment.CenterVertically
     ) {

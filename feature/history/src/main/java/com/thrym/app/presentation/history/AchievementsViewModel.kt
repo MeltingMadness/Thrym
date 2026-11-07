@@ -7,6 +7,7 @@ import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.model.WeekStart
 import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.domain.repository.GamificationRepository
+import com.thrym.app.domain.repository.StatisticsRepository
 import com.thrym.app.domain.repository.WorkoutRepository
 import com.thrym.app.domain.util.AppLogger
 import com.thrym.shared.gamification.HeroJourney
@@ -21,14 +22,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,11 +57,13 @@ data class AchievementsUiState(
 
 /**
  * The achievements of the history tab. They come from the same derived state as the level card
- * on the dashboard and are computed again when a completed workout or a setting they depend on
- * changes. With game elements off nothing is computed.
+ * on the dashboard and are computed again when a completed workout, a record or a setting they
+ * depend on changes, and through [refresh] whenever the screen shows them, which also catches
+ * edited sets and accepted increases. With game elements off nothing is computed.
  */
 class AchievementsViewModel(
     private val workoutRepository: WorkoutRepository,
+    private val statisticsRepository: StatisticsRepository,
     private val appPreferencesRepository: AppPreferencesRepository,
     private val gamificationRepository: GamificationRepository
 ) : ViewModel() {
@@ -67,7 +71,8 @@ class AchievementsViewModel(
     private val _uiState = MutableStateFlow(AchievementsUiState())
     val uiState: StateFlow<AchievementsUiState> = _uiState.asStateFlow()
 
-    private val retries = MutableStateFlow(0)
+    /** Counts the retries and refreshes; each new value computes the achievements again. */
+    private val reloads = MutableStateFlow(0)
 
     /** The evaluation reads the whole history, so it runs off the main thread. */
     @VisibleForTesting
@@ -77,9 +82,20 @@ class AchievementsViewModel(
         observeJourney()
     }
 
-    /** Computes the achievements again after an error. */
+    /** Computes the achievements again after an error, also when observing the data failed. */
     fun retry() {
-        retries.update { it + 1 }
+        reloads.update { it + 1 }
+    }
+
+    /**
+     * Computes the achievements again when the screen shows them, because not every change of the
+     * XP reaches the observed flows. Shown achievements stay until the new ones are there; while
+     * the first evaluation still runs nothing happens, so opening the achievements loads once.
+     */
+    fun refresh() {
+        if (_uiState.value.content !is AchievementsContent.Loading) {
+            reloads.update { it + 1 }
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -91,14 +107,23 @@ class AchievementsViewModel(
                 .onEach { settings -> _uiState.update { it.copy(gamificationEnabled = settings.gamificationEnabled) } }
                 .flatMapLatest { settings ->
                     if (settings.gamificationEnabled) {
-                        combine(workoutRepository.getAllCompletedSessions(), retries) { _, _ -> Unit }
+                        // Records follow edited and deleted sets, like the refresh of the dashboard.
+                        combine(
+                            workoutRepository.getAllCompletedSessions(),
+                            statisticsRepository.getRecentRecords(limit = 1),
+                            reloads
+                        ) { _, _, _ -> Unit }
                     } else {
                         emptyFlow()
                     }
                 }
-                .catch { e ->
-                    AppLogger.w(TAG, "Erfolge nicht beobachtet: ${e.message}", e)
+                .retryWhen { cause, _ ->
+                    AppLogger.w(TAG, "Erfolge nicht beobachtet: ${cause.message}", cause)
                     _uiState.update { it.copy(content = AchievementsContent.Error) }
+                    // Observe again from the start once a retry or a refresh asks for it.
+                    val failedAt = reloads.value
+                    reloads.first { it != failedAt }
+                    true
                 }
                 .collectLatest {
                     // A refresh keeps the shown journey; only a first load or a retry shows progress.

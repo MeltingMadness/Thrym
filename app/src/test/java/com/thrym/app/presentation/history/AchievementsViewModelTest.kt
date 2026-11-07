@@ -1,12 +1,16 @@
 package com.thrym.app.presentation.history
 
 import com.thrym.app.domain.model.AppPreferences
+import com.thrym.app.domain.model.PersonalRecord
+import com.thrym.app.domain.model.RecordType
 import com.thrym.app.domain.model.ThemeMode
 import com.thrym.app.domain.model.WeekStart
 import com.thrym.app.domain.model.WorkoutSession
+import com.thrym.app.domain.repository.WorkoutRepository
 import com.thrym.app.domain.util.AppLogger
 import com.thrym.app.fakes.FakeAppPreferencesRepository
 import com.thrym.app.fakes.FakeGamificationRepository
+import com.thrym.app.fakes.FakeStatisticsRepository
 import com.thrym.app.fakes.FakeWorkoutRepository
 import com.thrym.shared.gamification.ChapterStatus
 import com.thrym.shared.gamification.GamificationState
@@ -22,6 +26,8 @@ import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -33,6 +39,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -40,6 +47,7 @@ class AchievementsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var workoutRepo: FakeWorkoutRepository
+    private lateinit var statisticsRepo: FakeStatisticsRepository
     private lateinit var preferencesRepo: FakeAppPreferencesRepository
     private lateinit var gamificationRepo: FakeGamificationRepository
 
@@ -47,6 +55,7 @@ class AchievementsViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         workoutRepo = FakeWorkoutRepository()
+        statisticsRepo = FakeStatisticsRepository()
         preferencesRepo = FakeAppPreferencesRepository()
         gamificationRepo = FakeGamificationRepository(state = stateWith(xp = 2_300L))
     }
@@ -56,11 +65,30 @@ class AchievementsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() =
-        AchievementsViewModel(workoutRepo, preferencesRepo, gamificationRepo).also {
+    private fun createViewModel(workouts: WorkoutRepository = workoutRepo) =
+        AchievementsViewModel(workouts, statisticsRepo, preferencesRepo, gamificationRepo).also {
             // Same scheduler as the test, so advanceUntilIdle also runs the evaluation.
             it.evaluationDispatcher = testDispatcher
         }
+
+    private fun record(id: Long) = PersonalRecord(
+        id = id,
+        exerciseId = 1L,
+        type = RecordType.MAX_WEIGHT,
+        value = 100.0 + id,
+        achievedAt = LocalDateTime.now().plusMinutes(id)
+    )
+
+    /** Runs [block] with AppLogger silenced, as on the JVM it would reach android.util.Log. */
+    private inline fun <T> withSilentLogger(block: () -> T): T {
+        mockkObject(AppLogger)
+        return try {
+            every { AppLogger.w(any(), any(), any()) } returns Unit
+            block()
+        } finally {
+            unmockkObject(AppLogger)
+        }
+    }
 
     /** A state of [xp] XP: one workout with a training and a record, the rest in a second one. */
     private fun stateWith(xp: Long): GamificationState {
@@ -162,15 +190,11 @@ class AchievementsViewModelTest {
     @Test
     fun `ein Fehler zeigt den Fehlerzustand und Erneut versuchen rechnet nochmal`() = runTest(testDispatcher) {
         gamificationRepo.evaluateFailure = IllegalStateException("xp boom")
-        mockkObject(AppLogger)
-        val vm = try {
-            every { AppLogger.w(any(), any(), any()) } returns Unit
+        val vm = withSilentLogger {
             createViewModel().also {
                 advanceUntilIdle()
                 verify { AppLogger.w("AchievementsVM", any(), any()) }
             }
-        } finally {
-            unmockkObject(AppLogger)
         }
 
         assertEquals(true, vm.uiState.value.gamificationEnabled)
@@ -225,4 +249,117 @@ class AchievementsViewModelTest {
         advanceUntilIdle()
         assertEquals(2, gamificationRepo.evaluateCalls)
     }
+
+    @Test
+    fun `ein neuer Rekord rechnet die Erfolge neu`() = runTest(testDispatcher) {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        assertEquals(1, gamificationRepo.evaluateCalls)
+
+        // An edited set can change a record without a new completed workout.
+        gamificationRepo.state = stateWith(xp = 2_340L)
+        statisticsRepo.addRecord(record(1L))
+        advanceUntilIdle()
+
+        assertEquals(2, gamificationRepo.evaluateCalls)
+        assertEquals(LevelCurve.progress(2_340L), vm.ready().progress)
+    }
+
+    @Test
+    fun `refresh rechnet neu und zeigt bis dahin den alten Stand`() = runTest(testDispatcher) {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        assertEquals(LevelCurve.progress(2_300L), vm.ready().progress)
+
+        gamificationRepo.state = stateWith(xp = 2_400L)
+        val gate = CompletableDeferred<Unit>()
+        gamificationRepo.evaluateGate = gate
+        vm.refresh()
+        advanceUntilIdle()
+        // Still the shown journey, no progress indicator, while the new one is computed.
+        assertEquals(2, gamificationRepo.evaluateCalls)
+        assertEquals(LevelCurve.progress(2_300L), vm.ready().progress)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+        assertEquals(LevelCurve.progress(2_400L), vm.ready().progress)
+        assertEquals(2, gamificationRepo.evaluateCalls)
+    }
+
+    @Test
+    fun `refresh waehrend der ersten Berechnung rechnet nicht doppelt`() = runTest(testDispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        gamificationRepo.evaluateGate = gate
+        val vm = createViewModel()
+        advanceUntilIdle()
+        assertEquals(1, gamificationRepo.evaluateCalls)
+        assertEquals(AchievementsContent.Loading, vm.uiState.value.content)
+
+        // The screen asks as soon as the achievements show; the running evaluation is current.
+        vm.refresh()
+        advanceUntilIdle()
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(1, gamificationRepo.evaluateCalls)
+        assertEquals(LevelCurve.progress(2_300L), vm.ready().progress)
+    }
+
+    @Test
+    fun `ausgeschaltete Spielelemente rechnen auch bei refresh und neuen Rekorden nichts`() = runTest(testDispatcher) {
+        preferencesRepo = FakeAppPreferencesRepository(AppPreferences(gamificationEnabled = false))
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        vm.refresh()
+        vm.retry()
+        statisticsRepo.addRecord(record(1L))
+        workoutRepo.addSession(completedSession(1L))
+        advanceUntilIdle()
+
+        assertEquals(false, vm.uiState.value.gamificationEnabled)
+        assertEquals(AchievementsContent.Loading, vm.uiState.value.content)
+        assertEquals(0, gamificationRepo.evaluateCalls)
+    }
+
+    @Test
+    fun `ein Fehler beim Beobachten zeigt den Fehlerzustand und Erneut versuchen beobachtet neu`() =
+        runTest(testDispatcher) {
+            var failNext = true
+            var subscriptions = 0
+            // The first observation of the completed workouts fails, every later one works.
+            val workouts = object : WorkoutRepository by workoutRepo {
+                override fun getAllCompletedSessions(): Flow<List<WorkoutSession>> {
+                    subscriptions++
+                    return if (failNext) {
+                        failNext = false
+                        flow { throw IOException("db boom") }
+                    } else {
+                        workoutRepo.getAllCompletedSessions()
+                    }
+                }
+            }
+            val vm = withSilentLogger {
+                createViewModel(workouts).also {
+                    advanceUntilIdle()
+                    verify { AppLogger.w("AchievementsVM", any(), any()) }
+                }
+            }
+
+            assertEquals(true, vm.uiState.value.gamificationEnabled)
+            assertEquals(AchievementsContent.Error, vm.uiState.value.content)
+            assertEquals(0, gamificationRepo.evaluateCalls)
+
+            vm.retry()
+            advanceUntilIdle()
+
+            assertEquals(2, subscriptions)
+            assertEquals(LevelCurve.progress(2_300L), vm.ready().progress)
+            assertEquals(1, gamificationRepo.evaluateCalls)
+
+            // Observed again: a new workout still computes the achievements anew.
+            workoutRepo.addSession(completedSession(1L))
+            advanceUntilIdle()
+            assertEquals(2, gamificationRepo.evaluateCalls)
+        }
 }
