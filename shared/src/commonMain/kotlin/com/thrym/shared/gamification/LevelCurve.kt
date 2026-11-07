@@ -56,6 +56,9 @@ object LevelCurve {
     /** Total XP at which [level] starts. */
     fun totalXpFor(level: Int): Long = levelStarts[level.coerceIn(1, MAX_LEVEL) - 1]
 
+    /** Total XP at which [chapter] starts with its first tier. */
+    fun chapterStartXp(chapter: Int): Long = totalXpFor((chapter.coerceIn(1, CHAPTERS) - 1) * TIERS_PER_CHAPTER + 1)
+
     fun progress(totalXp: Long): LevelProgress {
         val total = totalXp.coerceAtLeast(0L)
         val level = levelStarts.indexOfLast { it <= total } + 1
