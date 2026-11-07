@@ -13,8 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.hasAnyDescendant
-import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -92,6 +90,9 @@ import java.time.LocalDateTime
 
 /** Test tag of the level card on the dashboard (DashboardScreen). */
 private const val LEVEL_CARD_TAG = "dashboard_level_card"
+
+/** Test tag of the dashboard list (DashboardScreen). */
+private const val DASHBOARD_LIST_TAG = "dashboard_list"
 
 /** Test tag of the achievements list in the history (AchievementsView). */
 private const val ACHIEVEMENTS_LIST_TAG = "achievements_list"
@@ -236,16 +237,14 @@ class NavigationSmokeTest {
     }
 
     /**
-     * Scrollt auf der Startseite zur Level-Karte und tippt sie an. [anchor] ist ein Text der
-     * Startkarte, an dem der Test die Liste der Startseite erkennt; Liquid Glass zeigt dort
-     * statt „Training starten“ den Titel der Kommandokarte.
+     * Scrollt auf der Startseite zur Level-Karte und tippt sie an. Die Liste der Startseite gibt
+     * es erst, wenn sie geladen ist. Gescrollt wird ueber ihren Tag und nicht ueber einen Text der
+     * Startkarte: Auf kleinen Bildschirmen wie dem der CI scrollt die Startkarte aus dem Bild, und
+     * nach der Rueckkehr steht die Liste noch dort.
      */
-    private fun tapLevelCard(anchor: String = text(R.string.dashboard_hero_start)) {
-        waitOrDump(30_000L) {
-            composeRule.onAllNodesWithText(anchor).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNode(hasScrollToNodeAction() and hasAnyDescendant(hasText(anchor)))
-            .performScrollToNode(hasTestTag(LEVEL_CARD_TAG))
+    private fun tapLevelCard() {
+        waitOrDump(30_000L) { exists(hasTestTag(DASHBOARD_LIST_TAG)) }
+        composeRule.onNodeWithTag(DASHBOARD_LIST_TAG).performScrollToNode(hasTestTag(LEVEL_CARD_TAG))
         composeRule.onNodeWithTag(LEVEL_CARD_TAG).performClick()
     }
 
@@ -284,12 +283,16 @@ class NavigationSmokeTest {
         composeRule.onNode(segment).performClick()
     }
 
-    /** Der Verlauf zeigt die Trainings: Suche und leere Liste, „Trainings“ gewaehlt, keine Erfolge. */
+    /**
+     * Der Verlauf zeigt die Trainings: Suche und leere Liste, „Trainings“ gewaehlt, keine Erfolge.
+     * Sichtbar geprueft wird die Suche oben; die leere Liste steht auf kleinen Bildschirmen wie
+     * dem der CI unter den Filtern ausserhalb des Bildes.
+     */
     private fun assertHistoryShowsWorkouts() {
         val search = text(HistoryR.string.history_search_placeholder)
         waitOrDump(30_000L) { existsText(search) }
         waitOrDump(30_000L) { existsText(text(R.string.history_empty_title)) }
-        composeRule.onNodeWithText(text(R.string.history_empty_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(search).assertIsDisplayed()
         composeRule.onNode(workoutsSegment()).assertIsSelected()
         composeRule.onNode(achievementsSegment()).assertIsNotSelected()
         assertFalse(existsText(emptyTotalXp()))
@@ -339,7 +342,7 @@ class NavigationSmokeTest {
         // In Liquid Glass ist die Level-Karte ein Glas-Panel mit eigenem Klickpfad.
         val navController = setContentWithBottomBar(AppearanceStyle.LIQUID_GLASS)
 
-        tapLevelCard(anchor = text(R.string.dashboard_command_title))
+        tapLevelCard()
 
         assertHistoryRootShowsAchievements(navController())
     }

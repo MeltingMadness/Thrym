@@ -105,6 +105,7 @@ private const val DAY_ROLLOVER_CHECK_INTERVAL_MS = 60_000L
 
 /** Test tag of the level card, which UI tests tap to open the achievements. */
 private const val LEVEL_CARD_TAG = "dashboard_level_card"
+private const val LIST_TAG = "dashboard_list"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,7 +178,8 @@ fun DashboardScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .testTag(LIST_TAG),
             contentPadding = PaddingValues(dims.spacingMd),
             verticalArrangement = Arrangement.spacedBy(dims.spacingMd)
         ) {
