@@ -43,6 +43,13 @@ enum IOSGamification {
         )
     }
 
+    /// The whole history counts, so this runs off the main thread.
+    static func evaluateInBackground(data: ILTrainingData, settings: SettingsFormState) async -> GamificationState {
+        await Task.detached(priority: .userInitiated) {
+            evaluate(data: data, settings: settings)
+        }.value
+    }
+
     /// The celebration of the finished workout, nil when it earned no XP. Moves the sum this
     /// device celebrated forward, so a level-up shows once.
     static func celebrate(sessionID: Int64, data: ILTrainingData, settings: SettingsFormState) -> SessionCelebration? {
@@ -116,6 +123,83 @@ enum IOSGamification {
 
     static func formatXP(_ xp: Int64) -> String {
         xp.formatted(.number)
+    }
+
+    /// "9.120 XP gesamt".
+    static func totalXP(_ xp: Int64) -> String {
+        String(localized: "\(formatXP(xp)) XP gesamt")
+    }
+
+    /// "Kapitel 3" above a chapter of the hero's journey; the overview shows it in capitals.
+    static func chapterLabel(_ chapter: Int32) -> String {
+        String(localized: "Kapitel \(Int(chapter))")
+    }
+
+    /// Where a chapter of the hero's journey stands: done, the tier reached, or the XP it starts at.
+    /// The last chapter done means the hammer is home.
+    static func chapterDetail(_ chapter: JourneyChapter) -> String {
+        switch chapter.status {
+        case .done:
+            return chapter.chapter == LevelCurve.shared.CHAPTERS
+                ? String(localized: "Hammer heimgeholt")
+                : String(localized: "Abgeschlossen")
+        case .current:
+            return String(localized: "Stufe \(tierNumeral(chapter.tier)) von \(tierNumeral(LevelCurve.shared.TIERS_PER_CHAPTER))")
+        default:
+            return String(localized: "Ab \(formatXP(chapter.startXp)) XP")
+        }
+    }
+
+    /// The name of an XP source in the overview. `bundle` lets the tests read one language.
+    static func sourceTitle(_ source: XpSource, bundle: Bundle? = nil) -> String {
+        switch source {
+        case .record: return String(localized: "Rekorde", bundle: bundle)
+        case .mark: return String(localized: "Marken", bundle: bundle)
+        case .increase: return String(localized: "Steigerungen", bundle: bundle)
+        case .weeklyGoal: return String(localized: "Wochenziel", bundle: bundle)
+        case .comeback: return String(localized: "Comeback", bundle: bundle)
+        default: return String(localized: "Trainings", bundle: bundle)
+        }
+    }
+
+    /// The rule of an XP source. The numbers come from the engine, so the text never drifts from
+    /// the rules. `bundle` lets the tests read one language.
+    static func sourceRule(_ source: XpSource, bundle: Bundle? = nil) -> String {
+        let engine = GamificationEngine.shared
+        switch source {
+        case .record:
+            return String(
+                localized: "\(Int(engine.RECORD_XP)) XP je Rekord, höchstens \(Int(engine.MAX_RECORD_EXERCISES)) Übungen je Training",
+                bundle: bundle
+            )
+        case .mark:
+            return String(localized: "\(Int(engine.MARK_XP)) XP je neuer Marke", bundle: bundle)
+        case .increase:
+            return String(
+                localized: "\(Int(engine.INCREASE_XP)) XP je übernommener Steigerung, höchstens \(Int(engine.MAX_INCREASES)) je Training",
+                bundle: bundle
+            )
+        case .weeklyGoal:
+            return String(localized: "\(Int(engine.WEEKLY_GOAL_XP)) XP, wenn du dein Wochenziel erreichst", bundle: bundle)
+        case .comeback:
+            return String(
+                localized: "\(Int(engine.COMEBACK_XP)) XP für das erste Training nach \(Int(TrainingMilestones.shared.COMEBACK_MIN_DAYS)) Tagen Pause",
+                bundle: bundle
+            )
+        default:
+            return String(
+                localized: "\(Int(engine.TRAINING_XP)) XP je Training, weitere am selben Tag \(Int(engine.FURTHER_TRAINING_SAME_DAY_XP))",
+                bundle: bundle
+            )
+        }
+    }
+
+    /// The cap per workout below the rules.
+    static func sessionCapRule(bundle: Bundle? = nil) -> String {
+        String(
+            localized: "Höchstens \(Int(GamificationEngine.shared.MAX_XP_PER_SESSION)) XP je Training. Mehr Sätze bringen keine XP, mehr Fortschritt schon.",
+            bundle: bundle
+        )
     }
 
     /// "1.240 XP bis Stufe III", and for the last step of a chapter or the journey what comes next.
@@ -199,30 +283,59 @@ struct IOSLevelRing: View {
     }
 }
 
+/// What the derived XP state depends on; a change computes it again. The dashboard and History
+/// use the same input, so both show the same state. Without the game elements the data is left
+/// out and a new workout computes nothing.
+struct IOSGamificationInput: Equatable {
+    let data: ILTrainingData?
+    let enabled: Bool
+    let weekStart: String
+    let goalHistory: String
+    let unitSystem: String
+
+    init(data: ILTrainingData?, settings: SettingsFormState) {
+        self.data = settings.gamificationEnabled ? data : nil
+        enabled = settings.gamificationEnabled
+        weekStart = settings.weekStart
+        goalHistory = settings.weeklyGoalHistory
+        unitSystem = settings.unitSystem
+    }
+}
+
 /// The place on the hero's journey: emblem in a ring, chapter, tier and the way to the next step.
+/// A tap opens the achievements in History.
 struct IOSLevelCard: View {
     let progress: LevelProgress
+    let action: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        ThrymCard(tone: .elevated) {
-            HStack(spacing: 16) {
-                IOSLevelRing(progress: progress, size: 96)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(IOSGamification.chapterOf(progress.chapter).uppercased())
-                        .font(.geist(.caption, weight: .semibold))
-                        .foregroundStyle(IOSGamification.accent(progress.chapter, dark: colorScheme == .dark))
-                    Text(IOSGamification.title(progress))
-                        .font(.geist(.title3, weight: .heavy))
-                    Text("\(IOSGamification.hammerDepth(progress)) · \(IOSGamification.nextStep(progress))")
-                        .font(.geist(.subheadline))
-                        .monospacedDigit()
+        Button(action: action) {
+            ThrymCard(tone: .elevated) {
+                HStack(spacing: 16) {
+                    IOSLevelRing(progress: progress, size: 96)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(IOSGamification.chapterOf(progress.chapter).uppercased())
+                            .font(.geist(.caption, weight: .semibold))
+                            .foregroundStyle(IOSGamification.accent(progress.chapter, dark: colorScheme == .dark))
+                        Text(IOSGamification.title(progress))
+                            .font(.geist(.title3, weight: .heavy))
+                        Text("\(IOSGamification.hammerDepth(progress)) · \(IOSGamification.nextStep(progress))")
+                            .font(.geist(.subheadline))
+                            .monospacedDigit()
+                            .thrymSecondaryText()
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
                         .thrymSecondaryText()
+                        .accessibilityHidden(true)
                 }
-                Spacer(minLength: 0)
             }
+            .accessibilityElement(children: .combine)
+            .contentShape(Rectangle())
         }
-        .accessibilityElement(children: .combine)
+        .buttonStyle(.plain)
+        .accessibilityHint("Öffnet die Erfolge")
     }
 }

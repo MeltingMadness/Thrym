@@ -28,6 +28,7 @@
 		2890A5F4C453F4E9CD5A1ECF /* IOSWorkoutSetEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8374BCAC5F0C3B2B08B511A /* IOSWorkoutSetEditor.swift */; };
 		2D11D82A07934287F0C6D91D /* ThrymTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE26BB69E200C0434567A41 /* ThrymTheme.swift */; };
 		2DADCA32056FC9E39A81773B /* ExerciseDisplayName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EB30A3F5B5AAEA3BEA856FD /* ExerciseDisplayName.swift */; };
+		302049F9583F3502AC4B0ECD /* IOSHistoryAchievements.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4606377CB77A2E72601B5B /* IOSHistoryAchievements.swift */; };
 		336D8F7D69FEA96F40791BB2 /* WorkoutRestTimerPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB67C04D1909008666D4B2AB /* WorkoutRestTimerPersistenceTests.swift */; };
 		3732B63557AB5662341F6B35 /* TrainingAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */; };
 		3801BAF1C5064B747F1AD26B /* IOSHistorySupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9957C7624D0FE9A175D74E7D /* IOSHistorySupport.swift */; };
@@ -36,9 +37,11 @@
 		3B24B3818F5BC61A3108FC8F /* IOSWeeklyVolumeTrendCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07FDBD88DA2914E215D9D54D /* IOSWeeklyVolumeTrendCard.swift */; };
 		3E4CE13DCF91E45C46CC3F1D /* RecoveryBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */; };
 		44060FDDCFA0710F19A60307 /* IOSPlansScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07378224E535901D2D24DF77 /* IOSPlansScreen.swift */; };
+		44C8A35BC479F7B71232C3E3 /* ThrymModeSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0C2DFD69E501F76BC3A76B /* ThrymModeSwitcher.swift */; };
 		45E45BC954D143A102E6FFC3 /* IOSExerciseStatisticsGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED45311162B482FCA8B63D5 /* IOSExerciseStatisticsGlass.swift */; };
 		467E9088798B4F91B92BC2FB /* IOSWorkoutCompletionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D62D6C79390AED96C5CE64DD /* IOSWorkoutCompletionScreen.swift */; };
 		468CE6AAFD00F889AD84B773 /* RestTimerAdjustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */; };
+		48F7ED6E3E4D75C9A5213DBE /* HistoryAchievementsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B8393612B8FB3E5AEF0E4E7 /* HistoryAchievementsTests.swift */; };
 		4B443243084A46AFA2758B3F /* IOSWorkoutRecordsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A09CC16E080C74D0846BCB6B /* IOSWorkoutRecordsCard.swift */; };
 		4C39681EEB74680A5230789F /* RecognitionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D92093E19C4350932AB17523 /* RecognitionTests.swift */; };
 		4E8E8D657128A78649180D91 /* IOSStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C525C5F153A16EBC353C51 /* IOSStatisticsScreen.swift */; };
@@ -136,11 +139,14 @@
 		312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
 		33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExercisePicker.swift; sourceTree = "<group>"; };
 		37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberInputFormatTests.swift; sourceTree = "<group>"; };
+		3B8393612B8FB3E5AEF0E4E7 /* HistoryAchievementsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryAchievementsTests.swift; sourceTree = "<group>"; };
 		3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAnalytics.swift; sourceTree = "<group>"; };
 		3F1FC166F267E80756524FF8 /* RestDockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestDockTests.swift; sourceTree = "<group>"; };
 		404F7BB55717CDA68382429B /* IOSProgressionReviewScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSProgressionReviewScreen.swift; sourceTree = "<group>"; };
 		480EFA64640DCC677788A06F /* IOSGamification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSGamification.swift; sourceTree = "<group>"; };
 		4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndividualSetTargetsTests.swift; sourceTree = "<group>"; };
+		4A4606377CB77A2E72601B5B /* IOSHistoryAchievements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryAchievements.swift; sourceTree = "<group>"; };
+		4C0C2DFD69E501F76BC3A76B /* ThrymModeSwitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymModeSwitcher.swift; sourceTree = "<group>"; };
 		4E5787FDE5840DAA96D9C88B /* IOSTrainingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSTrainingStore.swift; sourceTree = "<group>"; };
 		543F401A78D5C96A1EF9C75C /* ThrymMetricRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymMetricRing.swift; sourceTree = "<group>"; };
 		5520C40CCE8B86DFAAFF21F1 /* Geist-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-SemiBold.ttf; sourceTree = "<group>"; };
@@ -304,6 +310,7 @@
 			02C24432BBA49DFDD9176238 /* ThrymFont.swift */,
 			89590DC86A5380D96E31FBB3 /* ThrymLiquidGlass.swift */,
 			543F401A78D5C96A1EF9C75C /* ThrymMetricRing.swift */,
+			4C0C2DFD69E501F76BC3A76B /* ThrymModeSwitcher.swift */,
 			8EE26BB69E200C0434567A41 /* ThrymTheme.swift */,
 			0128D750AEA5D9C781C284DA /* ThrymWeeklyMuscleVolume.swift */,
 		);
@@ -406,6 +413,7 @@
 		E2102CCEDF04CE3AD3E8872E /* History */ = {
 			isa = PBXGroup;
 		children = (
+			4A4606377CB77A2E72601B5B /* IOSHistoryAchievements.swift */,
 			6028857DD325A7F9A1D2D06A /* IOSHistoryGlass.swift */,
 			2B21EECD6390D3A31BBA78E9 /* IOSHistoryScreen.swift */,
 			9957C7624D0FE9A175D74E7D /* IOSHistorySupport.swift */,
@@ -430,6 +438,7 @@
 			D9874E75EFD4E071277479B2 /* DashboardWeekStripTests.swift */,
 			F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */,
 			0E8FEC7346C5AE94410788C9 /* GamificationTests.swift */,
+			3B8393612B8FB3E5AEF0E4E7 /* HistoryAchievementsTests.swift */,
 			00A68B1AAFF337FCFDA4931F /* HistoryWeekTests.swift */,
 			4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */,
 			5624491CC5906B319AE6AC57 /* LocalDayGuardTests.swift */,
@@ -598,9 +607,11 @@
 				0CBA1C2ABF0D7495C137673E /* ThrymFont.swift in Sources */, 
 				84AAFA20CF75D4386C505FCB /* ThrymLiquidGlass.swift in Sources */, 
 				C80BB50656822CDF39C46418 /* ThrymMetricRing.swift in Sources */, 
+				44C8A35BC479F7B71232C3E3 /* ThrymModeSwitcher.swift in Sources */, 
 				2D11D82A07934287F0C6D91D /* ThrymTheme.swift in Sources */, 
 				626FB6DF1330A4D64555E2C3 /* ThrymWeeklyMuscleVolume.swift in Sources */, 
 				563D4900414C76F11063DC2C /* IOSGamification.swift in Sources */, 
+				302049F9583F3502AC4B0ECD /* IOSHistoryAchievements.swift in Sources */, 
 				916C6AF65FBA8D8B3C3542FD /* IOSHistoryGlass.swift in Sources */, 
 				8436ECBCD7C2E0A7E34D37A9 /* IOSHistoryScreen.swift in Sources */, 
 				3801BAF1C5064B747F1AD26B /* IOSHistorySupport.swift in Sources */, 
@@ -660,6 +671,7 @@
 				2851A4E549A9EC0DD9E63BED /* DashboardWeekStripTests.swift in Sources */, 
 				6D4718E6C37028AAA5148B9D /* ExerciseDisplayNameTests.swift in Sources */, 
 				CC9C39DB931D4BF819F28DF6 /* GamificationTests.swift in Sources */, 
+				48F7ED6E3E4D75C9A5213DBE /* HistoryAchievementsTests.swift in Sources */, 
 				6DA78A548D7F2D8A288EA295 /* HistoryWeekTests.swift in Sources */, 
 				746A98C55667640D4AF4E007 /* IndividualSetTargetsTests.swift in Sources */, 
 				D7DACE2D51AC653ECDA8F8FF /* LocalDayGuardTests.swift in Sources */, 

@@ -108,6 +108,22 @@
         }
       }
     },
+    "%@ XP gesamt": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP gesamt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP in total"
+          }
+        }
+      }
+    },
     "%@ kg": {
       "localizations": {
         "de": {
@@ -1572,6 +1588,102 @@
         }
       }
     },
+    "%lld XP für das erste Training nach %lld Tagen Pause": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP für das erste Training nach %lld Tagen Pause"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP for your first workout after a %lld-day break"
+          }
+        }
+      }
+    },
+    "%lld XP je Rekord, höchstens %lld Übungen je Training": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP je Rekord, höchstens %lld Übungen je Training"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP per record, at most %lld exercises per workout"
+          }
+        }
+      }
+    },
+    "%lld XP je Training, weitere am selben Tag %lld": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP je Training, weitere am selben Tag %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP per workout, %lld for more on the same day"
+          }
+        }
+      }
+    },
+    "%lld XP je neuer Marke": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP je neuer Marke"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP per new mark"
+          }
+        }
+      }
+    },
+    "%lld XP je übernommener Steigerung, höchstens %lld je Training": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP je übernommener Steigerung, höchstens %lld je Training"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP per accepted increase, at most %lld per workout"
+          }
+        }
+      }
+    },
+    "%lld XP, wenn du dein Wochenziel erreichst": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP, wenn du dein Wochenziel erreichst"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld XP when you reach your weekly goal"
+          }
+        }
+      }
+    },
     "%lld abgeschlossene Einheiten": {
       "localizations": {
         "de": {
@@ -2887,6 +2999,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "EFFORT · %@"
+          }
+        }
+      }
+    },
+    "Ab %@ XP": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ab %@ XP"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From %@ XP"
           }
         }
       }
@@ -5968,6 +6096,22 @@
         }
       }
     },
+    "Die Heldenreise": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Heldenreise"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The hero's journey"
+          }
+        }
+      }
+    },
     "Die Linie zeigt das gesamte Gewicht × Wiederholungen der gültigen Arbeitssätze.": {
       "localizations": {
         "de": {
@@ -7082,6 +7226,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Achievements"
+          }
+        }
+      }
+    },
+    "Erfolge konnten nicht berechnet werden.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erfolge konnten nicht berechnet werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your achievements couldn't be calculated."
           }
         }
       }
@@ -8812,6 +8972,22 @@
         }
       }
     },
+    "Höchstens %lld XP je Training. Mehr Sätze bringen keine XP, mehr Fortschritt schon.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Höchstens %lld XP je Training. Mehr Sätze bringen keine XP, mehr Fortschritt schon."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At most %lld XP per workout. More sets earn nothing, more progress does."
+          }
+        }
+      }
+    },
     "Höhepunkte": {
       "localizations": {
         "de": {
@@ -9065,6 +9241,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cable"
+          }
+        }
+      }
+    },
+    "Kapitel %lld": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapitel %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chapter %lld"
           }
         }
       }
@@ -10182,6 +10374,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mark"
+          }
+        }
+      }
+    },
+    "Marken": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marken"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marks"
           }
         }
       }
@@ -13170,6 +13378,22 @@
         }
       }
     },
+    "Rekorde": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rekorde"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records"
+          }
+        }
+      }
+    },
     "Rekorde, Statistiken und ein Vorschlag für dein nächstes Gewicht.": {
       "localizations": {
         "de": {
@@ -14146,6 +14370,22 @@
         }
       }
     },
+    "So sammelst du XP": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "So sammelst du XP"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How you earn XP"
+          }
+        }
+      }
+    },
     "Sonntag": {
       "localizations": {
         "de": {
@@ -14466,6 +14706,22 @@
         }
       }
     },
+    "Steigerungen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steigerungen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Increases"
+          }
+        }
+      }
+    },
     "Steigerungen automatisch übernehmen": {
       "localizations": {
         "de": {
@@ -14510,6 +14766,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stress above threshold"
+          }
+        }
+      }
+    },
+    "Stufe %@ von %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stufe %@ von %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tier %@ of %@"
           }
         }
       }
@@ -15026,6 +15298,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Thor travels disguised as the bride."
+          }
+        }
+      }
+    },
+    "Thrym hat Thors Hammer acht Rasten unter der Erde versteckt. Jedes Kapitel holt ihn eine Rast höher.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thrym hat Thors Hammer acht Rasten unter der Erde versteckt. Jedes Kapitel holt ihn eine Rast höher."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thrym hid Thor's hammer eight leagues below the earth. Each chapter brings it one league higher."
           }
         }
       }
@@ -16243,6 +16531,22 @@
         }
       }
     },
+    "Verlaufsbereich": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verlaufsbereich"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History section"
+          }
+        }
+      }
+    },
     "Versagen": {
       "localizations": {
         "de": {
@@ -16743,6 +17047,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "More actions"
+          }
+        }
+      }
+    },
+    "Weitere Taten": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weitere Taten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Further deeds"
           }
         }
       }
@@ -18808,6 +19128,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Opens the details of this workout"
+          }
+        }
+      }
+    },
+    "Öffnet die Erfolge": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öffnet die Erfolge"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens your achievements"
           }
         }
       }

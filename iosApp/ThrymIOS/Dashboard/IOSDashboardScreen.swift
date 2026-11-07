@@ -118,7 +118,7 @@ struct IOSDashboardScreen: View {
         .task {
             await watchLocalDayChange()
         }
-        .task(id: LevelInput(data: store.data, settings: settings.state)) {
+        .task(id: IOSGamificationInput(data: store.data, settings: settings.state)) {
             await updateLevel()
         }
         .onChange(of: store.analytics?.currentWeekStart) { _, currentWeekStart in
@@ -141,33 +141,13 @@ struct IOSDashboardScreen: View {
         }
     }
 
-    /// What the level depends on; a change computes it again.
-    private struct LevelInput: Equatable {
-        let data: ILTrainingData?
-        let enabled: Bool
-        let weekStart: String
-        let goalHistory: String
-        let unitSystem: String
-
-        init(data: ILTrainingData?, settings: SettingsFormState) {
-            self.data = settings.gamificationEnabled ? data : nil
-            enabled = settings.gamificationEnabled
-            weekStart = settings.weekStart
-            goalHistory = settings.weeklyGoalHistory
-            unitSystem = settings.unitSystem
-        }
-    }
-
-    /// The whole history counts, so this runs off the main thread.
     private func updateLevel() async {
         let state = settings.state
         guard state.gamificationEnabled, let data = store.data else {
             level = nil
             return
         }
-        let progress = await Task.detached(priority: .userInitiated) {
-            IOSGamification.evaluate(data: data, settings: state).progress
-        }.value
+        let progress = await IOSGamification.evaluateInBackground(data: data, settings: state).progress
         guard !Task.isCancelled else { return }
         level = progress
     }
@@ -208,7 +188,7 @@ struct IOSDashboardScreen: View {
                 )
 
                 if let level {
-                    IOSLevelCard(progress: level)
+                    IOSLevelCard(progress: level) { store.showAchievements() }
                 }
 
                 IOSDashboardGlassWeekStrip(
@@ -238,7 +218,7 @@ struct IOSDashboardScreen: View {
                 )
 
                 if let level {
-                    IOSLevelCard(progress: level)
+                    IOSLevelCard(progress: level) { store.showAchievements() }
                 }
             }
 

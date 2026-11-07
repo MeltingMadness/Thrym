@@ -2,6 +2,18 @@ import Foundation
 import Observation
 import Shared
 
+/// The two modes of the History tab. The achievements exist only with the game elements on.
+enum IOSHistoryMode: Hashable, CaseIterable {
+    case trainings
+    case achievements
+
+    /// The mode History shows: with the game elements off it is always the workouts, also when
+    /// the achievements were selected or requested before.
+    func effective(gamificationEnabled: Bool) -> IOSHistoryMode {
+        gamificationEnabled ? self : .trainings
+    }
+}
+
 /// One observable projection of the durable Kotlin store for every screen.
 /// A failed load stays visible; it never becomes an apparently empty training history.
 @MainActor
@@ -18,6 +30,10 @@ final class IOSTrainingStore {
     private(set) var isLoading = false
     var errorMessage: String?
     var selectedTab: Int = 0
+    /// Mode of the History tab. It lives here, next to the tab, so the dashboard can set it.
+    var historyMode: IOSHistoryMode = .trainings
+    /// Grows each time History has to return to its root, e.g. to drop an open workout detail.
+    private(set) var historyRootRequest = 0
     /// Centrally bound to the settings in `RootView`. The deload mode is authoritative for every
     /// workout start, so a started session always records a concrete deload state. Defaults to
     /// `false` until the settings are bound.
@@ -49,6 +65,13 @@ final class IOSTrainingStore {
             errorMessage = String(localized: "Trainingsdaten konnten nicht gelesen werden: \(error.localizedDescription)")
             return false
         }
+    }
+
+    /// Opens History at its root in the achievements mode (the level card on the dashboard).
+    func showAchievements() {
+        historyMode = .achievements
+        historyRootRequest &+= 1
+        selectedTab = 2
     }
 
     /// Re-read the shared projection without replacing or seeding persisted data.

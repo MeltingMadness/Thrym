@@ -10,11 +10,16 @@ struct IOSHistoryScreen: View {
     @Environment(\.thrymAppearance) private var appearance
 
     @State private var searchText = ""
-    @State private var openedSessionID: Int64?
+    /// Opened workout details; empty at the root, so the dashboard can return here.
+    @State private var path: [Int64] = []
     @State private var dateFilter: IOSHistoryDateFilter = .all
     @State private var selectedPlanID: Int64?
     @State private var sessionToDelete: ILWorkoutSession?
     @State private var alert: IOSHistoryAlert?
+    /// The content has scrolled under the mode switcher, which then gets a bar material.
+    @State private var contentScrolled = false
+    /// The switcher's own selection, so only its pill animates (see `body`).
+    @State private var switcherMode: IOSHistoryMode = .trainings
 
     private var hasSearchFilter: Bool {
         !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -57,77 +62,79 @@ struct IOSHistoryScreen: View {
         return availablePlans.first(where: { $0.id == selectedPlanID })?.name
     }
 
+    /// The switcher shows only with the game elements on; without them History is the workouts.
+    private var showsModeSwitcher: Bool { settings.state.gamificationEnabled }
+
+    private var mode: IOSHistoryMode {
+        store.historyMode.effective(gamificationEnabled: settings.state.gamificationEnabled)
+    }
+
     var body: some View {
-        NavigationStack {
-            Group {
-                if let error = store.errorMessage, store.data == nil {
-                    ContentUnavailableView(
-                        "Verlauf nicht verfügbar",
-                        systemImage: "exclamationmark.triangle",
-                        description: Text(error)
+        let mode = mode
+        NavigationStack(path: $path) {
+            content(mode: mode)
+            // Search and filters belong to the workouts; the achievements have neither.
+            .modifier(IOSHistorySearch(isEnabled: mode == .trainings, text: $searchText))
+            .thrymScreenBackground()
+            // Outside the list, so it stays reachable when no workout is there or a filter
+            // empties the list.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if showsModeSwitcher {
+                    ThrymModeSwitcher(
+                        selection: $switcherMode,
+                        segments: IOSHistoryMode.segments,
+                        accessibilityLabel: String(localized: "Verlaufsbereich")
                     )
-                } else if store.data == nil {
-                    ProgressView("Verlauf wird geladen …")
-                } else if completedSessions.isEmpty {
-                    ContentUnavailableView(
-                        !hasSearchFilter && dateFilter == .all ? String(localized: "Noch keine abgeschlossenen Trainings") : String(localized: "Keine passenden Trainings"),
-                        systemImage: "clock.arrow.circlepath",
-                        description: Text(
-                            !hasSearchFilter && dateFilter == .all
-                                ? String(localized: "Abgeschlossene Sessions erscheinen hier. Eine aktive Session bleibt im Training-Bereich.")
-                                : String(localized: "Passe Suche oder Zeitraum an.")
-                        )
-                    )
-                } else if appearance == .liquidGlass {
-                    glassHistoryList
-                } else {
-                    historyList
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                    .padding(.bottom, 8)
+                    .background { IOSHistoryModeBarBackground(contentScrolled: contentScrolled) }
                 }
             }
-            .thrymScreenBackground()
             .navigationTitle("Verlauf")
-            .searchable(text: $searchText, prompt: "Training, Notiz oder Übung")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Picker("Zeitraum", selection: $dateFilter) {
-                            ForEach(IOSHistoryDateFilter.allCases) { filter in
-                                Text(filter.title).tag(filter)
-                            }
-                        }
-                    } label: {
-                        Label("Zeitraum", systemImage: "calendar")
-                    }
-                    .accessibilityLabel("Zeitraum filtern")
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            selectedPlanID = nil
-                        } label: {
-                            Label("Alle Pläne", systemImage: selectedPlanID == nil ? "checkmark" : "rectangle.stack")
-                        }
-                        if !availablePlans.isEmpty {
-                            Divider()
-                            ForEach(availablePlans) { plan in
-                                Button {
-                                    selectedPlanID = plan.id
-                                } label: {
-                                    Label(
-                                        plan.name,
-                                        systemImage: selectedPlanID == plan.id ? "checkmark" : "rectangle.stack"
-                                    )
+                if mode == .trainings {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Picker("Zeitraum", selection: $dateFilter) {
+                                ForEach(IOSHistoryDateFilter.allCases) { filter in
+                                    Text(filter.title).tag(filter)
                                 }
                             }
+                        } label: {
+                            Label("Zeitraum", systemImage: "calendar")
                         }
-                    } label: {
-                        Label(selectedPlanName ?? String(localized: "Plan: Alle"), systemImage: "rectangle.stack")
+                        .accessibilityLabel("Zeitraum filtern")
                     }
-                    .accessibilityLabel("Plan filtern")
-                    .accessibilityValue(selectedPlanName ?? String(localized: "Alle Pläne"))
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Button {
+                                selectedPlanID = nil
+                            } label: {
+                                Label("Alle Pläne", systemImage: selectedPlanID == nil ? "checkmark" : "rectangle.stack")
+                            }
+                            if !availablePlans.isEmpty {
+                                Divider()
+                                ForEach(availablePlans) { plan in
+                                    Button {
+                                        selectedPlanID = plan.id
+                                    } label: {
+                                        Label(
+                                            plan.name,
+                                            systemImage: selectedPlanID == plan.id ? "checkmark" : "rectangle.stack"
+                                        )
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label(selectedPlanName ?? String(localized: "Plan: Alle"), systemImage: "rectangle.stack")
+                        }
+                        .accessibilityLabel("Plan filtern")
+                        .accessibilityValue(selectedPlanName ?? String(localized: "Alle Pläne"))
+                    }
                 }
             }
-            .navigationDestination(item: $openedSessionID) { sessionID in
+            .navigationDestination(for: Int64.self) { sessionID in
                 IOSHistoryDetailScreen(sessionID: sessionID)
             }
             .alert(item: $alert) { item in
@@ -155,6 +162,55 @@ struct IOSHistoryScreen: View {
                 Text("Alle Sätze, Notizen und Fortschrittsdaten dieses Trainings werden entfernt.")
             }
         }
+        // The level card on the dashboard opens History at its root.
+        .onChange(of: store.historyRootRequest) { _, _ in
+            path.removeAll()
+        }
+        .onAppear { switcherMode = mode }
+        // The switcher slides its pill with an animation. The mode itself changes without one:
+        // inside an animation the navigation bar loses its large title or search field when
+        // the search comes back with the workouts.
+        .onChange(of: switcherMode) { _, newMode in
+            guard newMode != mode else { return }
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { store.historyMode = newMode }
+        }
+        // The level card or the setting changed the mode; the other mode starts at its top.
+        .onChange(of: mode) { _, newMode in
+            switcherMode = newMode
+            contentScrolled = false
+        }
+    }
+
+    /// The achievements, or the workouts with their loading, error and empty states.
+    @ViewBuilder
+    private func content(mode: IOSHistoryMode) -> some View {
+        if mode == .achievements {
+            IOSHistoryAchievements(contentScrolled: $contentScrolled)
+        } else if let error = store.errorMessage, store.data == nil {
+            ContentUnavailableView(
+                "Verlauf nicht verfügbar",
+                systemImage: "exclamationmark.triangle",
+                description: Text(error)
+            )
+        } else if store.data == nil {
+            ProgressView("Verlauf wird geladen …")
+        } else if completedSessions.isEmpty {
+            ContentUnavailableView(
+                !hasSearchFilter && dateFilter == .all ? String(localized: "Noch keine abgeschlossenen Trainings") : String(localized: "Keine passenden Trainings"),
+                systemImage: "clock.arrow.circlepath",
+                description: Text(
+                    !hasSearchFilter && dateFilter == .all
+                        ? String(localized: "Abgeschlossene Sessions erscheinen hier. Eine aktive Session bleibt im Training-Bereich.")
+                        : String(localized: "Passe Suche oder Zeitraum an.")
+                )
+            )
+        } else if appearance == .liquidGlass {
+            glassHistoryList
+        } else {
+            historyList
+        }
     }
 
     private var historyList: some View {
@@ -168,9 +224,7 @@ struct IOSHistoryScreen: View {
 
                 Section("Abgeschlossen") {
                     ForEach(completedSessions) { session in
-                        NavigationLink {
-                            IOSHistoryDetailScreen(sessionID: session.id)
-                        } label: {
+                        NavigationLink(value: session.id) {
                             IOSHistorySessionRow(
                                 session: session,
                                 data: store.data,
@@ -191,6 +245,7 @@ struct IOSHistoryScreen: View {
             .thrymListRows()
         }
         .listStyle(.insetGrouped)
+        .modifier(IOSScrolledFromTop(isScrolled: $contentScrolled))
     }
 
     /// Liquid Glass: one glass header per week with mini bars, the trainings of that week
@@ -205,7 +260,7 @@ struct IOSHistoryScreen: View {
                         .listRowSeparator(.hidden)
                     ForEach(week.sessions) { session in
                         Button {
-                            openedSessionID = session.id
+                            path.append(session.id)
                         } label: {
                             IOSHistoryGlassRow(session: session, data: store.data, unitSystem: settings.state.unitSystem)
                         }
@@ -228,6 +283,7 @@ struct IOSHistoryScreen: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .modifier(IOSScrolledFromTop(isScrolled: $contentScrolled))
     }
 
     private func delete(_ session: ILWorkoutSession) {
@@ -245,6 +301,74 @@ struct IOSHistoryScreen: View {
 /// Alias kept for callers that use the Android feature's terminology.
 struct IOSWorkoutHistoryScreen: View {
     var body: some View { IOSHistoryScreen() }
+}
+
+extension IOSHistoryMode {
+    /// "Trainings | Erfolge" without counts, the same on Android.
+    static var segments: [ThrymModeSegment<IOSHistoryMode>] {
+        [
+            ThrymModeSegment(mode: .trainings, title: String(localized: "Trainings"), systemImage: "clock.arrow.circlepath"),
+            ThrymModeSegment(mode: .achievements, title: String(localized: "Erfolge"), systemImage: "trophy")
+        ]
+    }
+}
+
+/// Behind the mode switcher: clear at the top of the content like the navigation bar, a bar
+/// material once rows scroll under it. Before iOS 18 the scroll position is unknown, so the
+/// material stays.
+private struct IOSHistoryModeBarBackground: View {
+    let contentScrolled: Bool
+
+    @Environment(\.thrymAppearance) private var appearance
+
+    private var isVisible: Bool {
+        if #available(iOS 18.0, *) { return contentScrolled }
+        return true
+    }
+
+    var body: some View {
+        Group {
+            if isVisible {
+                switch appearance {
+                case .liquidGlass: Rectangle().fill(.ultraThinMaterial)
+                case .ember: Rectangle().fill(.bar)
+                }
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: isVisible)
+    }
+}
+
+/// Reports whether a list or scroll view has left its top, for the bar behind the mode switcher.
+struct IOSScrolledFromTop: ViewModifier {
+    @Binding var isScrolled: Bool
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top > 1
+            } action: { _, scrolled in
+                isScrolled = scrolled
+            }
+        } else {
+            content
+        }
+    }
+}
+
+/// `.searchable` cannot be switched off, so the achievements leave it out entirely. The search
+/// text stays in the screen and is back with the workouts.
+private struct IOSHistorySearch: ViewModifier {
+    let isEnabled: Bool
+    @Binding var text: String
+
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content.searchable(text: $text, prompt: "Training, Notiz oder Übung")
+        } else {
+            content
+        }
+    }
 }
 
 private struct IOSHistorySummary {
