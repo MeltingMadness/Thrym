@@ -50,7 +50,21 @@ struct IOSHistoryAchievements: View {
         }
     }
 
+    /// The top of the content, where the current standing is.
+    private static let topID = "achievements-top"
+
     private func content(_ snapshot: IOSAchievementsSnapshot) -> some View {
+        ScrollViewReader { proxy in
+            list(snapshot)
+                // The level card opens the achievements at the current standing, also when they
+                // were left scrolled further down.
+                .onChange(of: store.historyRootRequest) { _, _ in
+                    proxy.scrollTo(Self.topID, anchor: .top)
+                }
+        }
+    }
+
+    private func list(_ snapshot: IOSAchievementsSnapshot) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 IOSAchievementsHero(progress: snapshot.progress)
@@ -94,6 +108,7 @@ struct IOSHistoryAchievements: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
             .padding(.bottom, 24)
+            .id(Self.topID)
         }
         .modifier(IOSScrolledFromTop(isScrolled: $contentScrolled))
         // Ember: the grouped background of the workout list, so the mode switch keeps the backdrop.
