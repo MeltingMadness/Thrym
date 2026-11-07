@@ -7230,22 +7230,6 @@
         }
       }
     },
-    "Erfolge konnten nicht berechnet werden.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erfolge konnten nicht berechnet werden."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your achievements couldn't be calculated."
-          }
-        }
-      }
-    },
     "Erfolgreiche Einheiten vor der Steigerung": {
       "localizations": {
         "de": {

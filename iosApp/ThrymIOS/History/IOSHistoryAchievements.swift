@@ -25,18 +25,12 @@ struct IOSHistoryAchievements: View {
     @Environment(\.thrymAppearance) private var appearance
 
     @State private var phase: Phase = .loading
-    @State private var attempt = 0
 
+    /// No error state of its own: History only shows once the store has loaded, and RootView
+    /// handles a failed store load for the whole tab.
     private enum Phase {
         case loading
         case loaded(IOSAchievementsSnapshot)
-        case failed
-    }
-
-    /// The same input as the dashboard; a retry computes again.
-    private struct Key: Equatable {
-        let input: IOSGamificationInput
-        let attempt: Int
     }
 
     var body: some View {
@@ -46,20 +40,12 @@ struct IOSHistoryAchievements: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onAppear { contentScrolled = false }
-            case .failed:
-                // A failed store load: without the history there is nothing to count. A retry
-                // loads the store again.
-                ContentUnavailableView {
-                    Label("Erfolge konnten nicht berechnet werden.", systemImage: "exclamationmark.triangle")
-                } actions: {
-                    Button("Erneut versuchen", action: retry)
-                }
-                .onAppear { contentScrolled = false }
             case .loaded(let snapshot):
                 content(snapshot)
             }
         }
-        .task(id: Key(input: IOSGamificationInput(data: store.data, settings: settings.state), attempt: attempt)) {
+        // The same input as the level card on the dashboard.
+        .task(id: IOSGamificationInput(data: store.data, settings: settings.state)) {
             await update()
         }
     }
@@ -120,21 +106,10 @@ struct IOSHistoryAchievements: View {
 
     private func update() async {
         let state = settings.state
-        guard let data = store.data else {
-            phase = store.errorMessage == nil ? .loading : .failed
-            return
-        }
+        guard let data = store.data else { return }
         let gamification = await IOSGamification.evaluateInBackground(data: data, settings: state)
         guard !Task.isCancelled else { return }
         phase = .loaded(IOSAchievementsSnapshot(state: gamification))
-    }
-
-    private func retry() {
-        Task { @MainActor in
-            phase = .loading
-            await store.reload()
-            attempt += 1
-        }
     }
 }
 

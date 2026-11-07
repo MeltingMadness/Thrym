@@ -99,8 +99,6 @@ final class HistoryAchievementsTests: XCTestCase {
             "Erfolge": "Achievements",
             "Verlaufsbereich": "History section",
             "Öffnet die Erfolge": "Opens your achievements",
-            "Erfolge konnten nicht berechnet werden.": "Your achievements couldn't be calculated.",
-            "Erneut versuchen": "Try again",
             "%@ XP gesamt": "%@ XP in total",
             "Die Heldenreise": "The hero's journey",
             "Thrym hat Thors Hammer acht Rasten unter der Erde versteckt. Jedes Kapitel holt ihn eine Rast höher.":
