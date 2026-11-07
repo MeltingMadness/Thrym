@@ -23,7 +23,7 @@ feature/
   workout/              Aktives Workout, Übungsauswahl, Abschlussdialog und Zusammenfassung
   plans/                Trainingspläne, Meta-Pläne, Plan-Editor inkl. Progressions-Konfiguration
   progression/          Review-Bildschirm für Progressionsvorschläge
-  history/              Verlauf und Workout-Detail
+  history/              Verlauf mit Erfolgen (Heldenreise, XP je Quelle) und Workout-Detail
   exercises/            Übungsbibliothek
   statistics/           Statistik pro Übung
   settings/             Einstellungen, Backup, Incident-Report
@@ -34,7 +34,7 @@ iosApp/                 Native SwiftUI-App (ThrymIOS), Projekt per generate_proj
 
 **Abhängigkeitsrichtung:** `feature/*` → `core/*`. `data` implementiert die Interfaces aus `core:model`. Nur `app` kennt alle Module und verdrahtet sie über Koin.
 
-**Bottom-Navigation:** Home, Pläne, Verlauf, Übungen. Einstellungen, aktives Workout, Progressions-Review und Detailseiten sind eigene Ziele ohne Tab.
+**Bottom-Navigation:** Home, Pläne, Verlauf, Übungen. Einstellungen, aktives Workout, Progressions-Review und Detailseiten sind eigene Ziele ohne Tab. Tab-Wechsel laufen über `navigateToTopLevel` (`TopLevelNavigation.kt`); dieselben Optionen nutzt der Sprung von der Level-Karte in Verlauf › Erfolge, der den Bereich als einmalige Anfrage im `SavedStateHandle` des Verlaufs ablegt.
 
 ## Datenbank (Room, Version 15)
 

@@ -111,7 +111,7 @@ Bei reduzierter Bewegung gibt es keine Animation und kein Konfetti, die Schritte
 
 ### Verlauf: „Trainings | Erfolge“
 
-Kein neuer Tab. Der Verlauf bekommt oben einen Umschalter wie die Pläne (`PlansModeSwitcher` / `IOSPlansModeSwitcher`):
+Kein neuer Tab. Der Verlauf bekommt oben einen Umschalter wie die Pläne (`ThrymModeSwitcher` auf beiden Plattformen). *Umschalter und der Level-Teil der Erfolge sind mit Etappe 2 umgesetzt, siehe [`features/level-und-xp.md`](../features/level-und-xp.md); Abzeichen, Rekorde je Übung und das Bild der acht Erdschichten folgen mit Etappe 3.*
 
 - **Trainings:** der heutige Verlauf.
 - **Erfolge:** Kapitel mit Emblem, XP und dem Bild der acht Rasten, die Abzeichen als Raster (gesperrte gedimmt mit Fortschritt), Rekorde je Übung (bester Wert je Kennzahl mit Datum), später Kraftstufen und Monats-/Jahresrückblick.
@@ -136,8 +136,8 @@ Der Tages-Check-in (Schlaf, Energie, Stress auf 1 bis 5, an das Datum gebunden) 
 Jede Etappe ist ein eigener PR auf beiden Plattformen, mit Tests in `:shared` und Doku.
 
 1. **Rekord-Marker und Feier.** PR-Marker am Satz statt der Rekordmeldung; die Abschluss-Sequenz mit den Schritten 1 und 4 (Höhepunkte aus den bestehenden Rekorden, Marken und Fakten). *Umgesetzt; Doku in `docs/design-system.md`.*
-2. **XP und Level.** `GamificationEngine` in `:shared` (XP je Training, Level, Kapitel, Sterne), XP- und Level-Schritt in der Sequenz, Level-Ring auf der Startseite, Stand „schon gefeiert“ je Gerät. *Umgesetzt im Branch `thrym/gamification-2-level`; Doku in `docs/features/level-und-xp.md`. Der Bereitschafts-Ring und die Tagesform bleiben bis Etappe 4.*
-3. **Abzeichen und Erfolge.** Abzeichenregeln, Umschalter „Trainings | Erfolge“ im Verlauf, „Letzte Erfolge“ auf der Startseite, Teilen-Bild.
+2. **XP und Level.** `GamificationEngine` in `:shared` (XP je Training, Level, Kapitel, Sterne), XP- und Level-Schritt in der Sequenz, Level-Ring auf der Startseite, Stand „schon gefeiert“ je Gerät. *Umgesetzt im Branch `thrym/gamification-2-level`; Doku in `docs/features/level-und-xp.md`. Vorgezogen aus Etappe 3: Ein Tipp auf die Level-Karte öffnet den Umschalter „Trainings | Erfolge“ im Verlauf, „Erfolge“ zeigt bisher Stand, die acht Kapitel als Liste und XP je Quelle. Der Bereitschafts-Ring und die Tagesform bleiben bis Etappe 4.*
+3. **Abzeichen und Erfolge.** Abzeichenregeln, Abzeichen und Rekorde je Übung im Bereich „Erfolge“ des Verlaufs, das Bild der acht Erdschichten, „Letzte Erfolge“ auf der Startseite, Teilen-Bild.
 4. **Tagesform je Einheit.** Check-in-Blatt beim Start, `sessionCheckIns` mit Migration und Backup-Schemasprung, Vergleich mit der Leistung, Abbau von Tages-Check-in und Bereitschafts-Ring.
 5. **Kraftstufen und Rückblicke.** Profil, Kraftstufen, Monats- und Jahresrückblick.
 

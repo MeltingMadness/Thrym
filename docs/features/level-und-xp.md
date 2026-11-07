@@ -2,7 +2,7 @@
 
 Thrym zeigt den Weg durch die Thrymskvida, die Sage vom gestohlenen Hammer: acht Kapitel mit je drei Stufen, auf Android und iOS gleich. XP, Level und Kapitel werden aus dem Trainingsverlauf berechnet und nie gespeichert. Room-Schema und Backup bleiben unverändert, alte Trainings und importierte IronLog-Backups bekommen ihren Stand rückwirkend. Pausen kosten nichts.
 
-Die Regeln liegen in `:shared` (`shared/src/commonMain/kotlin/com/thrym/shared/gamification/`), getestet in `LevelCurveTest` und `GamificationEngineTest`. Android liest die Daten über `GamificationRepository`, iOS über `IOSGamification`; beide rechnen im Hintergrund.
+Die Regeln liegen in `:shared` (`shared/src/commonMain/kotlin/com/thrym/shared/gamification/`), getestet in `LevelCurveTest`, `GamificationEngineTest` und `HeroJourneyTest`. Android liest die Daten über `GamificationRepository`, iOS über `IOSGamification`; beide rechnen im Hintergrund.
 
 ## XP
 
@@ -28,9 +28,15 @@ Die Regeln liegen in `:shared` (`shared/src/commonMain/kotlin/com/thrym/shared/g
 
 ## Anzeige
 
-- **Startseite:** Karte unter dem Hauptblock mit Emblem im Fortschrittsring, „Kapitel 3 von 8“, „Die Spur II“ und „Hammer noch 5 Rasten tief · 1.240 XP bis Stufe III“. Auf Stufe III nennt sie das nächste Kapitel, nach dem letzten Level die nächste Tat. Bereitschaft und Tagesform bleiben bis zur Etappe 4 des Plans.
+- **Startseite:** Karte unter dem Hauptblock mit Emblem im Fortschrittsring, „Kapitel 3 von 8“, „Die Spur II“ und „Hammer noch 5 Rasten tief · 1.240 XP bis Stufe III“. Auf Stufe III nennt sie das nächste Kapitel, nach dem letzten Level die nächste Tat. Ein Tipp auf die Karte (Pfeil rechts) öffnet den Verlauf im Bereich „Erfolge“, immer auf dessen oberster Ebene, auch wenn dort zuletzt ein Training offen war. Bereitschaft und Tagesform bleiben bis zur Etappe 4 des Plans.
+- **Erfolge im Verlauf:** Oben im Verlauf wechselt ein Umschalter zwischen „Trainings“ und „Erfolge“; die Wahl bleibt beim Tab-Wechsel erhalten. Suche und Filter gibt es nur bei den Trainings. „Erfolge“ zeigt:
+  - den Stand: Emblem im großen Ring, „Kapitel 3 von 8“, Titel, Szene des Kapitels, Tiefe des Hammers mit dem Weg zur nächsten Stufe und die XP gesamt;
+  - „Die Heldenreise“: die acht Kapitel von oben nach unten. Abgeschlossene zeigen alle drei Scheiben, „Abgeschlossen“ (Kapitel 8: „Hammer heimgeholt“) und ihre Szene; das aktuelle ist in Kapitelfarbe hervorgehoben und nennt „Stufe II von III“; die übrigen sind grau gedimmt und nennen ihre Schwelle („Ab 19.300 XP“). Nach dem letzten Level folgt „Weitere Taten“ mit den Sternen;
+  - „So sammelst du XP“: je Quelle die Regel und deine bisherigen XP mit Anzahl („1.200 XP“, „12×“), darunter die Grenze von 400 XP je Training.
+
+  Die Regeln für Kapitelstand und XP je Quelle stehen in `HeroJourney` (`:shared`). Android: `AchievementsView.kt` und `AchievementsViewModel.kt` in `feature/history`, Sprung über `openAchievements` in `TopLevelNavigation.kt`. iOS: `IOSHistoryAchievements.swift`, Sprung über `IOSTrainingStore.showAchievements()`.
 - **Feier:** Schritt „Erfahrung“ mit „+245 XP“, Balken und Aufschlüsselung. Beim Aufstieg folgt „Neue Stufe“, „Neues Kapitel“ (mit der Szene des Kapitels und der Tiefe des Hammers) oder „Weitere Tat“, mit Konfetti und Erfolgs-Haptik. Details in [`../design-system.md`](../design-system.md).
-- **Einstellungen:** Abschnitt „Erfolge“ mit „Spielelemente anzeigen“ (Standard an). Aus verschwinden Level-Karte und Feier, die XP zählen weiter, die Rekord-Marker im Training bleiben. Es gibt keinen Eintrag im Backup; die Einstellungen sind wie immer nicht Teil davon.
+- **Einstellungen:** Abschnitt „Erfolge“ mit „Spielelemente anzeigen“ (Standard an). Aus verschwinden Level-Karte, der Umschalter im Verlauf mit den Erfolgen und die Feier; die XP zählen weiter, die Rekord-Marker im Training bleiben. Es gibt keinen Eintrag im Backup; die Einstellungen sind wie immer nicht Teil davon.
 
 ## Schon gefeiert
 
