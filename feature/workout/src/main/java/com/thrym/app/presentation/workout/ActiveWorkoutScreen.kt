@@ -223,6 +223,7 @@ fun ActiveWorkoutScreen(
     val setBadges by viewModel.setBadges.collectAsStateWithLifecycle()
     val completionRecordInputs by viewModel.completionRecordInputs.collectAsStateWithLifecycle()
     val completionFacts by viewModel.completionFacts.collectAsStateWithLifecycle()
+    val completionCelebration by viewModel.completionCelebration.collectAsStateWithLifecycle()
     val completionLoaded by viewModel.completionLoaded.collectAsStateWithLifecycle()
     LaunchedEffect(activeSession?.endTime) {
         if (activeSession?.endTime != null) viewModel.loadCompletionRecords()
@@ -233,6 +234,8 @@ fun ActiveWorkoutScreen(
             rows = state.exercisesWithSets,
             recordInputs = completionRecordInputs,
             facts = completionFacts,
+            celebration = completionCelebration,
+            gamificationEnabled = preferences.gamificationEnabled,
             unitSystem = preferences.unitSystem,
             loaded = completionLoaded,
             finishState = state.finishState,

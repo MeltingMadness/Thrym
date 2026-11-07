@@ -77,7 +77,9 @@ data class AppPreferences(
     /** Goal per week from its change on (see [WeeklyGoalRules]); empty means the default goal. */
     val weeklyGoalHistory: List<WeeklyGoalChange> = emptyList(),
     /** Applies the coach's increases to the plan after a workout (`ProgressionAutoApply`). */
-    val autoApplyProgression: Boolean = false
+    val autoApplyProgression: Boolean = false,
+    /** Shows level, XP and the celebration after a workout; the XP keep counting when it is off. */
+    val gamificationEnabled: Boolean = true
 ) {
     /** Goal of the week starting at [weekStart]. */
     fun weeklyGoalFor(weekStart: LocalDate): Int = WeeklyGoalRules.goalFor(weeklyGoalHistory, weekStart.toEpochDay())

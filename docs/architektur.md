@@ -23,7 +23,7 @@ feature/
   workout/              Aktives Workout, Übungsauswahl, Abschlussdialog und Zusammenfassung
   plans/                Trainingspläne, Meta-Pläne, Plan-Editor inkl. Progressions-Konfiguration
   progression/          Review-Bildschirm für Progressionsvorschläge
-  history/              Verlauf und Workout-Detail
+  history/              Verlauf mit Erfolgen (Heldenreise, XP je Quelle) und Workout-Detail
   exercises/            Übungsbibliothek
   statistics/           Statistik pro Übung
   settings/             Einstellungen, Backup, Incident-Report
@@ -34,7 +34,7 @@ iosApp/                 Native SwiftUI-App (ThrymIOS), Projekt per generate_proj
 
 **Abhängigkeitsrichtung:** `feature/*` → `core/*`. `data` implementiert die Interfaces aus `core:model`. Nur `app` kennt alle Module und verdrahtet sie über Koin.
 
-**Bottom-Navigation:** Home, Pläne, Verlauf, Übungen. Einstellungen, aktives Workout, Progressions-Review und Detailseiten sind eigene Ziele ohne Tab.
+**Bottom-Navigation:** Home, Pläne, Verlauf, Übungen. Einstellungen, aktives Workout, Progressions-Review und Detailseiten sind eigene Ziele ohne Tab. Tab-Wechsel laufen über `navigateToTopLevel` (`TopLevelNavigation.kt`); dieselben Optionen nutzt der Sprung von der Level-Karte in Verlauf › Erfolge, der den Bereich als einmalige Anfrage im `SavedStateHandle` des Verlaufs ablegt.
 
 ## Datenbank (Room, Version 15)
 
@@ -102,7 +102,7 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 
 ## Kotlin Multiplatform (`:shared`)
 
-Enthält den plattformneutralen Kern (`com.thrym.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise, Reihenfolge und Rekorde im laufenden Training (`workout`), Wochenziel, Meilensteine und Marken (`recognition`, siehe [`features/wochenziel-und-marken.md`](features/wochenziel-und-marken.md)) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
+Enthält den plattformneutralen Kern (`com.thrym.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise, Reihenfolge und Rekorde im laufenden Training (`workout`), Wochenziel, Meilensteine und Marken (`recognition`, siehe [`features/wochenziel-und-marken.md`](features/wochenziel-und-marken.md)), XP und Level (`gamification`, siehe [`features/level-und-xp.md`](features/level-und-xp.md)) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
 
 Android nutzt daraus vor allem Backup-Format und Validator, Readiness, Progression (über `PortableProgressionAdapter`), Satzvorgaben, Scheibenrechner und die Einstellungs-Controller. Die Android-Datenhaltung bleibt Room. Die iOS-App bindet `:shared` als statisches Framework `Shared` ein, speichert den Trainingsgraphen aus `store` als JSON-Datei unter `Application Support/Thrym/training-state.json` und greift über `IosTrainingFeature` und `IosSettingsFeature` (`shared/src/iosMain`) auf den Kern zu, siehe [`ios-feature-parity.md`](ios-feature-parity.md). Einstellungen liegen auf iOS in `UserDefaults`.
 

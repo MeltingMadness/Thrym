@@ -71,13 +71,14 @@ extension IOSWorkoutRecords {
 }
 
 /// The celebration after "Beenden", before the known summary: "Geschafft!" with the key numbers,
-/// then at most three highlights. A tap on the content or "Weiter" goes on, "Überspringen" goes
-/// straight to the summary. With reduced motion the steps change without animation. The caller
-/// shows it once per workout and only with highlights.
+/// the XP, the level-up if one is due and at most three highlights. A tap on the content or
+/// "Weiter" goes on, "Überspringen" goes straight to the summary. With reduced motion the steps
+/// change without animation and without confetti. The caller shows it once per workout.
 struct IOSWorkoutCelebration: View {
     let session: ILWorkoutSession
     let sets: [ILWorkoutSet]
     let facts: CompletionFacts?
+    let celebration: SessionCelebration?
     let highlights: [IOSWorkoutHighlightText]
     let more: Int
     let unitSystem: String
@@ -89,7 +90,16 @@ struct IOSWorkoutCelebration: View {
     @State private var step = 0
     @State private var revealed = 0
 
-    private static let steps = 2
+    private enum Step { case done, xp, level, highlights }
+
+    private var steps: [Step] {
+        var steps: [Step] = [.done]
+        if celebration != nil { steps.append(.xp) }
+        if celebration?.levelUp != nil { steps.append(.level) }
+        if !highlights.isEmpty { steps.append(.highlights) }
+        return steps
+    }
+
     private var reducedMotion: Bool { reduceMotion || theme.reducedMotion }
 
     var body: some View {
@@ -101,9 +111,20 @@ struct IOSWorkoutCelebration: View {
                     .font(.geist(.body, weight: .semibold))
             }
             ZStack {
-                if step == 0 {
+                switch steps[step] {
+                case .done:
                     doneStep.transition(stepTransition)
-                } else {
+                case .xp:
+                    if let celebration {
+                        IOSCelebrationXPStep(celebration: celebration, reducedMotion: reducedMotion)
+                            .transition(stepTransition)
+                    }
+                case .level:
+                    if let levelUp = celebration?.levelUp {
+                        IOSCelebrationLevelStep(levelUp: levelUp, facts: facts, reducedMotion: reducedMotion)
+                            .transition(stepTransition)
+                    }
+                case .highlights:
                     highlightsStep.transition(stepTransition)
                 }
             }
@@ -111,7 +132,7 @@ struct IOSWorkoutCelebration: View {
             .contentShape(Rectangle())
             .onTapGesture(perform: advance)
             Button(action: advance) {
-                Text(step < Self.steps - 1 ? String(localized: "Weiter") : String(localized: "Zur Zusammenfassung"))
+                Text(step < steps.count - 1 ? String(localized: "Weiter") : String(localized: "Zur Zusammenfassung"))
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.borderedProminent)
@@ -120,9 +141,9 @@ struct IOSWorkoutCelebration: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(theme.palette(for: colorScheme).background.ignoresSafeArea())
+        .thrymScreenBackground(ember: theme.palette(for: colorScheme).background)
         .toolbar(.hidden, for: .navigationBar)
-        .sensoryFeedback(.success, trigger: step) { _, new in new == Self.steps - 1 }
+        .sensoryFeedback(.success, trigger: step) { _, new in steps[new] == .level || new == steps.count - 1 }
     }
 
     private var stepTransition: AnyTransition {
@@ -130,12 +151,12 @@ struct IOSWorkoutCelebration: View {
     }
 
     private func advance() {
-        guard step < Self.steps - 1 else {
+        guard step < steps.count - 1 else {
             onFinish()
             return
         }
         withAnimation(reducedMotion ? nil : .easeOut(duration: 0.26)) { step += 1 }
-        revealHighlights()
+        if steps[step] == .highlights { revealHighlights() }
     }
 
     /// The highlights come in one after another; with reduced motion they are there at once.
@@ -153,14 +174,14 @@ struct IOSWorkoutCelebration: View {
 
     private var stepIndicator: some View {
         HStack(spacing: 6) {
-            ForEach(0..<Self.steps, id: \.self) { index in
+            ForEach(steps.indices, id: \.self) { index in
                 Capsule()
                     .fill(Color.primary.opacity(index <= step ? 1 : 0.2))
                     .frame(width: 24, height: 5)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(String(localized: "Schritt \(step + 1) von \(Self.steps)"))
+        .accessibilityLabel(String(localized: "Schritt \(step + 1) von \(steps.count)"))
     }
 
     private var doneStep: some View {

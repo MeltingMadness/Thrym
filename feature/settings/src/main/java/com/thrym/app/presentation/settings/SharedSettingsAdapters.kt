@@ -115,6 +115,10 @@ internal class AndroidSharedAppPreferencesRepository(
         delegate.updateWeeklyGoalHistory(history)
     }
 
+    override suspend fun updateGamificationEnabled(enabled: Boolean) {
+        delegate.updateGamificationEnabled(enabled)
+    }
+
     override suspend fun updateAutoApplyProgression(enabled: Boolean) {
         delegate.updateAutoApplyProgression(enabled)
     }
@@ -159,7 +163,8 @@ internal fun AppPreferences.toShared(): com.thrym.shared.model.AppPreferences =
         backupReminderEnabled = backupReminderEnabled,
         weeklyGoalEnabled = weeklyGoalEnabled,
         weeklyGoalHistory = weeklyGoalHistory,
-        autoApplyProgression = autoApplyProgression
+        autoApplyProgression = autoApplyProgression,
+        gamificationEnabled = gamificationEnabled
     )
 
 internal fun com.thrym.shared.model.AppPreferences.toApp(): AppPreferences =
@@ -187,7 +192,8 @@ internal fun com.thrym.shared.model.AppPreferences.toApp(): AppPreferences =
         backupReminderEnabled = backupReminderEnabled,
         weeklyGoalEnabled = weeklyGoalEnabled,
         weeklyGoalHistory = weeklyGoalHistory,
-        autoApplyProgression = autoApplyProgression
+        autoApplyProgression = autoApplyProgression,
+        gamificationEnabled = gamificationEnabled
     )
 
 internal fun ReminderConfig.toShared(): com.thrym.shared.model.ReminderConfig =

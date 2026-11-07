@@ -109,10 +109,17 @@ struct IOSPlansScreen: View {
         List {
             Group {
             Section {
-                IOSPlansModeSwitcher(
-                    mode: $mode,
-                    planCount: data?.trainingPlans.count ?? 0,
-                    metaPlanCount: data?.metaTrainingPlans.count ?? 0
+                ThrymModeSwitcher(
+                    selection: $mode,
+                    segments: SectionMode.allCases.map { section in
+                        ThrymModeSegment(
+                            mode: section,
+                            title: section.title,
+                            systemImage: section.systemImage,
+                            count: section == .plans ? (data?.trainingPlans.count ?? 0) : (data?.metaTrainingPlans.count ?? 0)
+                        )
+                    },
+                    accessibilityLabel: String(localized: "Planbereich")
                 )
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
@@ -227,107 +234,6 @@ private struct IOSPlansDeleteRequest: Identifiable {
     let itemID: Int64
     let title: String
     var id: String { "\(kind)-\(itemID)" }
-}
-
-/// Switches between plans and meta plans. A full-width capsule below the title
-/// with the count per kind; the selected segment is a bright pill in Liquid Glass
-/// (white on dark, near black on light glass) and the accent color in Ember.
-private struct IOSPlansModeSwitcher: View {
-    @Binding var mode: IOSPlansScreen.SectionMode
-    let planCount: Int
-    let metaPlanCount: Int
-
-    @Environment(\.thrymAppearance) private var appearance
-    @Environment(\.thrymTheme) private var theme
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Namespace private var selection
-
-    private static let glassInk = Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255)
-
-    var body: some View {
-        let palette = theme.palette(for: colorScheme)
-        HStack(spacing: 4) {
-            ForEach(IOSPlansScreen.SectionMode.allCases) { section in
-                segment(section, count: section == .plans ? planCount : metaPlanCount, palette: palette)
-            }
-        }
-        .padding(4)
-        .background { container(palette: palette) }
-        .sensoryFeedback(.selection, trigger: mode)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Planbereich")
-    }
-
-    private func segment(_ section: IOSPlansScreen.SectionMode, count: Int, palette: ThrymTheme.Palette) -> some View {
-        let selected = section == mode
-        let ink = selected ? selectedInk(palette: palette) : palette.textPrimary
-        return Button {
-            guard !selected else { return }
-            if reduceMotion {
-                mode = section
-            } else {
-                withAnimation(.snappy(duration: 0.28)) { mode = section }
-            }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: section.systemImage)
-                    .font(.system(size: 14, weight: .semibold))
-                Text(section.title)
-                    .font(.geist(.subheadline, weight: .bold))
-                    .lineLimit(1)
-                Text(count, format: .number)
-                    .font(.geist(.caption, weight: .bold))
-                    .monospacedDigit()
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 2)
-                    .background(ink.opacity(selected ? 0.14 : 0.10), in: Capsule())
-            }
-            .minimumScaleFactor(0.75)
-            .foregroundStyle(ink)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .padding(.horizontal, 8)
-            .background {
-                if selected {
-                    Capsule()
-                        .fill(selectedFill(palette: palette))
-                        .shadow(color: .black.opacity(appearance == .liquidGlass ? 0.28 : 0.12), radius: 6, y: 3)
-                        .matchedGeometryEffect(id: "selection", in: selection)
-                }
-            }
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(section.title)
-        .accessibilityValue(Text(count, format: .number))
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
-    @ViewBuilder
-    private func container(palette: ThrymTheme.Palette) -> some View {
-        switch appearance {
-        case .liquidGlass:
-            Capsule().fill(.clear).liquidGlass(.standard, in: Capsule())
-        case .ember:
-            Capsule()
-                .fill(palette.surfaceMuted)
-                .overlay { Capsule().strokeBorder(palette.separator) }
-        }
-    }
-
-    private func selectedFill(palette: ThrymTheme.Palette) -> Color {
-        switch appearance {
-        case .liquidGlass: colorScheme == .dark ? .white : Self.glassInk
-        case .ember: palette.primary
-        }
-    }
-
-    private func selectedInk(palette: ThrymTheme.Palette) -> Color {
-        switch appearance {
-        case .liquidGlass: colorScheme == .dark ? Self.glassInk : .white
-        case .ember: palette.buttonText
-        }
-    }
 }
 
 private struct IOSPlanListRow: View {

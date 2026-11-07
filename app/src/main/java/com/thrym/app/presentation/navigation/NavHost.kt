@@ -14,6 +14,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.thrym.app.presentation.dashboard.DashboardScreen
 import com.thrym.app.presentation.exercises.ExerciseLibraryScreen
+import com.thrym.app.presentation.history.HistoryMode
 import com.thrym.app.presentation.history.WorkoutDetailScreen
 import com.thrym.app.presentation.history.WorkoutHistoryScreen
 import com.thrym.app.presentation.onboarding.OnboardingScreen
@@ -114,6 +117,9 @@ fun ThrymNavHost(
                 },
                 onOpenProgressionReview = {
                     navController.navigate(Screen.ProgressionReview.createRoute(null))
+                },
+                onOpenAchievements = {
+                    navController.openAchievements()
                 }
             )
         }
@@ -178,11 +184,19 @@ fun ThrymNavHost(
             )
         }
 
-        composable(Screen.WorkoutHistory.route) {
+        composable(Screen.WorkoutHistory.route) { entry ->
+            // Set by openAchievements(); read once by the screen and then cleared.
+            val requestedMode by entry.savedStateHandle
+                .getStateFlow<String?>(HISTORY_MODE_REQUEST_KEY, null)
+                .collectAsStateWithLifecycle()
             CompositionLocalProvider(LocalAnimatedVisibilityScope provides this@composable) {
                 WorkoutHistoryScreen(
                 onWorkoutClick = { sessionId ->
                     navController.navigate(Screen.WorkoutDetail.createRoute(sessionId))
+                },
+                requestedMode = HistoryMode.entries.firstOrNull { it.name == requestedMode },
+                onModeRequestHandled = {
+                    entry.savedStateHandle[HISTORY_MODE_REQUEST_KEY] = null
                 }
             )
             }

@@ -23,6 +23,8 @@ struct IOSDashboardScreen: View {
     /// `watchLocalDayChange()` and the scene re-activation check, so "heute" can
     /// never silently mean yesterday.
     @State private var dayGuard = ILLocalDayGuard()
+    /// Level on the hero's journey; nil while loading or when the game elements are switched off.
+    @State private var level: LevelProgress?
 
     private var todayKey: String { dayGuard.currentDate }
 
@@ -31,10 +33,12 @@ struct IOSDashboardScreen: View {
     }
 
     var body: some View {
+        // Read here: a value read only inside the lazy stack would not redraw it.
+        let level = level
         NavigationStack {
             ScrollView {
                 if let analytics = store.analytics {
-                    dashboardContent(analytics)
+                    dashboardContent(analytics, level: level)
                 } else {
                     unavailableContent
                 }
@@ -114,6 +118,9 @@ struct IOSDashboardScreen: View {
         .task {
             await watchLocalDayChange()
         }
+        .task(id: IOSGamificationInput(data: store.data, settings: settings.state)) {
+            await updateLevel()
+        }
         .onChange(of: store.analytics?.currentWeekStart) { _, currentWeekStart in
             guard selectedMuscleVolumeWeek == nil else { return }
             loadMuscleVolumeWeek(currentWeekStart)
@@ -134,8 +141,19 @@ struct IOSDashboardScreen: View {
         }
     }
 
+    private func updateLevel() async {
+        let state = settings.state
+        guard state.gamificationEnabled, let data = store.data else {
+            level = nil
+            return
+        }
+        let progress = await IOSGamification.evaluateInBackground(data: data, settings: state).progress
+        guard !Task.isCancelled else { return }
+        level = progress
+    }
+
     @ViewBuilder
-    private func dashboardContent(_ analytics: ILTrainingAnalytics) -> some View {
+    private func dashboardContent(_ analytics: ILTrainingAnalytics, level: LevelProgress?) -> some View {
         let unitSystem = settings.state.unitSystem
         let weekly = selectedMuscleVolumeWeek
         let pendingProgressions = store.data?.progressionSuggestions.filter {
@@ -169,6 +187,10 @@ struct IOSDashboardScreen: View {
                     onChooseTraining: { store.selectedTab = 1 }
                 )
 
+                if let level {
+                    IOSLevelCard(progress: level) { store.showAchievements() }
+                }
+
                 IOSDashboardGlassWeekStrip(
                     days: IOSDashboardWeekDay.week(
                         startingAt: analytics.currentWeekStart,
@@ -194,6 +216,10 @@ struct IOSDashboardScreen: View {
                     onStartPlan: startPlan,
                     onChooseTraining: { store.selectedTab = 1 }
                 )
+
+                if let level {
+                    IOSLevelCard(progress: level) { store.showAchievements() }
+                }
             }
 
             IOSDashboardTrainingTrendCard(trend: assessment?.trainingTrend)

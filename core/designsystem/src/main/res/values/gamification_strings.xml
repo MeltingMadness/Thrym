@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The eight chapters retell the Thrymskvida: winning back Thor's hammer. -->
+    <string name="gamification_chapter_1">The Call</string>
+    <string name="gamification_chapter_2">The Feather Cloak</string>
+    <string name="gamification_chapter_3">The Trail</string>
+    <string name="gamification_chapter_4">The Ruse</string>
+    <string name="gamification_chapter_5">The Chariot</string>
+    <string name="gamification_chapter_6">Jotunheim</string>
+    <string name="gamification_chapter_7">The Feast</string>
+    <string name="gamification_chapter_8">The Hammer</string>
+    <string name="gamification_scene_1">Thor wakes up and the hammer is gone.</string>
+    <string name="gamification_scene_2">Loki borrows Freyja\'s feather cloak and searches.</string>
+    <string name="gamification_scene_3">Thrym reveals it: eight leagues deep, and only for Freyja as his bride.</string>
+    <string name="gamification_scene_4">Thor travels disguised as the bride.</string>
+    <string name="gamification_scene_5">The goats pull the chariot and mountains burst.</string>
+    <string name="gamification_scene_6">In the hall of the giant king.</string>
+    <string name="gamification_scene_7">One ox, eight salmon, three barrels of mead.</string>
+    <string name="gamification_scene_8">The hammer lies in the bride\'s lap and Thor takes it.</string>
+    <string name="gamification_level_title" translatable="false">%1$s %2$s</string>
+    <string name="gamification_level_title_stars" translatable="false">%1$s · %2$s ★</string>
+    <string name="gamification_chapter_of">Chapter %1$d of %2$d</string>
+    <plurals name="gamification_hammer_depth">
+        <item quantity="one">Hammer still %d league deep</item>
+        <item quantity="other">Hammer still %d leagues deep</item>
+    </plurals>
+    <string name="gamification_hammer_home">Hammer reclaimed</string>
+    <string name="gamification_xp_to_tier">%1$s XP to tier %2$s</string>
+    <string name="gamification_xp_to_chapter">%1$s XP to chapter %2$d</string>
+    <string name="gamification_xp_to_star">%1$s XP to the next deed</string>
+    <string name="gamification_line" translatable="false">%1$s · %2$s</string>
+    <string name="gamification_emblem_cd">Emblem %1$s</string>
+    <string name="gamification_open_achievements">Open achievements</string>
+    <string name="settings_gamification">Achievements</string>
+    <string name="settings_gamification_show">Show game elements</string>
+    <string name="settings_gamification_hint">Level, XP and the celebration after a workout. The record markers on your sets stay.</string>
+</resources>

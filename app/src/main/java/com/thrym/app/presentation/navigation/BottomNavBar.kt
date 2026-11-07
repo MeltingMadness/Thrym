@@ -48,13 +48,7 @@ fun BottomNavBar(navController: NavController) {
     val dims = thrymDimens
     val navigate: (BottomNavItem) -> Unit = { item ->
         if (currentRoute != item.screen.route) {
-            navController.navigate(item.screen.route) {
-                popUpTo(Screen.Dashboard.route) {
-                    saveState = true
-                }
-                launchSingleTop = true
-                restoreState = true
-            }
+            navController.navigateToTopLevel(item.screen.route)
         }
     }
 

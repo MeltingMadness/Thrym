@@ -18,6 +18,7 @@ import com.thrym.app.data.repository.DeloadRepositoryImpl
 import com.thrym.app.data.repository.ExerciseRepositoryImpl
 import com.thrym.app.data.repository.IncidentReportRepositoryImpl
 import com.thrym.app.data.repository.MetaTrainingPlanRepositoryImpl
+import com.thrym.app.data.repository.GamificationRepositoryImpl
 import com.thrym.app.data.repository.ProgressionRepositoryImpl
 import com.thrym.app.data.repository.ReadinessProjectionSourceImpl
 import com.thrym.app.data.repository.ReadinessRepositoryImpl
@@ -31,6 +32,7 @@ import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.domain.repository.IncidentReportRepository
 import com.thrym.app.domain.repository.MetaTrainingPlanRepository
 import com.thrym.app.domain.repository.OnboardingRepository
+import com.thrym.app.domain.repository.GamificationRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.repository.ReadinessProjectionSource
 import com.thrym.app.domain.repository.ReadinessRepository
@@ -45,6 +47,7 @@ import com.thrym.app.presentation.common.ResourcesUiStrings
 import com.thrym.app.presentation.common.uiLocale
 import com.thrym.app.presentation.dashboard.DashboardViewModel
 import com.thrym.app.presentation.exercises.ExerciseLibraryViewModel
+import com.thrym.app.presentation.history.AchievementsViewModel
 import com.thrym.app.presentation.history.WorkoutDetailViewModel
 import com.thrym.app.presentation.history.WorkoutHistoryViewModel
 import com.thrym.app.presentation.onboarding.OnboardingGate
@@ -122,6 +125,7 @@ val appModule = module {
     }
     single { ProgressionEngine() }
     single<ProgressionRepository> { ProgressionRepositoryImpl(get(), get(), get(), get(), get(), get()) }
+    single<GamificationRepository> { GamificationRepositoryImpl(get(), get(), get(), get(), get()) }
     single<ReadinessRepository> { ReadinessRepositoryImpl(get(), get(), get()) }
     single<ReadinessProjectionSource> { ReadinessProjectionSourceImpl(get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
@@ -170,6 +174,7 @@ val appModule = module {
     viewModelOf(::ExerciseLibraryViewModel)
     viewModelOf(::DashboardViewModel)
     viewModelOf(::WorkoutHistoryViewModel)
+    viewModelOf(::AchievementsViewModel)
     viewModelOf(::TrainingPlanListViewModel)
     viewModelOf(::MetaPlanListViewModel)
     viewModelOf(::MetaPlanEditorViewModel)

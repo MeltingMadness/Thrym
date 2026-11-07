@@ -115,6 +115,8 @@ Die drei `ic_launcher_*.xml` entstehen mit dem SVG-Konverter von Android Studio 
 8. **Mindestgrößen:** Das App-Icon ist bis hinunter zu 29 px geprüft; bei 48 px liegt der Kontrast Eisen zu Amber bei 5,6–7,1 : 1. Ein Lockup ist mindestens 120 px breit (Versalhöhe dann etwa 18 px); kleiner nur das App-Icon ohne Schriftzug verwenden.
 9. **Schutzzone:** Um ein Lockup bleiben mindestens 28 Einheiten (bezogen auf seine Höhe von 218) frei. Die Lockup-Dateien haben diesen Rand schon eingebaut, nichts direkt an ihre Kante setzen.
 
+Die Embleme der Kapitel (`docs/features/level-und-xp.md`) sind Spielgrafik, kein Logo: Scheiben auf einer Hülse mit einem Motiv aus der Sage, ohne Runen. Ihre Ringe und Kreise rahmen deshalb kein Zeichen im Sinn von Regel 3. Sie sind KI-generiert und freigestellt; neue Motive tragen ebenfalls keine Runen.
+
 Zu den Regeln 2 bis 4: Runen im Kreis und die Farben Schwarz-Weiß-Rot werden von rechtsextremen Gruppen verwendet. Thrym bezieht sich auf die nordische Sage und auf das Krafttraining. Diese Regeln halten Abstand zu jeder solchen Lesart.
 
 ## Lizenz

@@ -73,15 +73,23 @@ internal fun isLiquidGlass(): Boolean = LocalAppearanceStyle.current == Appearan
 
 /**
  * Container of the secondary dashboard cards: translucent Ember surface, or a Liquid Glass
- * panel in that appearance. Content and behavior stay the same.
+ * panel in that appearance. Content and behavior stay the same. With [onClick] the whole panel
+ * is one button; the press feedback sits inside the panel's clip and keeps its rounded shape.
  */
 @Composable
 internal fun DashboardPanel(
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val click = if (onClick != null) {
+        Modifier.clickable(role = Role.Button, onClickLabel = onClickLabel, onClick = onClick)
+    } else {
+        Modifier
+    }
     if (isLiquidGlass()) {
-        Column(modifier.liquidGlass(GlassLevel.STANDARD, RoundedCornerShape(28.dp))) { content() }
+        Column(modifier.liquidGlass(GlassLevel.STANDARD, RoundedCornerShape(28.dp)).then(click)) { content() }
     } else {
         Surface(
             modifier = modifier,
@@ -89,7 +97,7 @@ internal fun DashboardPanel(
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
         ) {
-            Column { content() }
+            Column(click) { content() }
         }
     }
 }

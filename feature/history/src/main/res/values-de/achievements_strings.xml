@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Umschalter im Verlauf -->
+    <string name="history_mode_workouts">Trainings</string>
+    <string name="history_mode_achievements">Erfolge</string>
+
+    <!-- Erfolge: aktueller Stand -->
+    <string name="achievements_error">Erfolge konnten nicht berechnet werden.</string>
+    <string name="achievements_total_xp">%1$s XP gesamt</string>
+
+    <!-- Erfolge: die Heldenreise -->
+    <string name="achievements_journey_title">Die Heldenreise</string>
+    <string name="achievements_journey_intro">Thrym hat Thors Hammer acht Rasten unter der Erde versteckt. Jedes Kapitel holt ihn eine Rast höher.</string>
+    <string name="achievements_chapter_label">Kapitel %1$d</string>
+    <string name="achievements_chapter_done">Abgeschlossen</string>
+    <string name="achievements_chapter_tier">Stufe %1$s von %2$s</string>
+    <string name="achievements_chapter_from">Ab %1$s XP</string>
+    <string name="achievements_further_deeds">Weitere Taten</string>
+
+    <!-- Erfolge: so sammelst du XP -->
+    <string name="achievements_xp_title">So sammelst du XP</string>
+    <string name="achievements_source_training">Trainings</string>
+    <string name="achievements_source_record">Rekorde</string>
+    <string name="achievements_source_mark">Marken</string>
+    <string name="achievements_source_increase">Steigerungen</string>
+    <string name="achievements_source_weekly_goal">Wochenziel</string>
+    <string name="achievements_source_comeback">Comeback</string>
+    <string name="achievements_rule_training">%1$d XP je Training, weitere am selben Tag %2$d</string>
+    <string name="achievements_rule_record">%1$d XP je Rekord, höchstens %2$d Übungen je Training</string>
+    <string name="achievements_rule_mark">%1$d XP je neuer Marke</string>
+    <string name="achievements_rule_increase">%1$d XP je übernommener Steigerung, höchstens %2$d je Training</string>
+    <string name="achievements_rule_weekly_goal">%1$d XP, wenn du dein Wochenziel erreichst</string>
+    <string name="achievements_rule_comeback">%1$d XP für das erste Training nach %2$d Tagen Pause</string>
+    <string name="achievements_xp_footer">Höchstens %1$d XP je Training. Mehr Sätze bringen keine XP, mehr Fortschritt schon.</string>
+</resources>

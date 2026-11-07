@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gamification_chapter_1">Der Ruf</string>
+    <string name="gamification_chapter_2">Das Federkleid</string>
+    <string name="gamification_chapter_3">Die Spur</string>
+    <string name="gamification_chapter_4">Die List</string>
+    <string name="gamification_chapter_5">Der Wagen</string>
+    <string name="gamification_chapter_6">Jötunheim</string>
+    <string name="gamification_chapter_7">Das Festmahl</string>
+    <string name="gamification_chapter_8">Der Hammer</string>
+    <string name="gamification_scene_1">Thor erwacht, der Hammer ist fort.</string>
+    <string name="gamification_scene_2">Loki leiht Freyjas Federgewand und sucht.</string>
+    <string name="gamification_scene_3">Thrym verrät: acht Rasten tief, nur gegen Freyja als Braut.</string>
+    <string name="gamification_scene_4">Thor reist als Braut verkleidet.</string>
+    <string name="gamification_scene_5">Das Bockgespann zieht den Wagen, Berge bersten.</string>
+    <string name="gamification_scene_6">In der Halle des Riesenkönigs.</string>
+    <string name="gamification_scene_7">Ein Ochse, acht Lachse, drei Fässer Met.</string>
+    <string name="gamification_scene_8">Der Hammer liegt im Schoß der Braut, Thor greift zu.</string>
+    <string name="gamification_chapter_of">Kapitel %1$d von %2$d</string>
+    <plurals name="gamification_hammer_depth">
+        <item quantity="one">Hammer noch %d Rast tief</item>
+        <item quantity="other">Hammer noch %d Rasten tief</item>
+    </plurals>
+    <string name="gamification_hammer_home">Hammer heimgeholt</string>
+    <string name="gamification_xp_to_tier">%1$s XP bis Stufe %2$s</string>
+    <string name="gamification_xp_to_chapter">%1$s XP bis Kapitel %2$d</string>
+    <string name="gamification_xp_to_star">%1$s XP bis zur nächsten Tat</string>
+    <string name="gamification_emblem_cd">Emblem %1$s</string>
+    <string name="gamification_open_achievements">Erfolge öffnen</string>
+    <string name="settings_gamification">Erfolge</string>
+    <string name="settings_gamification_show">Spielelemente anzeigen</string>
+    <string name="settings_gamification_hint">Level, XP und die Feier nach dem Training. Die Rekord-Marker an deinen Sätzen bleiben.</string>
+</resources>
