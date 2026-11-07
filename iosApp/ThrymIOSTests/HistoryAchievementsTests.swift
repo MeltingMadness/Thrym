@@ -88,6 +88,50 @@ final class HistoryAchievementsTests: XCTestCase {
         XCTAssertTrue(englishCap.contains("\(engine.MAX_XP_PER_SESSION)"))
     }
 
+    /// Every text of the switcher and of the achievements is in the catalog, in German as its key
+    /// and with its English translation. Read from the language bundles, so the result does not
+    /// depend on the language the tests run in.
+    func testAchievementTextsAreTranslated() throws {
+        let english = try languageBundle("en")
+        let german = try languageBundle("de")
+        let expected: [String: String] = [
+            "Trainings": "Workouts",
+            "Erfolge": "Achievements",
+            "Verlaufsbereich": "History section",
+            "Öffnet die Erfolge": "Opens your achievements",
+            "Erfolge konnten nicht berechnet werden.": "Your achievements couldn't be calculated.",
+            "Erneut versuchen": "Try again",
+            "%@ XP gesamt": "%@ XP in total",
+            "Die Heldenreise": "The hero's journey",
+            "Thrym hat Thors Hammer acht Rasten unter der Erde versteckt. Jedes Kapitel holt ihn eine Rast höher.":
+                "Thrym hid Thor's hammer eight leagues below the earth. Each chapter brings it one league higher.",
+            "Kapitel %lld": "Chapter %lld",
+            "Abgeschlossen": "Completed",
+            "Stufe %@ von %@": "Tier %@ of %@",
+            "Ab %@ XP": "From %@ XP",
+            "Weitere Taten": "Further deeds",
+            "%@ XP bis zur nächsten Tat": "%@ XP to the next deed",
+            "So sammelst du XP": "How you earn XP"
+        ]
+        for (key, value) in expected {
+            XCTAssertEqual(english.localizedString(forKey: key, value: "<missing>", table: nil), value, key)
+            XCTAssertEqual(german.localizedString(forKey: key, value: "<missing>", table: nil), key, key)
+        }
+    }
+
+    /// The count of an XP source and the stars of the further deeds are grouped in the device
+    /// locale like the XP, never raw integers.
+    func testCountsAndStarsAreFormattedLikeTheXP() {
+        XCTAssertEqual(IOSGamification.formatCount(1234), IOSGamification.formatXP(1234))
+        XCTAssertEqual(IOSGamification.formatCount(7), "7")
+        XCTAssertEqual(IOSGamification.stars(1234), "\(IOSGamification.formatXP(1234)) ★")
+
+        let curve = LevelCurve.shared
+        let deeds = curve.progress(totalXp: curve.totalXpFor(level: curve.MAX_LEVEL) + 1234 * curve.XP_PER_STAR)
+        XCTAssertEqual(deeds.stars, 1234)
+        XCTAssertTrue(IOSGamification.title(deeds).hasSuffix("· \(IOSGamification.formatXP(1234)) ★"))
+    }
+
     /// A chapter row reads its status: done, the tier reached in the current one, or the XP a
     /// chapter still ahead starts at.
     func testJourneyRowsDescribeTheirStatus() {

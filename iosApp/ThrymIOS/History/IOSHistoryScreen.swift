@@ -18,8 +18,10 @@ struct IOSHistoryScreen: View {
     @State private var alert: IOSHistoryAlert?
     /// The content has scrolled under the mode switcher, which then gets a bar material.
     @State private var contentScrolled = false
-    /// The switcher's own selection, so only its pill animates (see `body`).
-    @State private var switcherMode: IOSHistoryMode = .trainings
+    /// The switcher's own selection, so only its pill animates (see `body`). Nil until the
+    /// switcher or the mode changes it; until then the switcher shows the mode, so History opened
+    /// in the achievements does not slide the pill over from the workouts.
+    @State private var switcherMode: IOSHistoryMode?
 
     private var hasSearchFilter: Bool {
         !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -81,7 +83,7 @@ struct IOSHistoryScreen: View {
             .safeAreaInset(edge: .top, spacing: 0) {
                 if showsModeSwitcher {
                     ThrymModeSwitcher(
-                        selection: $switcherMode,
+                        selection: Binding(get: { switcherMode ?? mode }, set: { switcherMode = $0 }),
                         segments: IOSHistoryMode.segments,
                         accessibilityLabel: String(localized: "Verlaufsbereich")
                     )
@@ -166,21 +168,25 @@ struct IOSHistoryScreen: View {
         .onChange(of: store.historyRootRequest) { _, _ in
             path.removeAll()
         }
-        .onAppear { switcherMode = mode }
         // The switcher slides its pill with an animation. The mode itself changes without one:
         // inside an animation the navigation bar loses its large title or search field when
         // the search comes back with the workouts.
         .onChange(of: switcherMode) { _, newMode in
-            guard newMode != mode else { return }
-            var transaction = Transaction()
-            transaction.disablesAnimations = true
-            withTransaction(transaction) { store.historyMode = newMode }
+            guard let newMode, newMode != mode else { return }
+            withoutAnimation { store.historyMode = newMode }
         }
-        // The level card or the setting changed the mode; the other mode starts at its top.
+        // The level card or the setting changed the mode; the other mode starts at its top. The
+        // pill moves there without sliding, like a mode that was set and not tapped.
         .onChange(of: mode) { _, newMode in
-            switcherMode = newMode
+            withoutAnimation { switcherMode = newMode }
             contentScrolled = false
         }
+    }
+
+    private func withoutAnimation(_ change: () -> Void) {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction, change)
     }
 
     /// The achievements, or the workouts with their loading, error and empty states.
@@ -194,9 +200,12 @@ struct IOSHistoryScreen: View {
                 systemImage: "exclamationmark.triangle",
                 description: Text(error)
             )
+            .onAppear { contentScrolled = false }
         } else if store.data == nil {
             ProgressView("Verlauf wird geladen …")
+                .onAppear { contentScrolled = false }
         } else if completedSessions.isEmpty {
+            // Also after a search or filter emptied a scrolled list: nothing is under the switcher.
             ContentUnavailableView(
                 !hasSearchFilter && dateFilter == .all ? String(localized: "Noch keine abgeschlossenen Trainings") : String(localized: "Keine passenden Trainings"),
                 systemImage: "clock.arrow.circlepath",
@@ -206,6 +215,7 @@ struct IOSHistoryScreen: View {
                         : String(localized: "Passe Suche oder Zeitraum an.")
                 )
             )
+            .onAppear { contentScrolled = false }
         } else if appearance == .liquidGlass {
             glassHistoryList
         } else {

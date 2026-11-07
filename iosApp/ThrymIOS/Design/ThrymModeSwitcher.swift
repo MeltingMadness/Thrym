@@ -25,6 +25,9 @@ struct ThrymModeSwitcher<Mode: Hashable>: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var selectionNamespace
+    /// Counts the taps that changed the mode. The haptic follows it, not `selection`, so a mode
+    /// set by the screen itself stays silent.
+    @State private var taps = 0
 
     private static var glassInk: Color { Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255) }
 
@@ -37,7 +40,7 @@ struct ThrymModeSwitcher<Mode: Hashable>: View {
         }
         .padding(4)
         .background { container(palette: palette) }
-        .sensoryFeedback(.selection, trigger: selection)
+        .sensoryFeedback(.selection, trigger: taps)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityLabel)
     }
@@ -47,6 +50,7 @@ struct ThrymModeSwitcher<Mode: Hashable>: View {
         let ink = selected ? selectedInk(palette: palette) : palette.textPrimary
         return Button {
             guard !selected else { return }
+            taps += 1
             if reduceMotion {
                 selection = segment.mode
             } else {

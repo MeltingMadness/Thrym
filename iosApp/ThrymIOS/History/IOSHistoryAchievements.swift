@@ -45,12 +45,16 @@ struct IOSHistoryAchievements: View {
             case .loading:
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear { contentScrolled = false }
             case .failed:
+                // A failed store load: without the history there is nothing to count. A retry
+                // loads the store again.
                 ContentUnavailableView {
                     Label("Erfolge konnten nicht berechnet werden.", systemImage: "exclamationmark.triangle")
                 } actions: {
                     Button("Erneut versuchen", action: retry)
                 }
+                .onAppear { contentScrolled = false }
             case .loaded(let snapshot):
                 content(snapshot)
             }
@@ -70,12 +74,17 @@ struct IOSHistoryAchievements: View {
                         title: String(localized: "Die Heldenreise"),
                         intro: String(localized: "Thrym hat Thors Hammer acht Rasten unter der Erde versteckt. Jedes Kapitel holt ihn eine Rast höher.")
                     )
-                    ForEach(snapshot.chapters, id: \.chapter) { chapter in
-                        IOSJourneyChapterRow(chapter: chapter)
+                    // One panel for the whole journey; the current chapter is highlighted inside it.
+                    VStack(spacing: 4) {
+                        ForEach(snapshot.chapters, id: \.chapter) { chapter in
+                            IOSJourneyChapterRow(chapter: chapter)
+                        }
+                        if snapshot.progress.isLastLevel {
+                            IOSJourneyDeedsRow(progress: snapshot.progress)
+                        }
                     }
-                    if snapshot.progress.isLastLevel {
-                        IOSJourneyDeedsRow(progress: snapshot.progress)
-                    }
+                    .padding(8)
+                    .modifier(IOSAchievementsSurface())
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
@@ -88,7 +97,7 @@ struct IOSHistoryAchievements: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 4)
-                    .modifier(IOSAchievementsSurface(highlight: nil))
+                    .modifier(IOSAchievementsSurface())
                     Text(IOSGamification.sessionCapRule())
                         .font(.geist(.footnote))
                         .thrymSecondaryText()
@@ -188,7 +197,8 @@ private struct IOSAchievementsSectionHeader: View {
     }
 }
 
-/// One chapter of the hero's journey. Chapters still ahead are dimmed and keep their scene for later.
+/// One chapter of the hero's journey. The current chapter is tinted in its accent; chapters still
+/// ahead are dimmed and keep their scene for later.
 private struct IOSJourneyChapterRow: View {
     let chapter: JourneyChapter
 
@@ -199,6 +209,7 @@ private struct IOSJourneyChapterRow: View {
         let palette = theme.palette(for: colorScheme)
         let locked = chapter.status == .locked
         let accent = IOSGamification.accent(chapter.chapter, dark: colorScheme == .dark)
+        let highlight = RoundedRectangle(cornerRadius: 20, style: .continuous)
         HStack(spacing: 14) {
             IOSChapterEmblem(chapter: chapter.chapter, tier: chapter.tier)
                 .frame(width: 48, height: 48)
@@ -226,42 +237,54 @@ private struct IOSJourneyChapterRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(14)
-        .modifier(IOSAchievementsSurface(highlight: chapter.status == .current ? accent : nil))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background {
+            if chapter.status == .current {
+                highlight
+                    .fill(accent.opacity(0.12))
+                    .overlay { highlight.strokeBorder(accent.opacity(0.6), lineWidth: 1) }
+            }
+        }
         .accessibilityElement(children: .combine)
     }
 }
 
-/// After the last chapter: the further deeds, one star per step.
+/// After the last chapter: the further deeds, one star per step, laid out like a chapter.
 private struct IOSJourneyDeedsRow: View {
     let progress: LevelProgress
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.thrymTheme) private var theme
 
     var body: some View {
+        let palette = theme.palette(for: colorScheme)
         let accent = IOSGamification.accent(LevelCurve.shared.CHAPTERS, dark: colorScheme == .dark)
         HStack(spacing: 14) {
             Image(systemName: "star.fill")
-                .font(.system(size: 24, weight: .semibold))
+                .resizable()
+                .scaledToFit()
+                .frame(width: 32, height: 32)
                 .foregroundStyle(accent)
                 .frame(width: 48, height: 48)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: IOSGamification.stars(progress.stars))
+                    .font(.geist(.caption, weight: .semibold))
+                    .tracking(0.6)
+                    .monospacedDigit()
+                    .foregroundStyle(accent)
                 Text("Weitere Taten")
                     .font(.geist(.headline, weight: .semibold))
                 Text(IOSGamification.nextStep(progress))
                     .font(.geist(.subheadline))
                     .monospacedDigit()
-                    .thrymSecondaryText()
+                    .foregroundStyle(palette.textPrimary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(verbatim: "\(progress.stars) ★")
-                .font(.geist(.title3, weight: .heavy))
-                .monospacedDigit()
-                .foregroundStyle(accent)
         }
-        .padding(14)
-        .modifier(IOSAchievementsSurface(highlight: nil))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .accessibilityElement(children: .combine)
     }
 }
@@ -286,7 +309,7 @@ private struct IOSXpSourceRow: View {
                     .font(.geist(.headline, weight: .bold))
                     .monospacedDigit()
                 if total.count > 0 {
-                    Text(verbatim: "\(total.count)×")
+                    Text(verbatim: "\(IOSGamification.formatCount(total.count))×")
                         .font(.geist(.caption, weight: .semibold))
                         .monospacedDigit()
                         .thrymSecondaryText()
@@ -298,11 +321,8 @@ private struct IOSXpSourceRow: View {
     }
 }
 
-/// Surface of the achievement rows: glass in Liquid Glass, a filled card in Ember. `highlight`
-/// tints the current chapter in its accent and draws its border.
+/// Surface of the journey and of the XP sources: glass in Liquid Glass, a filled card in Ember.
 private struct IOSAchievementsSurface: ViewModifier {
-    let highlight: Color?
-
     @Environment(\.thrymAppearance) private var appearance
     @Environment(\.thrymTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
@@ -310,20 +330,13 @@ private struct IOSAchievementsSurface: ViewModifier {
     func body(content: Content) -> some View {
         let palette = theme.palette(for: colorScheme)
         let shape = RoundedRectangle(cornerRadius: appearance == .liquidGlass ? 24 : 18, style: .continuous)
-        let tinted = content.background {
-            if let highlight { shape.fill(highlight.opacity(0.12)) }
-        }
         switch appearance {
         case .liquidGlass:
-            tinted
-                .liquidGlass(in: shape)
-                .overlay {
-                    if let highlight { shape.strokeBorder(highlight, lineWidth: 1) }
-                }
+            content.liquidGlass(in: shape)
         case .ember:
-            tinted
+            content
                 .background(palette.surface, in: shape)
-                .overlay { shape.strokeBorder(highlight ?? palette.separator, lineWidth: 1) }
+                .overlay { shape.strokeBorder(palette.separator, lineWidth: 1) }
         }
     }
 }

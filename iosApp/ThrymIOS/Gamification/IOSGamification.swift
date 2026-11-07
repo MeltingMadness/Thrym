@@ -108,7 +108,12 @@ enum IOSGamification {
     /// "Die Spur II", or "Der Hammer · 2 ★" with further deeds. The level number never shows.
     static func title(_ progress: LevelProgress) -> String {
         let name = chapterName(progress.chapter)
-        return progress.stars > 0 ? "\(name) · \(progress.stars) ★" : "\(name) \(tierNumeral(progress.tier))"
+        return progress.stars > 0 ? "\(name) · \(stars(progress.stars))" : "\(name) \(tierNumeral(progress.tier))"
+    }
+
+    /// "2 ★": the further deeds after the last chapter, grouped like the XP.
+    static func stars(_ count: Int32) -> String {
+        "\(formatCount(count)) ★"
     }
 
     static func chapterOf(_ chapter: Int32) -> String {
@@ -123,6 +128,11 @@ enum IOSGamification {
 
     static func formatXP(_ xp: Int64) -> String {
         xp.formatted(.number)
+    }
+
+    /// A count in the device locale with grouping, like the XP: "1.234".
+    static func formatCount(_ count: Int32) -> String {
+        Int(count).formatted(.number)
     }
 
     /// "9.120 XP gesamt".
