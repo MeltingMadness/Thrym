@@ -93,6 +93,9 @@ import java.time.LocalDateTime
 /** Test tag of the level card on the dashboard (DashboardScreen). */
 private const val LEVEL_CARD_TAG = "dashboard_level_card"
 
+/** Test tag of the achievements list in the history (AchievementsView). */
+private const val ACHIEVEMENTS_LIST_TAG = "achievements_list"
+
 @RunWith(AndroidJUnit4::class)
 class NavigationSmokeTest {
 
@@ -263,6 +266,10 @@ class NavigationSmokeTest {
     private fun existsText(text: String): Boolean =
         composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
 
+    /** Der Text steht sichtbar auf dem Bildschirm, nicht nur irgendwo im Baum. */
+    private fun displaysText(text: String): Boolean =
+        runCatching { composeRule.onNodeWithText(text).assertIsDisplayed() }.isSuccess
+
     /** Tippt einen Tab der Bottom-Bar an und wartet, bis seine Route oben liegt. */
     private fun selectBottomTab(tag: String, route: String, navController: () -> NavHostController) {
         composeRule.onNodeWithTag(tag, useUnmergedTree = true).performClick()
@@ -380,6 +387,29 @@ class NavigationSmokeTest {
         waitOrDump(30_000L) { existsText(text(R.string.history_empty_title)) }
         assertFalse(existsText(emptyTotalXp()))
         assertFalse(existsText(text(HistoryR.string.history_mode_achievements)))
+    }
+
+    @Test
+    fun level_card_opens_achievements_at_the_hero_after_they_were_scrolled() {
+        val navController = setContentWithBottomBar()
+        tapLevelCard()
+        assertHistoryRootShowsAchievements(navController())
+
+        // Bis „So sammelst du XP“ scrollen: der Stand oben verlaesst den Bildschirm.
+        val totalXp = emptyTotalXp()
+        composeRule.onNodeWithTag(ACHIEVEMENTS_LIST_TAG)
+            .performScrollToNode(hasText(text(HistoryR.string.achievements_xp_title)))
+        waitOrDump(30_000L) { !displaysText(totalXp) }
+
+        // Ueber die Trainings zur Startseite: der Tab speichert die Erfolge samt Scrollstand.
+        selectSegment(workoutsSegment())
+        assertHistoryShowsWorkouts()
+        selectBottomTab("bottom_nav_home", Screen.Dashboard.route, navController)
+
+        tapLevelCard()
+
+        // Die Level-Karte will den Stand zeigen: die Erfolge stehen wieder oben.
+        assertHistoryRootShowsAchievements(navController())
     }
 
     @Test

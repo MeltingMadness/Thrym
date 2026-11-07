@@ -147,20 +147,25 @@ fun WorkoutHistoryScreen(
 
     // Kept like the plans mode: a bottom-nav return to the history shows the last mode again.
     var selectedMode by rememberSaveable { mutableStateOf(HistoryMode.WORKOUTS) }
-    LaunchedEffect(requestedMode) {
-        if (requestedMode != null) {
-            selectedMode = requestedMode
-            onModeRequestHandled()
-        }
-    }
-    // The request already counts in the frame it arrives in, so the old mode never flashes.
-    val display = resolveHistoryMode(requestedMode ?: selectedMode, achievements.gamificationEnabled)
 
     // Above the modes, so that each keeps its scroll position when the switcher changes them.
     val workoutListState = rememberLazyListState()
     val timeChipsScroll = rememberScrollState()
     val planChipsScroll = rememberScrollState()
     val achievementsListState = rememberLazyListState()
+
+    LaunchedEffect(requestedMode) {
+        if (requestedMode != null) {
+            // A request from outside, such as the level card, wants the current standing: the
+            // achievements start at the hero, not where the tab's saved state left them. Only
+            // the switcher keeps their position.
+            if (requestedMode == HistoryMode.ACHIEVEMENTS) achievementsListState.requestScrollToItem(0)
+            selectedMode = requestedMode
+            onModeRequestHandled()
+        }
+    }
+    // The request already counts in the frame it arrives in, so the old mode never flashes.
+    val display = resolveHistoryMode(requestedMode ?: selectedMode, achievements.gamificationEnabled)
 
     LaunchedEffect(state.error) {
         state.error?.let {

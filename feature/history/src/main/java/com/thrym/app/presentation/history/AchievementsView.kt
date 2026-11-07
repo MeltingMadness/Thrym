@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -64,6 +65,9 @@ import com.thrym.shared.gamification.LevelProgress
 import com.thrym.shared.gamification.XpSource
 import com.thrym.shared.gamification.XpTotal
 import com.thrym.shared.recognition.TrainingMilestones
+
+/** Test tag of the achievements list, which UI tests scroll. */
+private const val ACHIEVEMENTS_LIST_TAG = "achievements_list"
 
 /**
  * The achievements of the history: the current stand, the eight chapters of the hero's journey
@@ -113,7 +117,9 @@ private fun AchievementsList(
 ) {
     val dims = thrymDimens
     LazyColumn(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(ACHIEVEMENTS_LIST_TAG),
         state = listState,
         contentPadding = PaddingValues(horizontal = if (glass) 16.dp else dims.spacingMd, vertical = dims.spacingSm),
         verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
