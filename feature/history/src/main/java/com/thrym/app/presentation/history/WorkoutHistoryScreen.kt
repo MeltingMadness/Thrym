@@ -21,6 +21,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -52,6 +54,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -76,6 +79,8 @@ import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.EmptyStateScreen
+import com.thrym.app.presentation.common.ModeSegment
+import com.thrym.app.presentation.common.ThrymModeSwitcher
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
@@ -108,11 +113,19 @@ internal fun resolveHistoryContentState(
     }
 }
 
+/**
+ * The history tab: the finished workouts and, with game elements on, the achievements behind a
+ * switcher. [requestedMode] comes from outside, for example from the level card on the
+ * dashboard; the screen shows it once and reports it handled through [onModeRequestHandled].
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutHistoryScreen(
     onWorkoutClick: (Long) -> Unit,
-    viewModel: WorkoutHistoryViewModel = koinViewModel()
+    requestedMode: HistoryMode? = null,
+    onModeRequestHandled: () -> Unit = {},
+    viewModel: WorkoutHistoryViewModel = koinViewModel(),
+    achievementsViewModel: AchievementsViewModel = koinViewModel()
 ) {
     val glass = isLiquidGlass()
     val pagedWorkouts = viewModel.pagedWorkouts.collectAsLazyPagingItems()
@@ -127,6 +140,18 @@ fun WorkoutHistoryScreen(
     val dims = thrymDimens
     val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val achievements by achievementsViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Kept like the plans mode: a bottom-nav return to the history shows the last mode again.
+    var selectedMode by rememberSaveable { mutableStateOf(HistoryMode.WORKOUTS) }
+    LaunchedEffect(requestedMode) {
+        if (requestedMode != null) {
+            selectedMode = requestedMode
+            onModeRequestHandled()
+        }
+    }
+    // The request already counts in the frame it arrives in, so the old mode never flashes.
+    val display = resolveHistoryMode(requestedMode ?: selectedMode, achievements.gamificationEnabled)
 
     LaunchedEffect(state.error) {
         state.error?.let {
@@ -148,135 +173,157 @@ fun WorkoutHistoryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            if (glass) {
-                GlassHistoryHeader()
-                GlassHistorySearchField(
-                    query = state.filter.query,
-                    onQueryChange = viewModel::setSearchQuery
-                )
-            } else {
-                HistorySearchField(
-                    query = state.filter.query,
-                    onQueryChange = viewModel::setSearchQuery
+            if (glass) GlassHistoryHeader()
+            if (display.showSwitcher) {
+                HistoryModeSwitcher(
+                    selected = display.mode ?: selectedMode,
+                    onSelect = { selectedMode = it },
+                    modifier = Modifier.padding(
+                        horizontal = if (glass) 16.dp else dims.spacingMd,
+                        vertical = dims.spacingXs
+                    )
                 )
             }
-            HistoryFilterBar(
-                filter = state.filter,
-                plans = state.plans,
-                onPlanSelected = viewModel::setPlanFilter,
-                onTimeRangeSelected = viewModel::setTimeRange
-            )
 
-            when (resolveHistoryContentState(pagedWorkouts.loadState.refresh, pagedWorkouts.itemCount)) {
-                HistoryListContentState.Loading -> {
-                    HistorySkeleton(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    )
-                }
-
-                HistoryListContentState.Empty -> {
-                    EmptyStateScreen(
-                        title = stringResource(
-                            id = if (state.filter.isActive) {
-                                HistoryR.string.history_filter_empty_title
-                            } else {
-                                R.string.history_empty_title
-                            }
-                        ),
-                        subtitle = stringResource(
-                            id = if (state.filter.isActive) {
-                                HistoryR.string.history_filter_empty_subtitle
-                            } else {
-                                R.string.history_empty_subtitle
-                            }
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    )
-                }
-
-                HistoryListContentState.Error -> {
-                    EmptyStateScreen(
-                        title = stringResource(id = R.string.history_error_title),
-                        subtitle = stringResource(id = R.string.history_error_subtitle),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        action = {
-                            TextButton(onClick = { pagedWorkouts.retry() }, colors = ThrymInteractiveColors.textButton()) {
-                                Text(text = stringResource(id = R.string.common_retry))
-                            }
-                        }
-                    )
-                }
-
-                HistoryListContentState.Content -> if (glass) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = dims.spacingSm),
-                        verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
-                    ) {
-                        items(
-                            count = pagedEntries.itemCount,
-                            key = pagedEntries.itemKey { entry ->
-                                when (entry) {
-                                    is HistoryListEntry.Week -> "week_${entry.weekStart}"
-                                    is HistoryListEntry.Workout -> "workout_${entry.item.session.id}"
-                                }
-                            },
-                            contentType = pagedEntries.itemContentType { it::class.simpleName }
-                        ) { index ->
-                            when (val entry = pagedEntries[index]) {
-                                is HistoryListEntry.Week -> GlassWeekHeader(
-                                    weekStart = entry.weekStart,
-                                    summary = weekSummaries[entry.weekStart],
-                                    today = today
-                                )
-                                is HistoryListEntry.Workout -> SwipeToDeleteCard(
-                                    item = entry.item,
-                                    unitSystem = preferences.unitSystem,
-                                    onClick = { onWorkoutClick(entry.item.session.id) },
-                                    onDelete = { deleteSessionId = entry.item.session.id },
-                                    glass = true
-                                )
-                                null -> Unit
-                            }
-                        }
-                        item {
-                            Spacer(modifier = Modifier.height(dims.spacingXl))
-                        }
+            when (display.mode) {
+                null -> Unit
+                HistoryMode.ACHIEVEMENTS -> AchievementsView(
+                    content = achievements.content,
+                    glass = glass,
+                    onRetry = achievementsViewModel::retry,
+                    modifier = Modifier.weight(1f)
+                )
+                HistoryMode.WORKOUTS -> {
+                    if (glass) {
+                        GlassHistorySearchField(
+                            query = state.filter.query,
+                            onQueryChange = viewModel::setSearchQuery
+                        )
+                    } else {
+                        HistorySearchField(
+                            query = state.filter.query,
+                            onQueryChange = viewModel::setSearchQuery
+                        )
                     }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentPadding = PaddingValues(dims.spacingMd),
-                        verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
-                    ) {
-                        items(
-                            count = pagedWorkouts.itemCount,
-                            key = pagedWorkouts.itemKey { it.session.id }
-                        ) { index ->
-                            val item = pagedWorkouts[index]
-                            if (item != null) {
-                                val entranceModifier = if (index < 8) Modifier.staggeredEntrance(index) else Modifier
-                                SwipeToDeleteCard(
-                                    item = item,
-                                    unitSystem = preferences.unitSystem,
-                                    onClick = { onWorkoutClick(item.session.id) },
-                                    onDelete = { deleteSessionId = item.session.id },
-                                    modifier = entranceModifier
-                                )
-                            }
+                    HistoryFilterBar(
+                        filter = state.filter,
+                        plans = state.plans,
+                        onPlanSelected = viewModel::setPlanFilter,
+                        onTimeRangeSelected = viewModel::setTimeRange
+                    )
+
+                    when (resolveHistoryContentState(pagedWorkouts.loadState.refresh, pagedWorkouts.itemCount)) {
+                        HistoryListContentState.Loading -> {
+                            HistorySkeleton(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                            )
                         }
-                        item {
-                            Spacer(modifier = Modifier.height(dims.spacingXl))
+
+                        HistoryListContentState.Empty -> {
+                            EmptyStateScreen(
+                                title = stringResource(
+                                    id = if (state.filter.isActive) {
+                                        HistoryR.string.history_filter_empty_title
+                                    } else {
+                                        R.string.history_empty_title
+                                    }
+                                ),
+                                subtitle = stringResource(
+                                    id = if (state.filter.isActive) {
+                                        HistoryR.string.history_filter_empty_subtitle
+                                    } else {
+                                        R.string.history_empty_subtitle
+                                    }
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                            )
+                        }
+
+                        HistoryListContentState.Error -> {
+                            EmptyStateScreen(
+                                title = stringResource(id = R.string.history_error_title),
+                                subtitle = stringResource(id = R.string.history_error_subtitle),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                action = {
+                                    TextButton(onClick = { pagedWorkouts.retry() }, colors = ThrymInteractiveColors.textButton()) {
+                                        Text(text = stringResource(id = R.string.common_retry))
+                                    }
+                                }
+                            )
+                        }
+
+                        HistoryListContentState.Content -> if (glass) {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = dims.spacingSm),
+                                verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+                            ) {
+                                items(
+                                    count = pagedEntries.itemCount,
+                                    key = pagedEntries.itemKey { entry ->
+                                        when (entry) {
+                                            is HistoryListEntry.Week -> "week_${entry.weekStart}"
+                                            is HistoryListEntry.Workout -> "workout_${entry.item.session.id}"
+                                        }
+                                    },
+                                    contentType = pagedEntries.itemContentType { it::class.simpleName }
+                                ) { index ->
+                                    when (val entry = pagedEntries[index]) {
+                                        is HistoryListEntry.Week -> GlassWeekHeader(
+                                            weekStart = entry.weekStart,
+                                            summary = weekSummaries[entry.weekStart],
+                                            today = today
+                                        )
+                                        is HistoryListEntry.Workout -> SwipeToDeleteCard(
+                                            item = entry.item,
+                                            unitSystem = preferences.unitSystem,
+                                            onClick = { onWorkoutClick(entry.item.session.id) },
+                                            onDelete = { deleteSessionId = entry.item.session.id },
+                                            glass = true
+                                        )
+                                        null -> Unit
+                                    }
+                                }
+                                item {
+                                    Spacer(modifier = Modifier.height(dims.spacingXl))
+                                }
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentPadding = PaddingValues(dims.spacingMd),
+                                verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+                            ) {
+                                items(
+                                    count = pagedWorkouts.itemCount,
+                                    key = pagedWorkouts.itemKey { it.session.id }
+                                ) { index ->
+                                    val item = pagedWorkouts[index]
+                                    if (item != null) {
+                                        val entranceModifier = if (index < 8) Modifier.staggeredEntrance(index) else Modifier
+                                        SwipeToDeleteCard(
+                                            item = item,
+                                            unitSystem = preferences.unitSystem,
+                                            onClick = { onWorkoutClick(item.session.id) },
+                                            onDelete = { deleteSessionId = item.session.id },
+                                            modifier = entranceModifier
+                                        )
+                                    }
+                                }
+                                item {
+                                    Spacer(modifier = Modifier.height(dims.spacingXl))
+                                }
+                            }
                         }
                     }
                 }
@@ -310,6 +357,25 @@ fun WorkoutHistoryScreen(
             )
         }
     }
+}
+
+/** "Trainings | Erfolge" at the top of the history, the same switcher as in the plans tab. */
+@Composable
+private fun HistoryModeSwitcher(
+    selected: HistoryMode,
+    onSelect: (HistoryMode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val modes = HistoryMode.entries
+    ThrymModeSwitcher(
+        segments = listOf(
+            ModeSegment(stringResource(HistoryR.string.history_mode_workouts), Icons.Default.History),
+            ModeSegment(stringResource(HistoryR.string.history_mode_achievements), Icons.Default.EmojiEvents)
+        ),
+        selectedIndex = modes.indexOf(selected),
+        onSelect = { index -> onSelect(modes[index]) },
+        modifier = modifier
+    )
 }
 
 @Composable

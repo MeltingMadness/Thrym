@@ -26,6 +26,7 @@
     <string name="gamification_xp_to_chapter">%1$s XP bis Kapitel %2$d</string>
     <string name="gamification_xp_to_star">%1$s XP bis zur nächsten Tat</string>
     <string name="gamification_emblem_cd">Emblem %1$s</string>
+    <string name="gamification_open_achievements">Erfolge öffnen</string>
     <string name="settings_gamification">Erfolge</string>
     <string name="settings_gamification_show">Spielelemente anzeigen</string>
     <string name="settings_gamification_hint">Level, XP und die Feier nach dem Training. Die Rekord-Marker an deinen Sätzen bleiben.</string>

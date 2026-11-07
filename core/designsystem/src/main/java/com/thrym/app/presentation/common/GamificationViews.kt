@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
@@ -140,10 +141,19 @@ private fun emblemRes(chapter: Int, tier: Int): Int = when (chapter to tier) {
     else -> R.drawable.emblem_chapter_8_tier_3
 }
 
-/** The emblem of a tier: one plate per tier on a sleeve, in the material of the chapter. */
+/**
+ * The emblem of a tier: one plate per tier on a sleeve, in the material of the chapter.
+ * [colorFilter] lets a list dim a chapter that is still ahead.
+ */
 @Composable
-fun ChapterEmblem(chapter: Int, tier: Int, contentDescription: String?, modifier: Modifier = Modifier) {
-    Image(painterResource(emblemRes(chapter, tier)), contentDescription, modifier)
+fun ChapterEmblem(
+    chapter: Int,
+    tier: Int,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    colorFilter: ColorFilter? = null
+) {
+    Image(painterResource(emblemRes(chapter, tier)), contentDescription, modifier, colorFilter = colorFilter)
 }
 
 /** The emblem inside a ring that shows the way to the next tier. */

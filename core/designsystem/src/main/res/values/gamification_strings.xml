@@ -30,6 +30,7 @@
     <string name="gamification_xp_to_star">%1$s XP to the next deed</string>
     <string name="gamification_line" translatable="false">%1$s · %2$s</string>
     <string name="gamification_emblem_cd">Emblem %1$s</string>
+    <string name="gamification_open_achievements">Open achievements</string>
     <string name="settings_gamification">Achievements</string>
     <string name="settings_gamification_show">Show game elements</string>
     <string name="settings_gamification_hint">Level, XP and the celebration after a workout. The record markers on your sets stay.</string>

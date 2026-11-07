@@ -69,6 +69,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -102,6 +103,9 @@ import org.koin.androidx.compose.koinViewModel
 /** Abstand, in dem eine sichtbare Dashboard-Seite den Kalendertag prüft. */
 private const val DAY_ROLLOVER_CHECK_INTERVAL_MS = 60_000L
 
+/** Test tag of the level card, which UI tests tap to open the achievements. */
+private const val LEVEL_CARD_TAG = "dashboard_level_card"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
@@ -109,6 +113,7 @@ fun DashboardScreen(
     onContinueWorkout: (Long, Long?, Long?) -> Unit,
     onOpenProgressionReview: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenAchievements: () -> Unit,
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -239,7 +244,13 @@ fun DashboardScreen(
 
             state.level?.let { level ->
                 item(key = "level_ring") {
-                    LevelCard(level, Modifier.fillMaxWidth())
+                    LevelCard(
+                        level = level,
+                        onClick = onOpenAchievements,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(LEVEL_CARD_TAG)
+                    )
                 }
             }
 

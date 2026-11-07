@@ -47,6 +47,7 @@ import com.thrym.app.presentation.common.ResourcesUiStrings
 import com.thrym.app.presentation.common.uiLocale
 import com.thrym.app.presentation.dashboard.DashboardViewModel
 import com.thrym.app.presentation.exercises.ExerciseLibraryViewModel
+import com.thrym.app.presentation.history.AchievementsViewModel
 import com.thrym.app.presentation.history.WorkoutDetailViewModel
 import com.thrym.app.presentation.history.WorkoutHistoryViewModel
 import com.thrym.app.presentation.onboarding.OnboardingGate
@@ -173,6 +174,7 @@ val appModule = module {
     viewModelOf(::ExerciseLibraryViewModel)
     viewModelOf(::DashboardViewModel)
     viewModelOf(::WorkoutHistoryViewModel)
+    viewModelOf(::AchievementsViewModel)
     viewModelOf(::TrainingPlanListViewModel)
     viewModelOf(::MetaPlanListViewModel)
     viewModelOf(::MetaPlanEditorViewModel)

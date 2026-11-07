@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- History switcher -->
+    <string name="history_mode_workouts">Workouts</string>
+    <string name="history_mode_achievements">Achievements</string>
+
+    <!-- Achievements: current stand -->
+    <string name="achievements_error">Your achievements couldn\'t be calculated.</string>
+    <string name="achievements_total_xp">%1$s XP in total</string>
+
+    <!-- Achievements: the hero's journey -->
+    <string name="achievements_journey_title">The hero\'s journey</string>
+    <string name="achievements_journey_intro">Thrym hid Thor\'s hammer eight leagues below the earth. Each chapter brings it one league higher.</string>
+    <string name="achievements_chapter_label">Chapter %1$d</string>
+    <string name="achievements_chapter_done">Completed</string>
+    <string name="achievements_chapter_tier">Tier %1$s of %2$s</string>
+    <string name="achievements_chapter_from">From %1$s XP</string>
+    <string name="achievements_further_deeds">Further deeds</string>
+    <string name="achievements_stars" translatable="false">%1$d ★</string>
+
+    <!-- Achievements: how you earn XP. The rule numbers are the engine's constants, all above one. -->
+    <string name="achievements_xp_title">How you earn XP</string>
+    <string name="achievements_source_training">Workouts</string>
+    <string name="achievements_source_record">Records</string>
+    <string name="achievements_source_mark">Marks</string>
+    <string name="achievements_source_increase">Increases</string>
+    <string name="achievements_source_weekly_goal">Weekly goal</string>
+    <string name="achievements_source_comeback">Comeback</string>
+    <string name="achievements_rule_training" tools:ignore="PluralsCandidate">%1$d XP per workout, %2$d for more on the same day</string>
+    <string name="achievements_rule_record" tools:ignore="PluralsCandidate">%1$d XP per record, at most %2$d exercises per workout</string>
+    <string name="achievements_rule_mark">%1$d XP per new mark</string>
+    <string name="achievements_rule_increase" tools:ignore="PluralsCandidate">%1$d XP per accepted increase, at most %2$d per workout</string>
+    <string name="achievements_rule_weekly_goal">%1$d XP when you reach your weekly goal</string>
+    <string name="achievements_rule_comeback">%1$d XP for your first workout after a %2$d-day break</string>
+    <string name="achievements_xp_amount" translatable="false">%1$s XP</string>
+    <string name="achievements_count" translatable="false">%1$d×</string>
+    <string name="achievements_xp_footer">At most %1$d XP per workout. More sets earn nothing, more progress does.</string>
+</resources>

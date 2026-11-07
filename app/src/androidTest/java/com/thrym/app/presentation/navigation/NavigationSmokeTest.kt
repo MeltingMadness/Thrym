@@ -11,9 +11,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.isRoot
@@ -24,6 +30,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.datastore.preferences.core.edit
 import androidx.navigation.NavHostController
@@ -54,10 +61,12 @@ import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.domain.repository.OnboardingRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.util.DateFormatting
+import com.thrym.app.presentation.common.formatXp
 import com.thrym.app.presentation.common.uiLocale
 import com.thrym.app.presentation.progression.ProgressionReviewViewModel
 import com.thrym.app.presentation.theme.ThrymTheme
 import com.thrym.core.designsystem.R
+import com.thrym.feature.history.R as HistoryR
 import com.thrym.feature.onboarding.R as OnboardingR
 import com.thrym.feature.workout.R as WorkoutR
 import kotlinx.coroutines.flow.Flow
@@ -78,6 +87,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.LocalDateTime
+
+/** Test tag of the level card on the dashboard (DashboardScreen). */
+private const val LEVEL_CARD_TAG = "dashboard_level_card"
 
 @RunWith(AndroidJUnit4::class)
 class NavigationSmokeTest {
@@ -196,6 +208,101 @@ class NavigationSmokeTest {
         composeRule.runOnIdle {
             assertEquals(Screen.Dashboard.route, navController.currentBackStackEntry?.destination?.route)
         }
+    }
+
+    /**
+     * Wie MainActivity: NavHost mit Bottom-Bar. Die Bar bleibt hier auch auf Details sichtbar,
+     * damit ein Test den Tab wechseln kann, waehrend im Verlauf noch ein Detail offen ist.
+     */
+    private fun setContentWithBottomBar(): () -> NavHostController {
+        lateinit var navController: NavHostController
+        composeRule.setContent {
+            ThrymTheme {
+                navController = rememberNavController()
+                Scaffold(bottomBar = { BottomNavBar(navController) }) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        ThrymNavHost(navController = navController)
+                    }
+                }
+            }
+        }
+        return { navController }
+    }
+
+    /** Scrollt auf der Startseite zur Level-Karte und tippt sie an. */
+    private fun tapLevelCard() {
+        val start = text(R.string.dashboard_hero_start)
+        waitOrDump(30_000L) {
+            composeRule.onAllNodesWithText(start).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(hasScrollToNodeAction() and hasAnyDescendant(hasText(start)))
+            .performScrollToNode(hasTestTag(LEVEL_CARD_TAG))
+        composeRule.onNodeWithTag(LEVEL_CARD_TAG).performClick()
+    }
+
+    /** Der Verlauf steht an seiner Wurzel, „Erfolge“ ist gewaehlt und zeigt den Stand. */
+    private fun assertHistoryRootShowsAchievements(navController: NavHostController) {
+        waitOrDump(30_000L) {
+            navController.currentBackStackEntry?.destination?.route == Screen.WorkoutHistory.route
+        }
+        composeRule.runOnIdle {
+            assertEquals(Screen.WorkoutHistory.route, navController.currentBackStackEntry?.destination?.route)
+            assertEquals(Screen.Dashboard.route, navController.previousBackStackEntry?.destination?.route)
+        }
+        val achievements = hasText(text(HistoryR.string.history_mode_achievements)) and isSelectable()
+        waitOrDump(30_000L) {
+            composeRule.onAllNodes(achievements).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(achievements).assertIsSelected()
+        composeRule.onNode(hasText(text(HistoryR.string.history_mode_workouts)) and isSelectable()).assertIsNotSelected()
+
+        // Leere App: Kapitel 1 mit 0 XP; Suche und Filter der Trainings sind weg, der Titel bleibt.
+        val totalXp = text(HistoryR.string.achievements_total_xp, formatXp(0L))
+        waitOrDump(30_000L) {
+            composeRule.onAllNodesWithText(totalXp).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(totalXp).assertIsDisplayed()
+        assertTrue(
+            composeRule.onAllNodesWithText(text(HistoryR.string.history_search_placeholder)).fetchSemanticsNodes().isEmpty()
+        )
+        assertTrue(
+            composeRule.onAllNodesWithText(text(R.string.history_title)).fetchSemanticsNodes().isNotEmpty()
+        )
+    }
+
+    @Test
+    fun level_card_opens_history_in_achievements_mode() {
+        val navController = setContentWithBottomBar()
+
+        tapLevelCard()
+
+        assertHistoryRootShowsAchievements(navController())
+    }
+
+    @Test
+    fun level_card_opens_history_root_even_with_a_detail_left_in_the_history_tab() {
+        val navController = setContentWithBottomBar()
+
+        composeRule.onNodeWithTag("bottom_nav_history", useUnmergedTree = true).performClick()
+        waitOrDump(30_000L) {
+            navController().currentBackStackEntry?.destination?.route == Screen.WorkoutHistory.route
+        }
+        composeRule.runOnIdle {
+            navController().navigate(Screen.WorkoutDetail.createRoute(sessionId = 1L))
+        }
+        waitOrDump(30_000L) {
+            navController().currentBackStackEntry?.destination?.route == Screen.WorkoutDetail.route
+        }
+
+        // Der Tabwechsel legt [Verlauf, Detail] als gespeicherten Stapel des Verlaufs ab.
+        composeRule.onNodeWithTag("bottom_nav_home", useUnmergedTree = true).performClick()
+        waitOrDump(30_000L) {
+            navController().currentBackStackEntry?.destination?.route == Screen.Dashboard.route
+        }
+
+        tapLevelCard()
+
+        assertHistoryRootShowsAchievements(navController())
     }
 
     @Test
