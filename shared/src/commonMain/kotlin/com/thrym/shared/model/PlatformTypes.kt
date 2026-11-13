@@ -92,7 +92,8 @@ data class AppPreferences(
     val useDynamicColor: Boolean = false,
     val reducedMotion: Boolean = false,
     val defaultWarmupFlag: Boolean = false,
-    val timerKeepScreenOn: Boolean = false,
+    /** Keeps the display awake while a workout runs (new key, so it is on for everyone at first). */
+    val keepScreenOnDuringWorkout: Boolean = true,
     val betaDiagnosticsOptIn: Boolean = false,
     val reminderConfig: ReminderConfig = ReminderConfig(),
     val intensitySystem: IntensitySystem = IntensitySystem.RPE,

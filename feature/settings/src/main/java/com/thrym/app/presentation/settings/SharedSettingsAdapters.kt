@@ -55,8 +55,8 @@ internal class AndroidSharedAppPreferencesRepository(
         delegate.updateDefaultWarmupFlag(enabled)
     }
 
-    override suspend fun updateTimerKeepScreenOn(enabled: Boolean) {
-        delegate.updateTimerKeepScreenOn(enabled)
+    override suspend fun updateKeepScreenOnDuringWorkout(enabled: Boolean) {
+        delegate.updateKeepScreenOnDuringWorkout(enabled)
     }
 
     override suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean) {
@@ -146,7 +146,7 @@ internal fun AppPreferences.toShared(): com.thrym.shared.model.AppPreferences =
         useDynamicColor = useDynamicColor,
         reducedMotion = reducedMotion,
         defaultWarmupFlag = defaultWarmupFlag,
-        timerKeepScreenOn = timerKeepScreenOn,
+        keepScreenOnDuringWorkout = keepScreenOnDuringWorkout,
         betaDiagnosticsOptIn = betaDiagnosticsOptIn,
         reminderConfig = reminderConfig.toShared(),
         intensitySystem = intensitySystem.toShared(),
@@ -177,7 +177,7 @@ internal fun com.thrym.shared.model.AppPreferences.toApp(): AppPreferences =
         useDynamicColor = useDynamicColor,
         reducedMotion = reducedMotion,
         defaultWarmupFlag = defaultWarmupFlag,
-        timerKeepScreenOn = timerKeepScreenOn,
+        keepScreenOnDuringWorkout = keepScreenOnDuringWorkout,
         betaDiagnosticsOptIn = betaDiagnosticsOptIn,
         reminderConfig = reminderConfig.toApp(),
         intensitySystem = intensitySystem.toApp(),

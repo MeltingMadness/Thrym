@@ -5,7 +5,6 @@ struct IOSWorkoutExerciseCard: View {
     let row: IOSWorkoutExerciseRow
     let unitSystem: String
     let intensitySystem: String
-    let supersetTint: Color?
     let onAddSet: () -> Void
     let onApplyCoachWeight: (Double) -> Void
     let onEditSet: (ILWorkoutSet) -> Void
@@ -147,8 +146,13 @@ struct IOSWorkoutExerciseCard: View {
             }
 
             if row.target == nil || !row.isComplete {
-                IOSWorkoutInlineSetEntry(row: row, sessionID: sessionID, unitSystem: unitSystem, onSave: onSaveSet)
-                    .id("\(row.id)-\(row.nextSetNumber)-\(unitSystem)")
+                // The inner id resets the entry for the next set; the outer one stays, so the
+                // superset jump can scroll to it.
+                VStack(spacing: 0) {
+                    IOSWorkoutInlineSetEntry(row: row, sessionID: sessionID, unitSystem: unitSystem, onSave: onSaveSet)
+                        .id("\(row.id)-\(row.nextSetNumber)-\(unitSystem)")
+                }
+                .id(IOSWorkoutCardScrollRequest.entryID(row.id))
             } else {
                 Label("Alle geplanten Sätze bestätigt", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(palette.success).font(.geist(.subheadline))
@@ -161,24 +165,9 @@ struct IOSWorkoutExerciseCard: View {
         .modifier(IOSWorkoutCardSurface(
             liquidGlass: appearance == .liquidGlass,
             open: row.target == nil || !row.isComplete,
-            ember: palette.surface
+            ember: palette.surface,
+            edge: palette.separator
         ))
-        .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(
-                    supersetTint?.opacity(0.72) ?? palette.separator,
-                    lineWidth: supersetTint == nil ? 1 : 1.5
-                )
-        }
-        .overlay(alignment: .leading) {
-            if let supersetTint {
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(supersetTint)
-                    .frame(width: 4)
-                    .padding(.vertical, 5)
-                    .padding(.leading, 1)
-            }
-        }
     }
 }
 
@@ -224,16 +213,22 @@ struct IOSWorkoutMoveControls: View {
 }
 
 /// Ember: plain surface. Liquid Glass: glass, the open exercise on the strong level.
+/// The card's surface and edge. Glass draws its own edge in the card shape; Ember gets a hairline
+/// in exactly the same shape as its background, so no second outline sits off the corners.
 private struct IOSWorkoutCardSurface: ViewModifier {
     let liquidGlass: Bool
     let open: Bool
     let ember: Color
+    let edge: Color
 
     func body(content: Content) -> some View {
         if liquidGlass {
             content.liquidGlass(open ? .strong : .standard, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         } else {
-            content.background(ember, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+            content
+                .background(ember, in: shape)
+                .overlay { shape.strokeBorder(edge, lineWidth: 1) }
         }
     }
 }

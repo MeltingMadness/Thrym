@@ -380,8 +380,8 @@ fun SettingsScreen(
                     ToggleRow(
                         title = stringResource(id = R.string.settings_keep_screen_on_title),
                         subtitle = stringResource(id = R.string.settings_keep_screen_on_subtitle),
-                        checked = state.preferences.timerKeepScreenOn,
-                        onCheckedChange = viewModel::updateTimerKeepScreenOn
+                        checked = state.preferences.keepScreenOnDuringWorkout,
+                        onCheckedChange = viewModel::updateKeepScreenOnDuringWorkout
                     )
                     ToggleRow(
                         title = stringResource(id = R.string.settings_beta_diagnostics_title),

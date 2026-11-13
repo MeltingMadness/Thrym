@@ -19,6 +19,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -32,12 +33,14 @@ import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.ThemeMode
 import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.domain.repository.ReminderScheduler
+import com.thrym.app.domain.repository.WorkoutRepository
 import com.thrym.app.presentation.navigation.BottomNavBar
 import com.thrym.app.presentation.navigation.ThrymNavHost
 import com.thrym.app.presentation.navigation.Screen
 import com.thrym.app.presentation.onboarding.OnboardingGate
 import com.thrym.app.domain.util.AppLogger
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.map
 import com.thrym.app.presentation.theme.ThrymTheme
 import org.koin.compose.koinInject
 import com.thrym.app.domain.model.AppearanceStyle
@@ -76,6 +79,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val preferencesRepository: AppPreferencesRepository = koinInject()
             val reminderScheduler: ReminderScheduler = koinInject()
+            val workoutRepository: WorkoutRepository = koinInject()
+            val workoutRunning by remember(workoutRepository) {
+                workoutRepository.observeActiveSession().map { it != null }
+            }.collectAsStateWithLifecycle(initialValue = false)
             val preferencesState by preferencesRepository.preferences.collectAsStateWithLifecycle(
                 initialValue = null
             )
@@ -123,8 +130,11 @@ class MainActivity : ComponentActivity() {
                     insetsController.isAppearanceLightNavigationBars = !isDarkTheme
                 }
 
-                LaunchedEffect(preferences.timerKeepScreenOn) {
-                    if (preferences.timerKeepScreenOn) {
+                // While a workout runs the screen stays on in the whole app, also on other tabs
+                // and in the full-screen pause; afterwards it may sleep again.
+                val keepScreenOn = preferences.keepScreenOnDuringWorkout && workoutRunning
+                LaunchedEffect(keepScreenOn) {
+                    if (keepScreenOn) {
                         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                     } else {
                         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

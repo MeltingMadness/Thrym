@@ -31,7 +31,7 @@ interface SharedAppPreferencesRepository {
     suspend fun updateUseDynamicColor(enabled: Boolean)
     suspend fun updateReducedMotion(enabled: Boolean)
     suspend fun updateDefaultWarmupFlag(enabled: Boolean)
-    suspend fun updateTimerKeepScreenOn(enabled: Boolean)
+    suspend fun updateKeepScreenOnDuringWorkout(enabled: Boolean)
     suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean)
     suspend fun updateReminderConfig(config: ReminderConfig)
     suspend fun updateIntensitySystem(intensitySystem: IntensitySystem)
@@ -127,8 +127,8 @@ class SettingsPreferencesController(
         controllerScope.launch { appPreferencesRepository.updateDefaultWarmupFlag(enabled) }
     }
 
-    fun updateTimerKeepScreenOn(enabled: Boolean) {
-        controllerScope.launch { appPreferencesRepository.updateTimerKeepScreenOn(enabled) }
+    fun updateKeepScreenOnDuringWorkout(enabled: Boolean) {
+        controllerScope.launch { appPreferencesRepository.updateKeepScreenOnDuringWorkout(enabled) }
     }
 
     fun updateBetaDiagnosticsOptIn(enabled: Boolean) {

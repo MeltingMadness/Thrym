@@ -146,7 +146,7 @@ class IosSettingsFeature {
     fun updateUseDynamicColor(enabled: Boolean) = controller.updateUseDynamicColor(enabled)
     fun updateReducedMotion(enabled: Boolean) = controller.updateReducedMotion(enabled)
     fun updateDefaultWarmupFlag(enabled: Boolean) = controller.updateDefaultWarmupFlag(enabled)
-    fun updateTimerKeepScreenOn(enabled: Boolean) = controller.updateTimerKeepScreenOn(enabled)
+    fun updateKeepScreenOnDuringWorkout(enabled: Boolean) = controller.updateKeepScreenOnDuringWorkout(enabled)
     fun updateBetaDiagnosticsOptIn(enabled: Boolean) = controller.updateBetaDiagnosticsOptIn(enabled)
     fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) =
         controller.updateShareWeightHistoryAcrossContexts(enabled)
@@ -381,7 +381,7 @@ class IosSettingsState(
     val useDynamicColor: Boolean,
     val reducedMotion: Boolean,
     val defaultWarmupFlag: Boolean,
-    val timerKeepScreenOn: Boolean,
+    val keepScreenOnDuringWorkout: Boolean,
     val betaDiagnosticsOptIn: Boolean,
     val shareWeightHistoryAcrossContexts: Boolean,
     val autoRestTimerEnabled: Boolean,
@@ -433,7 +433,7 @@ internal class IosAppPreferencesRepository(
     override suspend fun updateUseDynamicColor(enabled: Boolean) = persist { it.copy(useDynamicColor = enabled) }
     override suspend fun updateReducedMotion(enabled: Boolean) = persist { it.copy(reducedMotion = enabled) }
     override suspend fun updateDefaultWarmupFlag(enabled: Boolean) = persist { it.copy(defaultWarmupFlag = enabled) }
-    override suspend fun updateTimerKeepScreenOn(enabled: Boolean) = persist { it.copy(timerKeepScreenOn = enabled) }
+    override suspend fun updateKeepScreenOnDuringWorkout(enabled: Boolean) = persist { it.copy(keepScreenOnDuringWorkout = enabled) }
     override suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean) = persist { it.copy(betaDiagnosticsOptIn = enabled) }
     override suspend fun updateReminderConfig(config: ReminderConfig) = persist { it.copy(reminderConfig = config) }
     override suspend fun updateIntensitySystem(intensitySystem: IntensitySystem) = persist { it.copy(intensitySystem = intensitySystem) }
@@ -493,7 +493,7 @@ internal class IosAppPreferencesRepository(
             useDynamicColor = userDefaults.boolOrDefault(Keys.useDynamicColor, defaults.useDynamicColor),
             reducedMotion = userDefaults.boolOrDefault(Keys.reducedMotion, defaults.reducedMotion),
             defaultWarmupFlag = userDefaults.boolOrDefault(Keys.defaultWarmupFlag, defaults.defaultWarmupFlag),
-            timerKeepScreenOn = userDefaults.boolOrDefault(Keys.timerKeepScreenOn, defaults.timerKeepScreenOn),
+            keepScreenOnDuringWorkout = userDefaults.boolOrDefault(Keys.keepScreenOnDuringWorkout, defaults.keepScreenOnDuringWorkout),
             betaDiagnosticsOptIn = userDefaults.boolOrDefault(Keys.betaDiagnosticsOptIn, defaults.betaDiagnosticsOptIn),
             reminderConfig = ReminderConfig(
                 enabled = userDefaults.boolOrDefault(Keys.reminderEnabled, defaults.reminderConfig.enabled),
@@ -578,7 +578,7 @@ internal class IosAppPreferencesRepository(
         userDefaults.setBool(preferences.useDynamicColor, Keys.useDynamicColor)
         userDefaults.setBool(preferences.reducedMotion, Keys.reducedMotion)
         userDefaults.setBool(preferences.defaultWarmupFlag, Keys.defaultWarmupFlag)
-        userDefaults.setBool(preferences.timerKeepScreenOn, Keys.timerKeepScreenOn)
+        userDefaults.setBool(preferences.keepScreenOnDuringWorkout, Keys.keepScreenOnDuringWorkout)
         userDefaults.setBool(preferences.betaDiagnosticsOptIn, Keys.betaDiagnosticsOptIn)
         userDefaults.setBool(preferences.reminderConfig.enabled, Keys.reminderEnabled)
         userDefaults.setInteger(preferences.reminderConfig.hour.toLong(), Keys.reminderHour)
@@ -614,7 +614,7 @@ internal class IosAppPreferencesRepository(
         const val useDynamicColor = "settings.useDynamicColor"
         const val reducedMotion = "settings.reducedMotion"
         const val defaultWarmupFlag = "settings.defaultWarmupFlag"
-        const val timerKeepScreenOn = "settings.timerKeepScreenOn"
+        const val keepScreenOnDuringWorkout = "settings.keepScreenOnDuringWorkout"
         const val betaDiagnosticsOptIn = "settings.betaDiagnosticsOptIn"
         const val reminderEnabled = "settings.reminderEnabled"
         const val reminderHour = "settings.reminderHour"
@@ -867,7 +867,7 @@ private fun SettingsPreferencesState.toIosState(buildInfo: BuildInfo): IosSettin
     useDynamicColor = preferences.useDynamicColor,
     reducedMotion = preferences.reducedMotion,
     defaultWarmupFlag = preferences.defaultWarmupFlag,
-    timerKeepScreenOn = preferences.timerKeepScreenOn,
+    keepScreenOnDuringWorkout = preferences.keepScreenOnDuringWorkout,
     betaDiagnosticsOptIn = preferences.betaDiagnosticsOptIn,
     shareWeightHistoryAcrossContexts = preferences.shareWeightHistoryAcrossContexts,
     autoRestTimerEnabled = preferences.autoRestTimerEnabled,

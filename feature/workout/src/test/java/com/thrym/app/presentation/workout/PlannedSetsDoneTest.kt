@@ -19,6 +19,16 @@ import org.junit.Test
 class PlannedSetsDoneTest {
 
     @Test
+    fun `superset jump puts the next entry just above the visible bottom`() {
+        // Entry below the fold: scroll down until its bottom meets the viewport bottom.
+        assertEquals(300f, supersetEntryScrollDistance(900f, 1300f, 16f, 1000f), 0.001f)
+        // Back to the first member above: a negative distance scrolls up.
+        assertEquals(-700f, supersetEntryScrollDistance(-100f, 300f, 16f, 1000f), 0.001f)
+        // Taller than the viewport: its top aligns with the viewport top.
+        assertEquals(484f, supersetEntryScrollDistance(500f, 1600f, 16f, 1000f), 0.001f)
+    }
+
+    @Test
     fun `a free workout is never done`() {
         assertFalse(emptyList<ExerciseWithSets>().allPlannedSetsDone())
         assertFalse(listOf(adHoc(7, SetType.NORMAL, SetType.NORMAL)).allPlannedSetsDone())

@@ -4506,6 +4506,22 @@
         }
       }
     },
+    "Bildschirm im Training anlassen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bildschirm im Training anlassen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep screen on during workouts"
+          }
+        }
+      }
+    },
     "Bis zum Versagen": {
       "localizations": {
         "de": {
@@ -14370,6 +14386,22 @@
         }
       }
     },
+    "Solange ein Training läuft, geht der Bildschirm nicht aus.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solange ein Training läuft, geht der Bildschirm nicht aus."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The screen stays on while a workout is running."
+          }
+        }
+      }
+    },
     "Sonntag": {
       "localizations": {
         "de": {
@@ -15328,22 +15360,6 @@
         }
       },
       "shouldTranslate": false
-    },
-    "Timer darf Bildschirm aktiv halten": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Timer darf Bildschirm aktiv halten"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Timer keeps screen awake"
-          }
-        }
-      }
     },
     "Training": {
       "localizations": {

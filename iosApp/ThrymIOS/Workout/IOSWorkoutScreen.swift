@@ -453,8 +453,14 @@ struct IOSWorkoutScreen: View {
             }
         }
         .onChange(of: supersetScrollRequest) { _, request in
-            withAnimation(reduceMotion || theme.reducedMotion ? nil : .snappy) {
-                proxy.scrollTo(IOSWorkoutCardScrollRequest.cardID(request.rowID), anchor: .top)
+            // The next member's set entry comes up from below, its bottom edge just above the
+            // dock or bar, so the card's head stays visible above it where it fits. The logged
+            // card first lays out its new set row for one turn.
+            Task { @MainActor in
+                await Task.yield()
+                withAnimation(reduceMotion || theme.reducedMotion ? nil : IOSWorkoutCardScrollRequest.supersetAnimation) {
+                    proxy.scrollTo(IOSWorkoutCardScrollRequest.entryID(request.rowID), anchor: .bottom)
+                }
             }
         }
         .onChange(of: finishScrollRequest) { _, _ in
@@ -637,10 +643,6 @@ struct IOSWorkoutScreen: View {
                     row: row,
                     unitSystem: settings.state.unitSystem,
                     intensitySystem: settings.state.intensitySystem,
-                    supersetTint: IOSWorkoutSupersetTint.color(
-                        for: group.supersetGroupID,
-                        index: index
-                    ),
                     onAddSet: { presentNewSet(for: row, sessionID: sessionID) },
                     onApplyCoachWeight: { weightKg in
                         presentNewSet(
@@ -661,6 +663,9 @@ struct IOSWorkoutScreen: View {
                     onMoveDown: single ? { moveExercise(rowID: row.id, direction: .down) } : nil
                 )
                 .padding(.horizontal)
+                .modifier(IOSWorkoutSupersetStripe(
+                    tint: IOSWorkoutSupersetTint.color(for: group.supersetGroupID, index: index)
+                ))
                 .id(IOSWorkoutCardScrollRequest.cardID(row.id))
             }
         }
@@ -1298,6 +1303,11 @@ struct IOSWorkoutCardScrollRequest: Equatable {
     let token: Int
 
     static func cardID(_ rowID: String) -> String { "card-\(rowID)" }
+    /// The set entry of a card, the target of the superset jump.
+    static func entryID(_ rowID: String) -> String { "entry-\(rowID)" }
+
+    /// The superset jump: one calm glide (Android uses the same 550 ms ease in and out).
+    static let supersetAnimation = Animation.easeInOut(duration: 0.55)
 }
 
 private struct IOSWorkoutAlert: Identifiable {

@@ -326,8 +326,8 @@
     <string name="settings_default_warmup_title">Standard-Aufwärmsatz</string>
     <string name="settings_default_warmup_subtitle">Neue Satz-Eingaben starten als Aufwärmsatz</string>
 
-    <string name="settings_keep_screen_on_title">Display während Timer aktiv halten</string>
-    <string name="settings_keep_screen_on_subtitle">Verhindert Sperren während aktivem Training</string>
+    <string name="settings_keep_screen_on_title">Bildschirm im Training anlassen</string>
+    <string name="settings_keep_screen_on_subtitle">Solange ein Training läuft, geht der Bildschirm nicht aus</string>
 
     <string name="settings_beta_diagnostics_title">Beta-Diagnose aktivieren</string>
     <string name="settings_beta_diagnostics_subtitle">Technische Geräte- und Builddaten (OS, Gerätemodell) in Incident-Reports aufnehmen</string>

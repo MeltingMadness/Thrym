@@ -828,8 +828,8 @@ private class FakePreferencesRepository : AppPreferencesRepository {
         state.value = state.value.copy(defaultWarmupFlag = enabled)
     }
 
-    override suspend fun updateTimerKeepScreenOn(enabled: Boolean) {
-        state.value = state.value.copy(timerKeepScreenOn = enabled)
+    override suspend fun updateKeepScreenOnDuringWorkout(enabled: Boolean) {
+        state.value = state.value.copy(keepScreenOnDuringWorkout = enabled)
     }
 
     override suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean) {
