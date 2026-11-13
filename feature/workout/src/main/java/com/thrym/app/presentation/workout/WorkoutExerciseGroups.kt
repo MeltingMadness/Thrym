@@ -21,6 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -135,6 +139,50 @@ internal fun supersetTintColor(supersetGroupId: Int?, indexInSuperset: Int): Col
         else -> MaterialTheme.semantic.rose
     }
 }
+
+/**
+ * A superset member's accent: a short bar in the list's left margin, beside the card, in the
+ * member's tint (the same as its rest timer). The card keeps its plain surface, so the accent
+ * never has to follow the corners of a glass or Ember card. Expects the list's 16 dp start padding.
+ */
+internal fun Modifier.supersetStripe(color: Color?): Modifier =
+    if (color == null) {
+        this
+    } else {
+        drawBehind {
+            val width = 3.dp.toPx()
+            val inset = 14.dp.toPx()
+            if (size.height <= 2 * inset) return@drawBehind
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(-(7.dp.toPx() + width), inset),
+                size = Size(width, size.height - 2 * inset),
+                cornerRadius = CornerRadius(width / 2)
+            )
+        }
+    }
+
+/**
+ * How far the list scrolls so that the next superset member's set entry ([entryTop] to
+ * [entryBottom], in list coordinates) ends just above the visible bottom ([viewportBottom]), with
+ * the card's head above it where it fits. An entry taller than the viewport aligns its top instead.
+ */
+internal fun supersetEntryScrollDistance(
+    entryTop: Float,
+    entryBottom: Float,
+    viewportTop: Float,
+    viewportBottom: Float
+): Float = if (entryBottom - entryTop > viewportBottom - viewportTop) {
+    entryTop - viewportTop
+} else {
+    entryBottom - viewportBottom
+}
+
+/** The superset jump: one calm glide, the same 550 ms ease in and out as on iOS. */
+internal const val SUPERSET_SCROLL_MILLIS = 550
+
+/** Short follow-up glide when the entry moved during the jump. */
+internal const val SUPERSET_CORRECTION_MILLIS = 200
 
 @Composable
 internal fun supersetTintTextColor(supersetGroupId: Int?, indexInSuperset: Int): Color? {

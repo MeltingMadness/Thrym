@@ -74,7 +74,7 @@ class AppPreferencesRepositoryImpl(
             useDynamicColor = prefs[AppPreferenceKeys.USE_DYNAMIC_COLOR] ?: false,
             reducedMotion = prefs[AppPreferenceKeys.REDUCED_MOTION] ?: false,
             defaultWarmupFlag = prefs[AppPreferenceKeys.DEFAULT_WARMUP_FLAG] ?: false,
-            timerKeepScreenOn = prefs[AppPreferenceKeys.TIMER_KEEP_SCREEN_ON] ?: false,
+            keepScreenOnDuringWorkout = prefs[AppPreferenceKeys.KEEP_SCREEN_ON_DURING_WORKOUT] ?: true,
             betaDiagnosticsOptIn = prefs[AppPreferenceKeys.BETA_DIAGNOSTICS_OPT_IN] ?: false,
             reminderConfig = reminderConfig,
             intensitySystem = intensitySystem,
@@ -144,9 +144,9 @@ class AppPreferencesRepositoryImpl(
         }
     }
 
-    override suspend fun updateTimerKeepScreenOn(enabled: Boolean) {
+    override suspend fun updateKeepScreenOnDuringWorkout(enabled: Boolean) {
         context.appPreferencesDataStore.edit { prefs ->
-            prefs[AppPreferenceKeys.TIMER_KEEP_SCREEN_ON] = enabled
+            prefs[AppPreferenceKeys.KEEP_SCREEN_ON_DURING_WORKOUT] = enabled
         }
     }
 

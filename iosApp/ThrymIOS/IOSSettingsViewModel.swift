@@ -115,8 +115,8 @@ final class IOSSettingsViewModel: ObservableObject {
         feature.updateDefaultWarmupFlag(enabled: enabled)
     }
 
-    func updateTimerKeepScreenOn(_ enabled: Bool) {
-        feature.updateTimerKeepScreenOn(enabled: enabled)
+    func updateKeepScreenOnDuringWorkout(_ enabled: Bool) {
+        feature.updateKeepScreenOnDuringWorkout(enabled: enabled)
     }
 
     func updateShareWeightHistoryAcrossContexts(_ enabled: Bool) {
@@ -525,7 +525,7 @@ struct SettingsFormState {
     var useDynamicColor: Bool
     var reducedMotion: Bool
     var defaultWarmupFlag: Bool
-    var timerKeepScreenOn: Bool
+    var keepScreenOnDuringWorkout: Bool
     var betaDiagnosticsOptIn: Bool
     var shareWeightHistoryAcrossContexts: Bool
     var autoRestTimerEnabled: Bool
@@ -560,7 +560,7 @@ struct SettingsFormState {
         useDynamicColor: Bool,
         reducedMotion: Bool,
         defaultWarmupFlag: Bool,
-        timerKeepScreenOn: Bool,
+        keepScreenOnDuringWorkout: Bool,
         betaDiagnosticsOptIn: Bool,
         shareWeightHistoryAcrossContexts: Bool,
         autoRestTimerEnabled: Bool,
@@ -592,7 +592,7 @@ struct SettingsFormState {
         self.useDynamicColor = useDynamicColor
         self.reducedMotion = reducedMotion
         self.defaultWarmupFlag = defaultWarmupFlag
-        self.timerKeepScreenOn = timerKeepScreenOn
+        self.keepScreenOnDuringWorkout = keepScreenOnDuringWorkout
         self.betaDiagnosticsOptIn = betaDiagnosticsOptIn
         self.shareWeightHistoryAcrossContexts = shareWeightHistoryAcrossContexts
         self.autoRestTimerEnabled = autoRestTimerEnabled
@@ -625,7 +625,7 @@ struct SettingsFormState {
         useDynamicColor: false,
         reducedMotion: false,
         defaultWarmupFlag: false,
-        timerKeepScreenOn: false,
+        keepScreenOnDuringWorkout: true,
         betaDiagnosticsOptIn: false,
         shareWeightHistoryAcrossContexts: false,
         autoRestTimerEnabled: false,
@@ -655,7 +655,7 @@ struct SettingsFormState {
         useDynamicColor = sharedState.useDynamicColor
         reducedMotion = sharedState.reducedMotion
         defaultWarmupFlag = sharedState.defaultWarmupFlag
-        timerKeepScreenOn = sharedState.timerKeepScreenOn
+        keepScreenOnDuringWorkout = sharedState.keepScreenOnDuringWorkout
         betaDiagnosticsOptIn = sharedState.betaDiagnosticsOptIn
         shareWeightHistoryAcrossContexts = sharedState.shareWeightHistoryAcrossContexts
         autoRestTimerEnabled = sharedState.autoRestTimerEnabled

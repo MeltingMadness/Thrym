@@ -86,10 +86,15 @@ struct SettingsScreen: View {
                             set: viewModel.updateDefaultWarmupFlag
                         ))
 
-                        Toggle("Timer darf Bildschirm aktiv halten", isOn: Binding(
-                            get: { viewModel.state.timerKeepScreenOn },
-                            set: viewModel.updateTimerKeepScreenOn
-                        ))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Toggle("Bildschirm im Training anlassen", isOn: Binding(
+                                get: { viewModel.state.keepScreenOnDuringWorkout },
+                                set: viewModel.updateKeepScreenOnDuringWorkout
+                            ))
+                            Text("Solange ein Training läuft, geht der Bildschirm nicht aus.")
+                                .font(.geist(.footnote))
+                                .thrymSecondaryText()
+                        }
 
                         Toggle("Gewichtshistorie über Kontexte teilen", isOn: Binding(
                             get: { viewModel.state.shareWeightHistoryAcrossContexts },

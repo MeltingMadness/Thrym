@@ -86,7 +86,6 @@ internal fun ExerciseCard(
     expanded: Boolean,
     onToggleExpanded: () -> Unit,
     nextSetRecommendation: NextSetRecommendationUi?,
-    tintColor: Color?,
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
@@ -106,7 +105,9 @@ internal fun ExerciseCard(
     onUpdateSet: (Long, Int, Double, String, SetIntention?) -> Unit,
     onDeleteSet: (Long) -> Unit,
     haptic: HapticFeedbackHelper,
-    moveControls: ExerciseMoveControls? = null
+    moveControls: ExerciseMoveControls? = null,
+    /** Applied to the input of the next planned set, the target of the superset jump. */
+    nextSetEntryModifier: Modifier = Modifier
 ) {
     val dims = thrymDimens
     val planTarget = exerciseWithSets.planTarget
@@ -142,7 +143,6 @@ internal fun ExerciseCard(
         modifier = Modifier.fillMaxWidth(),
         // Liquid Glass lifts the open exercise to the strong glass level.
         tone = if (expanded && isLiquidGlass()) ThrymSurfaceTone.ELEVATED else ThrymSurfaceTone.MUTED,
-        border = tintColor?.let { BorderStroke(1.dp, it.copy(alpha = 0.3f)) },
         alpha = 1f
     ) {
         Column(modifier = Modifier.padding(dims.spacingMd)) {
@@ -352,7 +352,8 @@ internal fun ExerciseCard(
                                     intentionFailed = setIntentionsFailed,
                                     onLog = { reps, weight, setType, intensity, submissionId, intention ->
                                         onLogSet(reps, weight, setType, intensity, submissionId, intention)
-                                    }
+                                    },
+                                    modifier = nextSetEntryModifier
                                 )
                             } else {
                                 PlannedSetPreviewRow(

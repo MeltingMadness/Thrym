@@ -345,8 +345,8 @@
     <string name="settings_default_warmup_title">Warm-up set by default</string>
     <string name="settings_default_warmup_subtitle">New set entries start as warm-up sets</string>
 
-    <string name="settings_keep_screen_on_title">Keep screen on while timer runs</string>
-    <string name="settings_keep_screen_on_subtitle">Prevents the screen from locking during an active workout</string>
+    <string name="settings_keep_screen_on_title">Keep screen on during workouts</string>
+    <string name="settings_keep_screen_on_subtitle">The screen stays on while a workout is running</string>
 
     <string name="settings_beta_diagnostics_title">Enable beta diagnostics</string>
     <string name="settings_beta_diagnostics_subtitle">Include technical device and build data (OS, device model) in incident reports</string>

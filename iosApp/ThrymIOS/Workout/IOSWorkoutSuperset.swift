@@ -14,6 +14,27 @@ enum IOSWorkoutSupersetTint {
     }
 }
 
+/// A superset member's accent: a short bar in the list's left margin, beside the card, in the
+/// member's tint (the same as its rest timer). The card itself keeps its plain surface, so the
+/// accent never has to follow the different corners of glass (28 pt) and Ember (18 pt) cards.
+/// Apply it after the list's horizontal padding.
+struct IOSWorkoutSupersetStripe: ViewModifier {
+    let tint: Color?
+
+    func body(content: Content) -> some View {
+        content.overlay(alignment: .leading) {
+            if let tint {
+                Capsule(style: .continuous)
+                    .fill(tint)
+                    .frame(width: 3)
+                    .padding(.vertical, 14)
+                    .padding(.leading, 6)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+}
+
 struct IOSWorkoutSupersetHeader: View {
     let groupID: Int
     let exerciseCount: Int

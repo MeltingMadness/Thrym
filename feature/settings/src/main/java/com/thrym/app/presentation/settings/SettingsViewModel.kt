@@ -151,8 +151,8 @@ class SettingsViewModel(
         preferencesController.updateDefaultWarmupFlag(enabled)
     }
 
-    fun updateTimerKeepScreenOn(enabled: Boolean) {
-        preferencesController.updateTimerKeepScreenOn(enabled)
+    fun updateKeepScreenOnDuringWorkout(enabled: Boolean) {
+        preferencesController.updateKeepScreenOnDuringWorkout(enabled)
     }
 
     fun updateBetaDiagnosticsOptIn(enabled: Boolean) {

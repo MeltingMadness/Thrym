@@ -52,10 +52,11 @@ struct RootView: View {
                 await training.command("progression.generate")
             }
         }
-        // As on Android, the setting keeps the screen on in the whole app, also during the
-        // full-screen pause and on other tabs.
+        // As on Android, a running workout keeps the screen on in the whole app, also during
+        // the full-screen pause and on other tabs.
         .onAppear { updateIdleTimer() }
-        .onChange(of: settings.state.timerKeepScreenOn) { _, _ in updateIdleTimer() }
+        .onChange(of: settings.state.keepScreenOnDuringWorkout) { _, _ in updateIdleTimer() }
+        .onChange(of: workoutRunning) { _, _ in updateIdleTimer() }
         .onChange(of: settings.state.deloadMode) { _, newValue in
             let active = newValue != "NONE"
             training.deloadModeActive = active
@@ -109,8 +110,14 @@ struct RootView: View {
         settings.state.themeMode == "DARK" ? .dark : settings.state.themeMode == "LIGHT" ? .light : nil
     }
 
+    private var workoutRunning: Bool {
+        training.data?.activeSession != nil
+    }
+
     private func updateIdleTimer() {
-        UIApplication.shared.isIdleTimerDisabled = scenePhase == .active && settings.state.timerKeepScreenOn
+        UIApplication.shared.isIdleTimerDisabled = scenePhase == .active &&
+            workoutRunning &&
+            settings.state.keepScreenOnDuringWorkout
     }
 
     private func finishOnboarding() {

@@ -23,7 +23,7 @@ internal object AppPreferenceKeys {
     val USE_DYNAMIC_COLOR = booleanPreferencesKey("use_dynamic_color")
     val REDUCED_MOTION = booleanPreferencesKey("reduced_motion")
     val DEFAULT_WARMUP_FLAG = booleanPreferencesKey("default_warmup_flag")
-    val TIMER_KEEP_SCREEN_ON = booleanPreferencesKey("timer_keep_screen_on")
+    val KEEP_SCREEN_ON_DURING_WORKOUT = booleanPreferencesKey("keep_screen_on_during_workout")
     val BETA_DIAGNOSTICS_OPT_IN = booleanPreferencesKey("beta_diagnostics_opt_in")
     val REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
     val REMINDER_HOUR = intPreferencesKey("reminder_hour")

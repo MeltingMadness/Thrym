@@ -65,6 +65,13 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.layout.onSizeChanged
+import kotlin.math.abs
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -166,7 +173,14 @@ fun ActiveWorkoutScreen(
     // In a superset a work set moves on to the next member with open sets. Its card scrolls into
     // view, and the logged exercise's pause stays in the dock instead of covering that card.
     val cardRequesters = remember { mutableMapOf<String, BringIntoViewRequester>() }
+    // The jump aims at the next member's set entry; positions are read when it runs.
+    val entryCoordinates = remember { mutableMapOf<String, LayoutCoordinates>() }
+    val listCoordinates = remember { arrayOfNulls<LayoutCoordinates>(1) }
     var supersetJump by remember { mutableStateOf<Pair<String, Int>?>(null) }
+    // Sets in the workout when the jump was asked for; it runs once the new set is stored.
+    val supersetJumpSetCount = remember { intArrayOf(0) }
+    val supersetJumpRestTimers = remember { arrayOfNulls<Any>(1) }
+    val currentExercises by rememberUpdatedState(state.exercisesWithSets)
     val supersetPauseSkip = remember { arrayOfNulls<WorkoutExerciseKey>(1) }
 
     LaunchedEffect(Unit) {
@@ -321,9 +335,63 @@ fun ActiveWorkoutScreen(
                 }
                 LaunchedEffect(supersetJump) {
                     val target = supersetJump?.first ?: return@LaunchedEffect
-                    // Let the expanded card lay out before it scrolls into view.
+                    // Wait for the stored set (the logged card gets its new row), then for the
+                    // rest timers, which the ViewModel updates after the record check: in Liquid
+                    // Glass that adds the dock row. The dock height settles a frame later.
+                    val setsBefore = supersetJumpSetCount[0]
+                    val timersBefore = supersetJumpRestTimers[0]
+                    withTimeoutOrNull(2_000) {
+                        snapshotFlow { currentExercises.sumOf { it.sets.size } }.first { it > setsBefore }
+                    }
+                    if (liquidGlass) {
+                        withTimeoutOrNull(500) {
+                            snapshotFlow { currentRestTimers }.first { it !== timersBefore }
+                        }
+                    }
+                    var settledDock = dockHeight
+                    for (frame in 0 until 6) {
+                        withFrameNanos { }
+                        if (frame > 0 && dockHeight == settledDock) break
+                        settledDock = dockHeight
+                    }
+                    // How far the list has to move so the entry ends just above the dock (Liquid
+                    // Glass; its measured height includes its own padding) or the list's bottom
+                    // edge. Null while the entry or the list is not laid out.
+                    fun entryDistance(): Float? {
+                        val list = listCoordinates[0]?.takeIf { it.isAttached } ?: return null
+                        val entry = entryCoordinates[target]?.takeIf { it.isAttached } ?: return null
+                        val bounds = list.localBoundingBoxOf(entry, clipBounds = false)
+                        val padding = with(density) { dims.spacingMd.toPx() }
+                        val bottomInset = if (liquidGlass && currentRestTimers.isNotEmpty()) {
+                            with(density) { dockHeight.toPx() }
+                        } else {
+                            padding
+                        }
+                        return supersetEntryScrollDistance(
+                            entryTop = bounds.top,
+                            entryBottom = bounds.bottom,
+                            viewportTop = padding,
+                            viewportBottom = list.size.height - bottomInset
+                        )
+                    }
+                    suspend fun glide(distance: Float, millis: Int) {
+                        if (abs(distance) < 1f) return
+                        if (reducedMotion) {
+                            listState.scrollBy(distance)
+                        } else {
+                            listState.animateScrollBy(distance, tween(millis, easing = FastOutSlowInEasing))
+                        }
+                    }
+                    val distance = entryDistance()
+                    if (distance == null) {
+                        cardRequesters[target]?.bringIntoView()
+                        return@LaunchedEffect
+                    }
+                    glide(distance, SUPERSET_SCROLL_MILLIS)
+                    // A row above that changed during the glide shifts the entry; settle it once.
                     withFrameNanos { }
-                    cardRequesters[target]?.bringIntoView()
+                    withFrameNanos { }
+                    entryDistance()?.let { glide(it, SUPERSET_CORRECTION_MILLIS) }
                 }
                 val previousFocusGroupKey = remember { arrayOfNulls<String>(1) }
                 // Keyed by the focus block, not its index: moving another block above it shifts
@@ -500,7 +568,8 @@ fun ActiveWorkoutScreen(
                     state = listState,
                     modifier = Modifier
                         .weight(1f)
-                        .onSizeChanged { size -> listHeight = with(density) { size.height.toDp() } },
+                        .onSizeChanged { size -> listHeight = with(density) { size.height.toDp() } }
+                        .onGloballyPositioned { listCoordinates[0] = it },
                     verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
                     contentPadding = PaddingValues(
                         start = dims.spacingMd,
@@ -539,9 +608,16 @@ fun ActiveWorkoutScreen(
                                     val requester = remember { BringIntoViewRequester() }
                                     DisposableEffect(requester) {
                                         cardRequesters[expansionKey] = requester
-                                        onDispose { cardRequesters.remove(expansionKey) }
+                                        onDispose {
+                                            cardRequesters.remove(expansionKey)
+                                            entryCoordinates.remove(expansionKey)
+                                        }
                                     }
-                                    Box(modifier = Modifier.bringIntoViewRequester(requester)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .bringIntoViewRequester(requester)
+                                            .supersetStripe(supersetTintColor(group.supersetGroupId, indexInSuperset))
+                                    ) {
                                         ExerciseCard(
                                             exerciseWithSets = exerciseWithSets,
                                             expanded = expanded,
@@ -549,7 +625,6 @@ fun ActiveWorkoutScreen(
                                                 expansionOverrides = expansionOverrides + (expansionKey to !expanded)
                                             },
                                             nextSetRecommendation = state.nextSetRecommendations[exerciseWithSets.key],
-                                            tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
                                             defaultWarmupFlag = preferences.defaultWarmupFlag,
                                             intensitySystem = preferences.intensitySystem,
                                             unitSystem = preferences.unitSystem,
@@ -571,6 +646,8 @@ fun ActiveWorkoutScreen(
                                                         val nextKey = next.stableListKey()
                                                         expansionOverrides = expansionOverrides + (nextKey to true)
                                                         supersetPauseSkip[0] = exerciseWithSets.key
+                                                        supersetJumpSetCount[0] = state.exercisesWithSets.sumOf { it.sets.size }
+                                                        supersetJumpRestTimers[0] = state.restTimers
                                                         supersetJump = nextKey to ((supersetJump?.second ?: 0) + 1)
                                                     }
                                                 }
@@ -599,6 +676,9 @@ fun ActiveWorkoutScreen(
                                                 moveControls(groupIndex)
                                             } else {
                                                 null
+                                            },
+                                            nextSetEntryModifier = Modifier.onGloballyPositioned {
+                                                entryCoordinates[expansionKey] = it
                                             }
                                         )
                                     }
