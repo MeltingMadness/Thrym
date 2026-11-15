@@ -109,6 +109,6 @@ Signierte Archive baut die CI nicht.
 ## Trainingsbedienung
 
 - Ohne geladene Trainingsdaten zeigt die App einen Ladeindikator oder den konkreten Fehler mit „Erneut versuchen“ und dem Weg zur Backup-Wiederherstellung. Der erneute Versuch liest die Shared-Projektion neu. Nach einem fehlgeschlagenen Datei-Start kann die aktuelle Shared-Schnittstelle die Datei nicht erneut öffnen; dafür bleibt die Backup-Wiederherstellung verfügbar.
-- Die Hauptaktion auf der Startseite startet den Rotationsvorschlag direkt, ersatzweise den ersten Plan oder ein freies Training. „Andere Pläne“ öffnet die Trainingsauswahl; freies Training bleibt separat erreichbar.
+- Die Hauptaktion auf der Startseite startet den Rotationsvorschlag direkt, ersatzweise den ersten Plan oder ein freies Training. „Anderer Plan“ öffnet die Trainingsauswahl, „Freies Training“ steht daneben; „Teilplan überspringen“ liegt im Menü „Mehr“.
 - Nach dem Löschen eines Satzes im aktiven Training erscheint für acht Sekunden „Rückgängig“. Der zuletzt gelöschte Satz wird mit seiner Trainingsabsicht über `set.add` wiederhergestellt. Beim Sessionwechsel verfällt das Angebot.
 - Übungsleiste und Satzmenüs haben mindestens 44 pt große Touchflächen; die Übungsleiste wächst mit der Schriftgröße. Sichtbare App-Texte verwenden „Training“.

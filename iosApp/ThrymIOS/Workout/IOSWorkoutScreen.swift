@@ -15,6 +15,9 @@ struct IOSWorkoutExerciseRow: Identifiable, Equatable {
     let nextSetRecommendation: IOSWorkoutNextSetRecommendation?
 
     var deloadMode: String = "NONE"
+    /// Reps of the work set `previousWorkWeightKg` comes from; prefills an exercise without a
+    /// plan target the same way the weight does.
+    var previousWorkReps: Int? = nil
 
     var targetID: Int64? { target?.id }
 
@@ -55,7 +58,7 @@ struct IOSWorkoutExerciseRow: Identifiable, Equatable {
     }
     var targetReps: Int {
         if target?.setTargets.isEmpty == false { return nextPlannedSet?.reps ?? displayTarget?.reps ?? 0 }
-        return sets.last(where: { [IOSWorkoutSetType.normal, .failure].contains(resolvedIOSWorkoutSetType($0)) })?.reps ?? displayTarget?.reps ?? 0
+        return sets.last(where: { [IOSWorkoutSetType.normal, .failure].contains(resolvedIOSWorkoutSetType($0)) })?.reps ?? displayTarget?.reps ?? (target == nil ? previousWorkReps ?? 0 : 0)
     }
 
     var defaultWeightKg: Double {
@@ -213,16 +216,6 @@ struct IOSWorkoutScreen: View {
                         .interactiveDismissDisabled(isFinishing)
                 }
             }
-            .confirmationDialog(
-                "Training verwerfen?",
-                isPresented: $showingCancelConfirmation,
-                titleVisibility: .visible
-            ) {
-                Button("Training verwerfen", role: .destructive) { cancelWorkout() }
-                Button("Weiter trainieren", role: .cancel) { }
-            } message: {
-                Text("Die laufende Session und ihre Sätze werden verworfen.")
-            }
             .task(id: activeSession?.id) {
                 await restorePresentationState()
             }
@@ -248,7 +241,8 @@ struct IOSWorkoutScreen: View {
                 IOSWorkoutStartView(
                     plans: data.trainingPlans.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending },
                     onStartFree: startFreeWorkout,
-                    onStartPlan: startPlan
+                    onStartPlan: startPlan,
+                    onCreatePlan: { store.selectedTab = 3 }
                 )
             }
         } else {
@@ -256,10 +250,25 @@ struct IOSWorkoutScreen: View {
         }
     }
 
+    /// Exercises of the five latest finished workouts, newest first, for the picker's top section.
+    private var recentExerciseIDs: [Int64] {
+        guard let data else { return [] }
+        var ids: [Int64] = []
+        let sessions = data.workoutSessions
+            .filter { $0.endTime != nil }
+            .sorted { $0.startTime == $1.startTime ? $0.id > $1.id : $0.startTime > $1.startTime }
+            .prefix(5)
+        for session in sessions {
+            for set in data.sets(for: session) where !ids.contains(set.exerciseId) { ids.append(set.exerciseId) }
+        }
+        return Array(ids.prefix(8))
+    }
+
     private var exercisePickerSheet: some View {
         IOSWorkoutExercisePicker(
             exercises: data?.visibleExercises.sortedByDisplayName() ?? [],
             excludedIDs: Set(adHocExerciseIDs),
+            recentIDs: recentExerciseIDs,
             onSelect: addAdHocExercise
         )
     }
@@ -323,6 +332,21 @@ struct IOSWorkoutScreen: View {
         .padding()
     }
 
+    /// The discard confirmation, attached to the control that asks for it: the system anchors
+    /// the dialog to this view, so on the whole screen it pointed at the middle of the list.
+    private func discardConfirmation(_ anchor: some View) -> some View {
+        anchor.confirmationDialog(
+            "Training verwerfen?",
+            isPresented: $showingCancelConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Training verwerfen", role: .destructive) { cancelWorkout() }
+            Button("Weiter trainieren", role: .cancel) { }
+        } message: {
+            Text("Die laufende Session und ihre Sätze werden verworfen.")
+        }
+    }
+
     private var screenTitle: String {
         guard let activeSession else { return String(localized: "Training") }
         return activeSession.name.isEmpty ? String(localized: "Training") : activeSession.name
@@ -341,7 +365,7 @@ struct IOSWorkoutScreen: View {
             LazyVStack(alignment: .leading, spacing: 16) {
                 Group {
                     if liquidGlass {
-                        glassWorkoutHeader(session: session, layout: layout, proxy: proxy)
+                        discardConfirmation(glassWorkoutHeader(session: session, layout: layout, proxy: proxy))
                     } else {
                         workoutHeader(session: session)
                     }
@@ -378,16 +402,19 @@ struct IOSWorkoutScreen: View {
                     }
                 }
 
-                Button {
-                    showingExercisePicker = true
-                } label: {
-                    Label("Übung hinzufügen", systemImage: "plus.circle.fill")
-                        .frame(maxWidth: .infinity)
+                // The empty state already offers the one way to add the first exercise.
+                if !rows.isEmpty {
+                    Button {
+                        showingExercisePicker = true
+                    } label: {
+                        Label("Übung hinzufügen", systemImage: "plus.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .padding(.horizontal)
+                    .padding(.bottom, allPlannedSetsDone ? 8 : 24)
+                    .accessibilityHint("Öffnet die Suche nach einer weiteren Übung")
                 }
-                .buttonStyle(.bordered)
-                .padding(.horizontal)
-                .padding(.bottom, allPlannedSetsDone ? 8 : 24)
-                .accessibilityHint("Öffnet die Suche nach einer weiteren Übung")
 
                 if allPlannedSetsDone {
                     IOSWorkoutFinishCard(plannedSetCount: rows.plannedSetCount) {
@@ -425,14 +452,14 @@ struct IOSWorkoutScreen: View {
                 glassRestDock(rows: rows)
             } else {
             HStack(spacing: 12) {
-                Button {
+                discardConfirmation(Button {
                     showingCancelConfirmation = true
                 } label: {
                     Label("Verwerfen", systemImage: "trash")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
-                .tint(.red)
+                .tint(.red))
 
                 let finishButton = Button {
                     showingFinishConfirmation = true
@@ -657,6 +684,7 @@ struct IOSWorkoutScreen: View {
                     sessionID: sessionID,
                     onSaveSet: saveSet,
                     setBadges: setBadges,
+                    showsOriginBadge: activeSession?.planId != nil,
                     canMoveUp: canMoveUp,
                     canMoveDown: canMoveDown,
                     onMoveUp: single ? { moveExercise(rowID: row.id, direction: .up) } : nil,
@@ -747,7 +775,7 @@ struct IOSWorkoutScreen: View {
                 target: target,
                 displayTarget: session.endTime == nil ? deloadAdjustedTarget(target.target) : target.target,
                 sets: sets,
-                previousWorkWeightKg: previousWorkWeight(exerciseID: exercise.id, currentSession: session, data: data),
+                previousWorkWeightKg: previousWorkSet(exerciseID: exercise.id, currentSession: session, data: data)?.weightKg,
                 nextSetRecommendation: IOSWorkoutNextSetCoach.evaluate(
                     sets: sets,
                     target: target,
@@ -762,19 +790,21 @@ struct IOSWorkoutScreen: View {
             let sets = sessionSets
                 .filter { $0.planTargetSnapshotId == nil && $0.exerciseId == exerciseID }
                 .sorted { lhs, rhs in lhs.setNumber == rhs.setNumber ? lhs.id < rhs.id : lhs.setNumber < rhs.setNumber }
+            let previous = previousWorkSet(exerciseID: exercise.id, currentSession: session, data: data)
             rows.append(IOSWorkoutExerciseRow(
                 id: "adhoc-\(exerciseID)",
                 exercise: exercise,
                 target: nil,
                 displayTarget: nil,
                 sets: sets,
-                previousWorkWeightKg: previousWorkWeight(exerciseID: exercise.id, currentSession: session, data: data),
+                previousWorkWeightKg: previous?.weightKg,
                 nextSetRecommendation: IOSWorkoutNextSetCoach.evaluate(
                     sets: sets,
                     target: nil,
                     intensitySystem: settings.state.intensitySystem
                 ),
-                deloadMode: session.endTime == nil ? settings.state.deloadMode : "NONE"
+                deloadMode: session.endTime == nil ? settings.state.deloadMode : "NONE",
+                previousWorkReps: previous?.reps
             ))
         }
         return rows
@@ -806,11 +836,13 @@ struct IOSWorkoutScreen: View {
         )
     }
 
-    private func previousWorkWeight(
+    /// The latest work set of the exercise in the most recent matching session; its weight and
+    /// reps prefill the next set.
+    private func previousWorkSet(
         exerciseID: Int64,
         currentSession: ILWorkoutSession,
         data: ILTrainingData
-    ) -> Double? {
+    ) -> ILWorkoutSet? {
         let candidates = data.workoutSessions
             .filter { session in
                 guard session.id != currentSession.id, session.endTime != nil else { return false }
@@ -844,7 +876,7 @@ struct IOSWorkoutScreen: View {
                 .sorted {
                     $0.completedAt == $1.completedAt ? $0.id > $1.id : $0.completedAt > $1.completedAt
                 }
-                .first?.weightKg
+                .first
         }
         return nil
     }

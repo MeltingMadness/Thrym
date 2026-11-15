@@ -1,21 +1,45 @@
 import SwiftUI
 
+/// The idle training tab: the saved plans first, a free workout as the second way in.
 struct IOSWorkoutStartView: View {
     let plans: [ILTrainingPlan]
     let onStartFree: (String) -> Void
     let onStartPlan: (ILTrainingPlan) -> Void
+    let onCreatePlan: () -> Void
 
     @State private var freeWorkoutName = ""
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Bereit für dein Training?")
-                        .font(.geist(.largeTitle, weight: .bold))
-                    Text("Starte eine freie Session oder wähle einen gespeicherten Plan. Die Planziele werden beim Start für diese Session übernommen.")
-                        .font(.geist(.body))
-                        .thrymSecondaryText()
+                ThrymCard(title: String(localized: "Trainingspläne"), subtitle: plans.isEmpty ? String(localized: "Noch kein Plan angelegt.") : nil) {
+                    if plans.isEmpty {
+                        Button(action: onCreatePlan) {
+                            Label("Plan anlegen", systemImage: "plus")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityHint("Wechselt zu den Plänen")
+                    } else {
+                        ForEach(plans) { plan in
+                            Button {
+                                onStartPlan(plan)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "play.fill")
+                                        .foregroundStyle(.tint)
+                                    Text(plan.name)
+                                        .font(.geist(.body, weight: .semibold))
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                }
+                                .frame(minHeight: 44)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text("Plan \(plan.name) starten"))
+                        }
+                    }
                 }
 
                 ThrymCard(title: String(localized: "Freies Training"), subtitle: String(localized: "Übungen fügst du während des Trainings hinzu.")) {
@@ -23,46 +47,18 @@ struct IOSWorkoutStartView: View {
                         .textInputAutocapitalization(.sentences)
                         .accessibilityLabel("Name des freien Trainings")
 
-                    Button {
+                    let start = Button {
                         onStartFree(freeWorkoutName.trimmingCharacters(in: .whitespacesAndNewlines))
                         freeWorkoutName = ""
                     } label: {
                         Label("Freies Training starten", systemImage: "play.fill")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent).thrymButtonText()
-                }
-
-                ThrymCard(title: String(localized: "Trainingspläne"), subtitle: plans.isEmpty ? String(localized: "Noch kein Plan angelegt.") : String(localized: "Wähle einen Plan für diese Session.")) {
+                    // Without a plan the free workout is the only way to start, so it leads.
                     if plans.isEmpty {
-                        Label("Lege zuerst unter Pläne einen Trainingsplan an.", systemImage: "list.bullet.rectangle")
-                            .thrymSecondaryText()
+                        start.buttonStyle(.borderedProminent).thrymButtonText()
                     } else {
-                        ForEach(plans) { plan in
-                            Button {
-                                onStartPlan(plan)
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "list.bullet.rectangle.portrait")
-                                        .foregroundStyle(.tint)
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text(plan.name)
-                                            .font(.geist(.body, weight: .semibold))
-                                            .foregroundStyle(.primary)
-                                        Text("Plan starten")
-                                            .font(.geist(.caption))
-                                            .thrymSecondaryText()
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption.weight(.bold))
-                                        .thrymSecondaryText()
-                                }
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(Text("Plan \(plan.name) starten"))
-                        }
+                        start.buttonStyle(.bordered)
                     }
                 }
             }

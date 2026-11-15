@@ -52,29 +52,6 @@ struct IOSCompletionFactsBlock: View {
     }
 }
 
-/// After a pause of three weeks or more: offers the deload mode for an easier start.
-struct IOSComebackCard: View {
-    let pauseDays: Int
-    let onEaseBackIn: () -> Void
-
-    var body: some View {
-        ThrymCard(tone: .elevated) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Nach \(pauseDays) Tagen Pause")
-                    .font(.geist(.headline, weight: .bold))
-                    .accessibilityAddTraits(.isHeader)
-                Text("Nach einer Pause macht der Deload-Modus deine Trainings eine Weile leichter. Du kannst ihn jederzeit beenden.")
-                    .font(.geist(.subheadline))
-                    .thrymSecondaryText()
-                    .fixedSize(horizontal: false, vertical: true)
-                Button("Leichter einsteigen", action: onEaseBackIn)
-                    .buttonStyle(.bordered)
-                    .padding(.top, 4)
-            }
-        }
-    }
-}
-
 /// One ladder of round marks: "MARKEN · KG", the last reached marks with month and year, then the
 /// next one dimmed. The next mark appears only here, never during a workout, so nobody chases a
 /// round number with a single attempt.

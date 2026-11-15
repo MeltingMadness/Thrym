@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="review_confirmation_hint">These suggestions only change your plan once you apply them. They apply to your next workout.</string>
     <string name="review_finish_edit_first">Please apply or discard your open edit first.</string>
-    <string name="review_accept_count">Apply suggestions (%1$d)</string>
     <string name="review_loading">Loading workout review…</string>
     <string name="review_empty_session">There\'s no review for this workout. Suggestions are created after you complete a workout whose plan has a progression rule enabled.</string>
-    <string name="review_past_title">Past reviews</string>
     <string name="review_empty_all">No open reviews. After a workout with an enabled progression rule, your next suggestions will appear here.</string>
     <string name="review_plan">Plan: %1$s</string>
     <string name="review_plan_unavailable">The related plan is no longer available.</string>
@@ -13,8 +10,6 @@
     <string name="review_created_date">Evaluated on %1$s</string>
     <string name="review_trained_weight">Weight lifted: %1$s</string>
     <string name="review_stored_plan_weight">Plan target at the time: %1$s</string>
-    <string name="review_next_weight">Suggested weight: %1$s</string>
-    <string name="review_repeat_weight">Keep weight for next attempt: %1$s</string>
     <string name="review_legacy_weight_comparison">This older review compared the plan target at the time (%1$s) with the weight you lifted (%2$s). That doesn\'t mean your sets used different weights.</string>
     <string name="review_success_confirmation" tools:ignore="PluralsCandidate">%1$d of %2$d comparable successes reached. The target stays the same until confirmed.</string>
     <string name="review_mixed_loads">Your work sets used different weights, so together they don\'t confirm the target yet. Target kept; this session doesn\'t count as a comparable failed attempt.</string>

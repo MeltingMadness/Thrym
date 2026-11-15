@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="review_plan_changes_hint">Dein Plan ändert sich erst, wenn du übernimmst.</string>
+    <string name="review_notes">Hinweise</string>
+    <string name="review_earlier_decisions">Frühere Entscheidungen</string>
+    <string name="review_expanded">Ausgeklappt</string>
+    <string name="review_collapsed">Eingeklappt</string>
+    <string name="review_adjust">Anpassen</string>
+    <string name="review_details">Details</string>
+    <string name="review_target_stays">Ziel bleibt</string>
+    <string name="review_new_target">Neues Ziel: %1$s</string>
+    <string name="review_before">Bisher: %1$s</string>
+    <plurals name="review_decision_count">
+        <item quantity="one">%1$d Entscheidung ausstehend</item>
+        <item quantity="other">%1$d Entscheidungen ausstehend</item>
+    </plurals>
+    <plurals name="review_target_reached">
+        <item quantity="one">Ziel im gewerteten Satz erreicht.</item>
+        <item quantity="other">Ziel in allen %1$d gewerteten Sätzen erreicht.</item>
+    </plurals>
+    <string name="review_counted_sets">Gewertete Sätze</string>
+    <plurals name="review_apply_all_count">
+        <item quantity="one">Alle %1$d übernehmen</item>
+        <item quantity="other">Alle %1$d übernehmen</item>
+    </plurals>
+    <plurals name="review_reps_change">
+        <item quantity="one">%1$d → %2$d Wdh.</item>
+        <item quantity="other">%1$d → %2$d Wdh.</item>
+    </plurals>
+    <plurals name="review_sets_change">
+        <item quantity="one">%1$d → %2$d Satz</item>
+        <item quantity="other">%1$d → %2$d Sätze</item>
+    </plurals>
+    <plurals name="review_reps_value">
+        <item quantity="one">%1$d Wdh.</item>
+        <item quantity="other">%1$d Wdh.</item>
+    </plurals>
+    <plurals name="review_sets_value">
+        <item quantity="one">%1$d Satz</item>
+        <item quantity="other">%1$d Sätze</item>
+    </plurals>
+    <plurals name="review_reps_delta">
+        <item quantity="one">%1$s Wdh.</item>
+        <item quantity="other">%1$s Wdh.</item>
+    </plurals>
+    <plurals name="review_sets_delta">
+        <item quantity="one">%1$s Satz</item>
+        <item quantity="other">%1$s Sätze</item>
+    </plurals>
+</resources>

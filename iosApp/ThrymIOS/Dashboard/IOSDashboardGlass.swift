@@ -114,16 +114,17 @@ struct IOSDashboardGlassCommandCenter: View {
                 Text(tag.uppercased())
                     .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
-                    .lineLimit(1)
                     .opacity(0.9)
+                Spacer(minLength: 4)
+                if activeSession == nil, let suggestion, suggestion.canSkip {
+                    IOSDashboardSkipMenu(isBusy: isBusy) { onRequestSkip(suggestion) }
+                }
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.geist(size: 44, weight: .bold))
                     .tracking(-1.5)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.7)
                 Text(subtitle)
                     .font(.geist(.subheadline))
                     .thrymSecondaryText()
@@ -136,7 +137,6 @@ struct IOSDashboardGlassCommandCenter: View {
                         HStack(alignment: .firstTextBaseline) {
                             Text(exerciseName(exercise))
                                 .font(.geist(.body, weight: .bold))
-                                .lineLimit(1)
                             Spacer(minLength: 12)
                             Text(target(exercise))
                                 .font(.geist(.subheadline))
@@ -165,7 +165,6 @@ struct IOSDashboardGlassCommandCenter: View {
                         .background(accent, in: Circle())
                     Text(primaryTitle)
                         .font(.geist(size: 17, weight: .heavy))
-                        .lineLimit(1)
                     Spacer(minLength: 0)
                 }
                 .padding(8)
@@ -178,20 +177,8 @@ struct IOSDashboardGlassCommandCenter: View {
             .disabled(isBusy)
 
             if activeSession == nil {
-                HStack(spacing: 18) {
-                    Button("Andere Pläne", action: onChooseTraining)
-                    if let suggestion, suggestion.canSkip {
-                        Button("Teilplan überspringen") { onRequestSkip(suggestion) }
-                    }
-                    if suggestion != nil || fallbackPlan != nil {
-                        Button("Freies Training", action: onStartFree)
-                    }
-                }
-                .font(.geist(.subheadline, weight: .bold))
-                .thrymSecondaryText()
-                .buttonStyle(.plain)
-                .disabled(isBusy)
-                .frame(maxWidth: .infinity)
+                IOSDashboardStartLinks(showFree: suggestion != nil || fallbackPlan != nil,
+                    isBusy: isBusy, onChooseTraining: onChooseTraining, onStartFree: onStartFree)
             }
         }
         .padding(EdgeInsets(top: 22, leading: 22, bottom: 18, trailing: 22))
@@ -277,12 +264,24 @@ struct IOSDashboardGlassWeekStrip: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.thrymTheme) private var theme
+    @Environment(\.thrymAppearance) private var appearance
 
     var body: some View {
+        if appearance == .liquidGlass {
+            weekContent
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .liquidGlass(in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        } else {
+            ThrymCard { weekContent }
+        }
+    }
+
+    private var weekContent: some View {
         let dark = colorScheme == .dark
-        let ink = dark ? Color.white : Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255)
+        let ink = appearance == .liquidGlass ? (dark ? Color.white : Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255)) : theme.palette(for: colorScheme).textPrimary
         let accent = theme.palette(for: colorScheme).primary
-        VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("DIESE WOCHE")
                     .font(.geist(.caption, weight: .bold))
@@ -307,7 +306,7 @@ struct IOSDashboardGlassWeekStrip: View {
                                 Circle().fill(ink)
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 13, weight: .heavy))
-                                    .foregroundStyle(dark ? Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255) : .white)
+                                    .foregroundStyle(appearance == .liquidGlass ? (dark ? Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255) : .white) : theme.palette(for: colorScheme).surface)
                             } else if day.isToday {
                                 Circle()
                                     .strokeBorder(accent, lineWidth: 2)
@@ -328,9 +327,6 @@ struct IOSDashboardGlassWeekStrip: View {
                     .accessibilityHidden(true)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .liquidGlass(in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
     private func accessibilityText(_ day: IOSDashboardWeekDay) -> String {

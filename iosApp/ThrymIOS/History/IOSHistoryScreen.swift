@@ -408,9 +408,9 @@ private struct IOSHistorySummaryCard: View {
 
     var body: some View {
         ThrymCard(title: String(localized: "Zusammenfassung"), subtitle: String(localized: "Gefilterte abgeschlossene Trainings")) {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 20) { metrics }
-                VStack(alignment: .leading, spacing: 10) { metrics }
+            // Two columns always fit; four in a row broke the values apart letter by letter.
+            LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)], alignment: .leading, spacing: 12) {
+                metrics
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
@@ -437,8 +437,8 @@ private struct IOSHistoryMetric: View {
     var body: some View {
         Label {
             VStack(alignment: .leading, spacing: 2) {
-                Text(value).font(.geist(.headline).monospacedDigit())
-                Text(title).font(.geist(.caption)).thrymSecondaryText()
+                Text(value).font(.geist(.headline).monospacedDigit()).lineLimit(1).minimumScaleFactor(0.7)
+                Text(title).font(.geist(.caption)).thrymSecondaryText().lineLimit(1)
             }
         } icon: {
             Image(systemName: systemImage).foregroundStyle(.tint)

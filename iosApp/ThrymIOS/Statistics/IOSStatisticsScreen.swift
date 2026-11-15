@@ -90,6 +90,8 @@ struct IOSStatisticsScreen: View {
                 trend: store.readiness?.trainingTrend
             )
 
+            IOSStatisticsTrainingTrendCard(trend: store.readiness?.trainingTrend)
+
             IOSWeeklyVolumeTrendCard(
                 bins: analytics.weeklyVolume,
                 unitSystem: unitSystem
@@ -136,6 +138,10 @@ struct IOSStatisticsScreen: View {
                     loadMuscleVolumeWeek(next)
                 }
             )
+
+            IOSStatisticsVolumeExplanation()
+
+            IOSStatisticsRecentRecords(records: analytics.recentRecords, unitSystem: unitSystem)
 
             Text("Übungen")
                 .font(.geist(.title2, weight: .bold))

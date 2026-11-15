@@ -457,9 +457,9 @@ internal fun ExerciseCard(
                         isExtraOrAdHoc = true,
                         isEditMode = false,
                         coachHint = null,
-                        defaultWeight = loggedSets.lastOrNull()?.let { formatWeightValue(it.weightKg, unitSystem) } ?: previousWeightHint.orEmpty(),
+                        defaultWeight = loggedSets.lastOrNull()?.let { formatWeightValue(it.weightKg, unitSystem) } ?: previousSession?.sets?.let(::previousWorkoutWorkSetWeightKg)?.let { formatWeightValue(it, unitSystem) }.orEmpty(),
                         weightPlaceholder = previousWeightHint,
-                        defaultReps = loggedSets.lastOrNull()?.reps?.toString().orEmpty(),
+                        defaultReps = (loggedSets.lastOrNull()?.reps ?: previousSession?.sets?.let(::previousWorkoutWorkSetReps))?.toString().orEmpty(),
                         repsPlaceholder = null,
                         defaultIntensity = "",
                         intensityPlaceholder = intensityPlaceholder,
@@ -477,6 +477,9 @@ internal fun ExerciseCard(
                             onLogSet(reps, weight, setType, intensity, submissionId, intention)
                         }
                     )
+                    if (loggedSets.isEmpty() && previousSession?.sets?.let(::previousWorkoutWorkSet) != null) {
+                        Text(stringResource(WorkoutR.string.workout_previous_values_editable), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
 
                 nextSetRecommendation?.let { recommendation ->

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_finish_all_done">Alles geschafft</string>
+    <string name="workout_finish_free_title">Training abschließen</string>
+    <string name="workout_previous_values_editable">Werte aus dem letzten Training · editierbar</string>
+    <string name="workout_picker_recent">Zuletzt trainiert</string>
+    <string name="workout_picker_all">Alle Übungen</string>
+    <plurals name="workout_finish_planned_done">
+        <item quantity="one">%1$d geplanter Satz ist geloggt.</item>
+        <item quantity="other">Alle %1$d geplanten Sätze sind geloggt.</item>
+    </plurals>
+</resources>

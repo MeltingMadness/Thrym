@@ -60,11 +60,16 @@ internal fun planSlotWeightPrefill(
  * completion time, then id. Drop and backoff sets do not count. Same rule as iOS
  * `previousWorkWeight`.
  */
-internal fun previousWorkoutWorkSetWeightKg(previousSets: List<WorkoutSet>): Double? =
+internal fun previousWorkoutWorkSet(previousSets: List<WorkoutSet>): WorkoutSet? =
     previousSets
         .filter { it.setType == SetType.NORMAL || it.setType == SetType.FAILURE }
         .maxWithOrNull(compareBy<WorkoutSet>({ it.completedAt }, { it.id }))
-        ?.weightKg
+
+internal fun previousWorkoutWorkSetWeightKg(previousSets: List<WorkoutSet>): Double? =
+    previousWorkoutWorkSet(previousSets)?.weightKg
+
+internal fun previousWorkoutWorkSetReps(previousSets: List<WorkoutSet>): Int? =
+    previousWorkoutWorkSet(previousSets)?.reps
 
 /**
  * Passt ein Planziel an den aktiven Deload-Modus an (nur Anzeigeebene — die

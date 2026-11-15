@@ -92,15 +92,10 @@
 
     <string name="dashboard_muscles_title">Muskelgruppen im Blick</string>
     <string name="dashboard_muscles_planned_marker">geplant</string>
-    <string name="dashboard_muscles_detail_show">Muskel-Details anzeigen</string>
-    <string name="dashboard_muscles_detail_hide">Muskel-Details ausblenden</string>
-    <string name="dashboard_muscles_planned">Heute geplant: %1$s</string>
-    <string name="dashboard_muscles_no_plan">Für heute ist kein Trainingsplan hinterlegt.</string>
     <string name="dashboard_muscles_last_trained">Letzte Belastung: %1$s</string>
     <string name="dashboard_muscles_trained_today">heute</string>
     <string name="dashboard_muscles_never">keine Belastung erfasst</string>
     <string name="dashboard_muscles_soreness">Muskelkater %1$d/5</string>
-    <string name="dashboard_muscles_no_recovery_note">Keine Erholung in Prozent. MEV/MAV-Schwellen sind Planungsziele, keine Messwerte.</string>
     <plurals name="dashboard_trend_evidence_exercises">
         <item quantity="one">%1$d Übung analysiert</item>
         <item quantity="other">%1$d Übungen analysiert</item>

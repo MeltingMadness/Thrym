@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="review_confirmation_hint">Diese Vorschläge ändern deinen Plan erst, wenn du sie übernimmst. Sie gelten für das nächste Training.</string>
     <string name="review_finish_edit_first">Bitte übernimm oder verwirf zuerst deine offene Bearbeitung.</string>
-    <string name="review_accept_count">Vorschläge übernehmen (%1$d)</string>
     <string name="review_loading">Trainingsauswertung wird geladen …</string>
     <string name="review_empty_session">Für dieses Training liegt keine Auswertung vor. Vorschläge entstehen nach einem abgeschlossenen Training mit einer aktivierten Progressionsregel im Plan.</string>
-    <string name="review_past_title">Frühere Auswertungen</string>
     <string name="review_empty_all">Keine offenen Auswertungen. Nach einem Training mit einer aktivierten Progressionsregel findest du hier die nächsten Vorschläge.</string>
     <string name="review_plan">Plan: %1$s</string>
     <string name="review_plan_unavailable">Der zugehörige Plan ist nicht mehr verfügbar.</string>
@@ -13,8 +10,6 @@
     <string name="review_created_date">Bewertung vom %1$s</string>
     <string name="review_trained_weight">Trainierte Last: %1$s</string>
     <string name="review_stored_plan_weight">Damals gespeichertes Planziel: %1$s</string>
-    <string name="review_next_weight">Vorgeschlagenes Gewicht: %1$s</string>
-    <string name="review_repeat_weight">Gewicht beim nächsten Versuch beibehalten: %1$s</string>
     <string name="review_legacy_weight_comparison">Diese ältere Auswertung verglich das damalige Planziel %1$s mit der trainierten Last %2$s. Das ist kein Beleg für unterschiedliche Satzgewichte.</string>
     <string name="review_success_confirmation">%1$d von %2$d vergleichbaren Erfolgen erreicht. Das Ziel bleibt bis zur Bestätigung unverändert.</string>
     <string name="review_mixed_loads">Die Arbeitssätze wurden mit unterschiedlichen Gewichten ausgeführt und bestätigen das Ziel noch nicht gemeinsam. Ziel beibehalten; diese Einheit zählt nicht als vergleichbarer Fehlversuch.</string>

@@ -14,8 +14,8 @@ Fachliche Grundlage: [`../research/2026-08-08-progression-schemes.md`](../resear
    - Gewicht: das zuletzt trainierte Gewicht, sonst das Planziel
    - RPE/RIR-Schema: Ziel-RPE als Platzhalter (bei RIR: 10 − Ziel-RPE)
 4. **Workout beenden:** Danach erzeugt der Coach die Ergebnisse für reguläre Einheiten. Explizit als Deload gespeicherte Einheiten erhalten keine Progressionsauswertung. Ein Fehler im Coach hält das Workout nicht offen. Das Workout bleibt gespeichert, die Auswertung lässt sich wiederholen und ist idempotent.
-5. **Review-Screen** „Progression prüfen“: pro Übung Schema, `alt → neu`, gewertete Sätze und Begründung. Aktionen: **Übernehmen**, **Bearbeiten**, **Verwerfen** sowie **Alle sicheren übernehmen**. Reine Hinweise brauchen keine Entscheidung. Schließen lässt Offenes offen.
-6. **Dashboard:** Solange Vorschläge offen sind, erscheint „N Progressionsvorschläge offen · Prüfen“.
+5. **Review-Screen** „Progression prüfen“ (Android und iOS): Jeder offene Vorschlag ist eine Karte mit der Änderung in großer Schrift (`100 kg → 102,5 kg`, daneben `+2,5 kg`; bei gleichem Gewicht Wiederholungen oder Sätze), dem neuen Ziel und einer Begründung. **Übernehmen** ist der Hauptknopf, **Anpassen** und **Verwerfen** stehen darunter; gewertete Sätze, Schema und Datum klappen unter **Details** auf. Ab zwei sicheren Vorschlägen steht **Alle N übernehmen** fest am unteren Rand. Hinweise und frühere Entscheidungen sind eingeklappte Abschnitte. Reine Hinweise brauchen keine Entscheidung. Schließen lässt Offenes offen.
+6. **Startseite:** Solange Vorschläge offen sind, steht direkt unter der Start-Karte in „Offen“ die Zeile „Progression prüfen · N Vorschläge warten“.
 7. **Frühere Auswertungen:** Ohne Trainingsbezug zeigt der Review-Screen unter den offenen Vorschlägen die letzten 50 entschiedenen, veralteten und reinen Hinweis-Ergebnisse (nur lesend). Erreichbar ist er auch ohne offene Vorschläge über das Symbol in der Planliste.
 
 ## Begriffe

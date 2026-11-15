@@ -11,7 +11,7 @@ Die Regeln liegen in `:shared` (`shared/src/commonMain/kotlin/com/thrym/shared/r
 - **Puffer:** Je vier erreichte oder Deload-Wochen gibt es eine Woche Puffer, höchstens zwei auf Vorrat. Eine verpasste Woche verbraucht einen Puffer, statt die Serie zu beenden; Pufferwochen bringen selbst keinen neuen Puffer. Ohne Puffer endet die Serie.
 - **Laufende Woche:** Sie zählt zur Serie erst, wenn das Ziel erreicht ist. Bis Sonntag kann sie die Serie also nicht brechen.
 - **Zieländerung:** gilt ab der laufenden Woche; frühere Wochen behalten ihr Ziel. Gespeichert wird die Historie der Änderungen (`WeeklyGoalRules.withChange`, Text `"0:3,20745:4"` aus Startwoche als Epochentag und Ziel). Eine leere Historie heißt Ziel 3.
-- **Anzeige:** Startseite, Wochenleiste (Liquid Glass) bzw. Karte „Trainingsrhythmus“ (Ember): „2 von 3“ statt der Trainingszahl, darunter ab zwei Wochen „7 Wochen in Folge · 1 Woche Puffer“, sonst nach erreichtem Ziel „Wochenziel erreicht“. Screenreader lesen „2 von 3 Trainings diese Woche, 7 Wochen in Folge“.
+- **Anzeige:** Startseite, Wochenleiste (in beiden Erscheinungsbildern): „2 von 3“ statt der Trainingszahl, darunter ab zwei Wochen „7 Wochen in Folge · 1 Woche Puffer“, sonst nach erreichtem Ziel „Wochenziel erreicht“. Screenreader lesen „2 von 3 Trainings diese Woche, 7 Wochen in Folge“.
 - **Einstellungen:** Abschnitt „Wochenziel“ mit „Wochenziel anzeigen“ (Standard an) und der Auswahl 2 bis 7. Ausgeschaltet verschwinden Ziel, Serie und der Fakt im Abschluss; die Historie bleibt.
 
 ## Abschluss: Trainingsnummer und Fakten
@@ -25,7 +25,7 @@ Die Regeln liegen in `:shared` (`shared/src/commonMain/kotlin/com/thrym/shared/r
 
 ## Comeback auf der Startseite
 
-Liegt das letzte abgeschlossene Training 21 Tage oder länger zurück, kein Deload-Modus ist aktiv und kein Training läuft, zeigt die Startseite „Nach 26 Tagen Pause“ mit dem Angebot „Leichter einsteigen“. Der Knopf schaltet den Deload-Modus „halbe Sätze“ ein (`HALVE_SET_VOLUME`); die Karte verschwindet damit. Mit dem nächsten Training ist die Pause vorbei.
+Liegt das letzte abgeschlossene Training 21 Tage oder länger zurück, kein Deload-Modus ist aktiv und kein Training läuft, zeigt die Startseite in der Karte „Offen“ die Zeile „Nach 26 Tagen Pause“ mit dem Angebot „Leichter einsteigen“. Der Knopf schaltet den Deload-Modus „halbe Sätze“ ein (`HALVE_SET_VOLUME`); die Zeile verschwindet damit. Mit dem nächsten Training ist die Pause vorbei.
 
 ## Marken
 

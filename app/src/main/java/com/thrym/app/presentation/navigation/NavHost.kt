@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.thrym.app.presentation.dashboard.DashboardScreen
+import com.thrym.app.presentation.dashboard.DashboardStatisticsScreen
 import com.thrym.app.presentation.exercises.ExerciseLibraryScreen
 import com.thrym.app.presentation.history.HistoryMode
 import com.thrym.app.presentation.history.WorkoutDetailScreen
@@ -118,10 +119,15 @@ fun ThrymNavHost(
                 onOpenProgressionReview = {
                     navController.navigate(Screen.ProgressionReview.createRoute(null))
                 },
+                onOpenStatistics = { navController.navigate(Screen.Statistics.route) },
                 onOpenAchievements = {
                     navController.openAchievements()
                 }
             )
+        }
+
+        composable(Screen.Statistics.route) {
+            DashboardStatisticsScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.Onboarding.route) {

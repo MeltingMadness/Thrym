@@ -72,6 +72,12 @@ data class ProgressionReviewUiState(
     val isLoading: Boolean = true,
     val isSessionScoped: Boolean = false
 ) {
+    val decisionItems: List<ProgressionReviewItemUi>
+        get() = items.filter { it.canDecide && it.proposed != null }
+    val noteItems: List<ProgressionReviewItemUi>
+        get() = items.filter { it !in decisionItems && (isSessionScoped || it.status == ProgressionSuggestionStatus.PENDING || it.status == ProgressionSuggestionStatus.INFORMATIONAL) }
+    val pastItems: List<ProgressionReviewItemUi>
+        get() = if (isSessionScoped) emptyList() else items.filter { it !in decisionItems && (it.status == ProgressionSuggestionStatus.ACCEPTED || it.status == ProgressionSuggestionStatus.REJECTED || it.status == ProgressionSuggestionStatus.STALE) }
     val safePendingItems: List<ProgressionReviewItemUi>
         get() = items.filter { it.canDecide && it.proposed != null }
             .sortedByDescending { it.sourceSessionId }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_finish_all_done">All done</string>
+    <string name="workout_finish_free_title">Finish workout</string>
+    <string name="workout_previous_values_editable">Values from your last workout · editable</string>
+    <string name="workout_picker_recent">Recently trained</string>
+    <string name="workout_picker_all">All exercises</string>
+    <plurals name="workout_finish_planned_done">
+        <item quantity="one">%1$d planned set is logged.</item>
+        <item quantity="other">All %1$d planned sets are logged.</item>
+    </plurals>
+</resources>

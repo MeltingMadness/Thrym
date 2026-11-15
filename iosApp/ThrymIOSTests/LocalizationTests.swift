@@ -32,8 +32,10 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(try text("\(1) Trainings", "de"), "1 Training")
         XCTAssertEqual(try text("\(3) Trainings", "de"), "3 Trainings")
 
-        XCTAssertEqual(try text("\(1) Vorschläge warten auf deine Entscheidung.", "de"), "1 Vorschlag wartet auf deine Entscheidung.")
-        XCTAssertEqual(try text("\(2) Vorschläge warten auf deine Entscheidung.", "de"), "2 Vorschläge warten auf deine Entscheidung.")
+        XCTAssertEqual(try text("\(1) Vorschläge warten", "de"), "1 Vorschlag wartet")
+        XCTAssertEqual(try text("\(2) Vorschläge warten", "de"), "2 Vorschläge warten")
+        XCTAssertEqual(try text("\(1) Vorschläge warten", "en"), "1 suggestion waiting")
+        XCTAssertEqual(try text("\(2) Vorschläge warten", "en"), "2 suggestions waiting")
         XCTAssertEqual(try text("\(1) Entscheidungen ausstehend", "en"), "1 decision pending")
     }
 

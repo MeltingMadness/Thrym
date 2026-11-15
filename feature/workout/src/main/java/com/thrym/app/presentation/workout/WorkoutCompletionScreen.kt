@@ -26,6 +26,7 @@ import com.thrym.app.presentation.common.rememberUiStrings
 import com.thrym.app.presentation.common.userMessageOrNull
 import com.thrym.app.presentation.theme.accentText
 import com.thrym.app.presentation.theme.semanticText
+import com.thrym.feature.workout.R as WorkoutR
 import com.thrym.core.designsystem.R
 import com.thrym.app.domain.model.*
 import com.thrym.app.domain.repository.TrainingPlanRepository
@@ -53,39 +54,50 @@ internal fun ExerciseWithSets.openSlotCount(): Int {
 internal fun List<ExerciseWithSets>.allPlannedSetsDone(): Boolean =
     sumOf { it.planTarget?.loggingSlots()?.size ?: 0 } > 0 && sumOf { it.openSlotCount() } == 0
 
+internal fun finishWorkoutIsPrimary(remaining: Int, confirmed: Int): Boolean =
+    remaining == 0 && confirmed > 0
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, error: String?, onContinue: () -> Unit, onFinish: () -> Unit) {
     val remaining = rows.sumOf { it.openSlotCount() }
     val planned = rows.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
     val confirmed = rows.sumOf { row -> row.sets.count { it.reps > 0 } }
+    val finishPrimary = finishWorkoutIsPrimary(remaining, confirmed)
     ModalBottomSheet(onDismissRequest = { if (!busy) onContinue() }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text(stringResource(R.string.workout_finish_dialog_title), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(when {
+                !finishPrimary -> R.string.workout_finish_dialog_title
+                planned > 0 -> WorkoutR.string.workout_finish_all_done
+                else -> WorkoutR.string.workout_finish_free_title
+            }), style = MaterialTheme.typography.headlineSmall)
             Text(when {
                 remaining > 0 -> pluralStringResource(R.plurals.workout_finish_remaining, remaining, remaining, planned - remaining, planned)
                 confirmed == 0 -> stringResource(R.string.workout_finish_empty)
+                planned > 0 -> pluralStringResource(WorkoutR.plurals.workout_finish_planned_done, planned, planned)
                 else -> pluralStringResource(R.plurals.workout_finish_confirmed, confirmed, confirmed)
             })
-            Column(Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                rows.filter { it.openSlotCount() > 0 }.forEach { row ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(row.exercise.localizedName(), Modifier.weight(1f)); Text(stringResource(R.string.workout_finish_open_count, row.openSlotCount()))
+            if (remaining > 0) {
+                Column(Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    rows.filter { it.openSlotCount() > 0 }.forEach { row ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(row.exercise.localizedName(), Modifier.weight(1f)); Text(stringResource(R.string.workout_finish_open_count, row.openSlotCount()))
+                        }
                     }
                 }
             }
             error?.let { Text(it, color = MaterialTheme.semanticText.danger) }
-            Button(onClick = onContinue, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(R.string.workout_finish_dialog_cancel)) }
-            OutlinedButton(onClick = onFinish, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), colors = ThrymInteractiveColors.outlinedButton()) {
-                Text(
-                    stringResource(
-                        when {
-                            busy -> R.string.workout_finish_saving
-                            remaining > 0 -> R.string.workout_finish_confirm_partial
-                            else -> R.string.workout_finish_confirm
-                        }
-                    )
-                )
+            val finishLabel = stringResource(when {
+                busy -> R.string.workout_finish_saving
+                remaining > 0 -> R.string.workout_finish_confirm_partial
+                else -> R.string.workout_finish_confirm
+            })
+            if (finishPrimary) {
+                Button(onClick = onFinish, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(finishLabel) }
+                OutlinedButton(onClick = onContinue, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), colors = ThrymInteractiveColors.outlinedButton()) { Text(stringResource(R.string.workout_finish_dialog_cancel)) }
+            } else {
+                Button(onClick = onContinue, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(R.string.workout_finish_dialog_cancel)) }
+                OutlinedButton(onClick = onFinish, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), colors = ThrymInteractiveColors.outlinedButton()) { Text(finishLabel) }
             }
             Text(stringResource(R.string.workout_finish_footer), style = MaterialTheme.typography.bodySmall)
         }
