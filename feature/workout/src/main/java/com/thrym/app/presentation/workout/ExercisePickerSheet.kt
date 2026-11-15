@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -54,6 +55,9 @@ import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.ExerciseCategory
 import com.thrym.app.domain.model.MuscleGroup
 import com.thrym.app.domain.repository.ExerciseRepository
+import com.thrym.app.domain.repository.WorkoutRepository
+import com.thrym.app.domain.model.WorkoutSession
+import com.thrym.app.domain.model.WorkoutSet
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
 import com.thrym.app.presentation.common.currentLocale
@@ -91,7 +95,8 @@ fun ExercisePickerSheet(
     onExerciseSelected: (Exercise) -> Unit,
     allowCreateCustomExercise: Boolean = false,
     onCreationError: ((String) -> Unit)? = null,
-    exerciseRepository: ExerciseRepository = koinInject()
+    exerciseRepository: ExerciseRepository = koinInject(),
+    workoutRepository: WorkoutRepository = koinInject()
 ) {
     val dims = thrymDimens
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -117,6 +122,20 @@ fun ExercisePickerSheet(
             }
     }
     val activeExercises by activeExercisesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val recentIds by produceState(initialValue = emptyList<Long>(), workoutRepository) {
+        try {
+            workoutRepository.getAllCompletedSessions().collect { sessions ->
+                val newest = sessions.sortedWith(compareByDescending<WorkoutSession> { it.endTime ?: it.startTime }.thenByDescending { it.id }).take(5)
+                value = recentExerciseIds(newest, workoutRepository.getSetsForSessionsList(newest.map { it.id }))
+            }
+        } catch (error: Exception) {
+            if (error is CancellationException) throw error
+            value = emptyList()
+        }
+    }
+    val recentExercises = remember(recentIds, activeExercises) {
+        selectRecentExercises(recentIds, activeExercises)
+    }
     // Search and sort on the localized name; the database only knows the stored
     // (German canonical) names of the built-in exercises.
     val exercises = remember(activeExercises, searchQuery, selectedGroup, strings, locale) {
@@ -203,26 +222,20 @@ fun ExercisePickerSheet(
                 contentPadding = PaddingValues(horizontal = dims.spacingMd, vertical = dims.spacingXs),
                 verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
             ) {
-                items(exercises, key = { it.id }) { exercise ->
-                    ThrymSurfaceCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedExercises = if (selectedExercises.any { it.id == exercise.id }) selectedExercises.filterNot { it.id == exercise.id } else selectedExercises + exercise }
-                            .semantics { role = Role.Button },
-                        tone = ThrymSurfaceTone.ACCENT,
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            if (selectedExercises.any { it.id == exercise.id }) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-                        )
-                    ) {
-                        ListItem(
-                            headlineContent = { Text(exercise.localizedName()) },
-                            trailingContent = { androidx.compose.material3.Checkbox(checked = selectedExercises.any { it.id == exercise.id }, onCheckedChange = null) },
-                            supportingContent = {
-                                Text(stringResource(UxR.string.workout_picker_exercise_details, exercise.primaryMuscleGroup.label(), exercise.category.label()))
-                            },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-                        )
+                if (searchQuery.isBlank() && selectedGroup == null) {
+                    if (recentExercises.isNotEmpty()) {
+                        item(key = "recent_header") { PickerSectionTitle(stringResource(UxR.string.workout_picker_recent)) }
+                        items(recentExercises, key = { "recent_${it.id}" }) { exercise ->
+                            PickerExerciseRow(exercise, selectedExercises.any { it.id == exercise.id }) {
+                                selectedExercises = if (selectedExercises.any { it.id == exercise.id }) selectedExercises.filterNot { it.id == exercise.id } else selectedExercises + exercise
+                            }
+                        }
+                    }
+                    item(key = "all_header") { PickerSectionTitle(stringResource(UxR.string.workout_picker_all)) }
+                }
+                items(exercises, key = { "all_${it.id}" }) { exercise ->
+                    PickerExerciseRow(exercise, selectedExercises.any { it.id == exercise.id }) {
+                        selectedExercises = if (selectedExercises.any { it.id == exercise.id }) selectedExercises.filterNot { it.id == exercise.id } else selectedExercises + exercise
                     }
                 }
             }
@@ -281,6 +294,39 @@ fun ExercisePickerSheet(
                     }
                 }
             }
+        )
+    }
+}
+
+internal fun recentExerciseIds(sessions: List<WorkoutSession>, sets: List<WorkoutSet>): List<Long> {
+    val bySession = sets.groupBy { it.sessionId }
+    return sessions.sortedWith(compareByDescending<WorkoutSession> { it.endTime ?: it.startTime }.thenByDescending { it.id })
+        .take(5).flatMap { session -> bySession[session.id].orEmpty().sortedWith(compareByDescending<WorkoutSet> { it.completedAt }.thenByDescending { it.id }) }
+        .map { it.exerciseId }.distinct()
+}
+
+internal fun selectRecentExercises(recentIds: List<Long>, exercises: List<Exercise>): List<Exercise> {
+    val activeById = exercises.filterNot { it.isArchived }.associateBy { it.id }
+    return recentIds.distinct().mapNotNull(activeById::get).take(8)
+}
+
+@Composable
+private fun PickerSectionTitle(title: String) {
+    Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 8.dp))
+}
+
+@Composable
+private fun PickerExerciseRow(exercise: Exercise, selected: Boolean, onClick: () -> Unit) {
+    ThrymSurfaceCard(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).semantics { role = Role.Button },
+        tone = ThrymSurfaceTone.ACCENT,
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        ListItem(
+            headlineContent = { Text(exercise.localizedName()) },
+            trailingContent = { androidx.compose.material3.Checkbox(checked = selected, onCheckedChange = null) },
+            supportingContent = { Text(stringResource(UxR.string.workout_picker_exercise_details, exercise.primaryMuscleGroup.label(), exercise.category.label())) },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
         )
     }
 }

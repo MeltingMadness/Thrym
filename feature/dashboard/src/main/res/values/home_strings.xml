@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dashboard_statistics_title">Statistics</string>
+    <string name="dashboard_view_statistics">View statistics</string>
+    <string name="dashboard_statistics_subtitle">Trend, volume and records</string>
+    <string name="dashboard_todo">To do</string>
+    <string name="dashboard_today">Today</string>
+    <string name="dashboard_progression_review">Review progression</string>
+    <string name="dashboard_other_plan">Other plan</string>
+    <string name="dashboard_more">More</string>
+    <string name="dashboard_skip_subplan">Skip sub-plan</string>
+    <string name="dashboard_skip_confirm">Skip %1$s in the rotation?</string>
+    <string name="dashboard_checkin_today">Check in for today</string>
+    <string name="dashboard_daily_form">Daily form</string>
+    <string name="dashboard_checkin_optional">Optional · 20 seconds</string>
+    <string name="dashboard_muscles_show_all">Show all %1$d</string>
+    <plurals name="dashboard_suggestions_waiting">
+        <item quantity="one">%1$d suggestion waiting</item>
+        <item quantity="other">%1$d suggestions waiting</item>
+    </plurals>
+    <string name="dashboard_deload_suggested">Deload suggested</string>
+    <string name="dashboard_deload_active">Deload active</string>
+</resources>

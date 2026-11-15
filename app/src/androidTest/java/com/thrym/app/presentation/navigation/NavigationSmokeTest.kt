@@ -15,6 +15,7 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isSelectable
@@ -66,6 +67,7 @@ import com.thrym.app.presentation.common.uiLocale
 import com.thrym.app.presentation.progression.ProgressionReviewViewModel
 import com.thrym.app.presentation.theme.ThrymTheme
 import com.thrym.core.designsystem.R
+import com.thrym.feature.dashboard.R as DashboardR
 import com.thrym.feature.history.R as HistoryR
 import com.thrym.feature.onboarding.R as OnboardingR
 import com.thrym.feature.workout.R as WorkoutR
@@ -528,6 +530,31 @@ class NavigationSmokeTest {
     }
 
     @Test
+    fun dashboard_opens_statistics_and_returns() {
+        lateinit var navController: NavHostController
+        composeRule.setContent {
+            ThrymTheme {
+                navController = rememberNavController()
+                ThrymNavHost(navController = navController)
+            }
+        }
+        val link = text(DashboardR.string.dashboard_view_statistics)
+        composeRule.waitUntil(timeoutMillis = 30_000L) {
+            composeRule.onAllNodesWithText(text(R.string.dashboard_hero_start)).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(DASHBOARD_LIST_TAG).performScrollToNode(hasText(link))
+        composeRule.onNodeWithText(link).performClick()
+        composeRule.waitUntil(timeoutMillis = 30_000L) {
+            navController.currentBackStackEntry?.destination?.route == Screen.Statistics.route
+        }
+        composeRule.onNodeWithText(text(DashboardR.string.dashboard_statistics_title)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.nav_back)).performClick()
+        composeRule.runOnIdle {
+            assertEquals(Screen.Dashboard.route, navController.currentBackStackEntry?.destination?.route)
+        }
+    }
+
+    @Test
     fun dashboard_to_settings_smoke() {
         lateinit var navController: NavHostController
 
@@ -685,7 +712,7 @@ class NavigationSmokeTest {
         //    und die Zusammenfassung ueber "Fertig" schliessen.
         composeRule.onNodeWithText(text(R.string.workout_finish_action)).performClick()
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText(text(R.string.workout_finish_dialog_title)).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(text(WorkoutR.string.workout_finish_free_title)).fetchSemanticsNodes().isNotEmpty()
         }
         // Der Dialog bleibt gesperrt ("Speichert …"), bis der geloggte Satz ganz
         // gespeichert ist; erst dann erscheint der aktive Bestaetigen-Button.
@@ -694,7 +721,7 @@ class NavigationSmokeTest {
             composeRule.onAllNodes(hasText(finishConfirm) and isEnabled())
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText(finishConfirm).performClick()
+        composeRule.onNode(hasText(finishConfirm) and hasClickAction()).performClick()
         // Jedes beendete Training beginnt mit der Feier; die Zusammenfassung kommt danach.
         val skipCelebration = text(WorkoutR.string.workout_celebration_skip)
         waitOrDump(30_000L) {

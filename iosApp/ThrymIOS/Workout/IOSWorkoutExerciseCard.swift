@@ -13,6 +13,9 @@ struct IOSWorkoutExerciseCard: View {
     let onSaveSet: (ILWorkoutSet, ILSetIntention) async -> Bool
     /// Record markers of the logged sets by set id; the header shows the strongest one.
     var setBadges: [Int64: SessionSetBadge] = [:]
+    /// "Plan" / "Ad-hoc" only says something in a plan workout; a free one has nothing but
+    /// added exercises.
+    var showsOriginBadge = true
     /// Moving a single exercise; nil hides the arrows (superset members move with their header).
     var canMoveUp = false
     var canMoveDown = false
@@ -36,7 +39,9 @@ struct IOSWorkoutExerciseCard: View {
                     HStack(spacing: 8) {
                         Text(row.exercise.displayName)
                             .font(.geist(.headline, weight: .semibold))
-                        if row.target != nil {
+                        if !showsOriginBadge {
+                            EmptyView()
+                        } else if row.target != nil {
                             Text("Plan")
                                 .font(.geist(.caption, weight: .bold))
                                 .padding(.horizontal, 6)
@@ -342,6 +347,7 @@ private struct IOSWorkoutInlineSetEntry: View {
     private var source: String {
         if row.target?.setTargets.isEmpty == false { return String(localized: "Satzvorgabe aus dem Plan · editierbar") }
         if row.sets.contains(where: { [IOSWorkoutSetType.normal, .failure].contains(resolvedIOSWorkoutSetType($0)) }) { return String(localized: "Werte aus dem letzten Satz übernommen · editierbar") }
+        if row.target == nil, row.previousWorkWeightKg != nil, row.previousWorkReps != nil { return String(localized: "Werte aus dem letzten Training · editierbar") }
         if (row.displayTarget?.weightKg ?? 0) <= 0, row.previousWorkWeightKg != nil { return String(localized: "Gewicht aus dem letzten Training · editierbar") }
         return row.target == nil ? String(localized: "Werte für diesen Satz") : String(localized: "Werte aus dem Plan · editierbar")
     }

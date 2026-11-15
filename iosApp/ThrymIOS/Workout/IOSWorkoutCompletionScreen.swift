@@ -11,22 +11,32 @@ struct IOSWorkoutFinishSheet: View {
     private var planned: Int { rows.reduce(0) { $0 + $1.loggingSlots.count } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("Training beenden?").font(.geist(.title2, weight: .bold))
-            Text(remaining > 0 ? String(localized: "Noch \(remaining) geplante Sätze offen. \(planned - remaining) von \(planned) absolviert.") : String(localized: "Deine bestätigten Sätze werden gespeichert."))
-            ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(rows.filter { ($0.remainingPlannedSets ?? 0) > 0 }) { row in
-                        HStack { Text(row.exercise.displayName); Spacer(); Text("\(row.remainingPlannedSets ?? 0) offen").thrymSecondaryText() }
+            // With open planned sets the sheet warns and keeps training in front. With
+            // everything logged, finishing is the natural next step and leads.
+            Text(remaining > 0 ? String(localized: "Training beenden?") : planned > 0 ? String(localized: "Alles geschafft") : String(localized: "Training abschließen"))
+                .font(.geist(.title2, weight: .bold))
+            Text(remaining > 0 ? String(localized: "Noch \(remaining) geplante Sätze offen. \(planned - remaining) von \(planned) absolviert.") : planned > 0 ? String(localized: "Alle \(planned) geplanten Sätze sind geloggt.") : String(localized: "Deine bestätigten Sätze werden gespeichert."))
+            if remaining > 0 {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(rows.filter { ($0.remainingPlannedSets ?? 0) > 0 }) { row in
+                            HStack { Text(row.exercise.displayName); Spacer(); Text("\(row.remainingPlannedSets ?? 0) offen").thrymSecondaryText() }
+                        }
                     }
-                }
-            }.frame(maxHeight: 170)
+                }.frame(maxHeight: 170)
+            }
             if let error { Text(error).font(.geist(.footnote)).foregroundStyle(.red) }
-            Button(action: onContinue) { Text("Weitertrainieren").frame(maxWidth: .infinity).padding(.vertical, 7) }
-                .buttonStyle(.borderedProminent).thrymButtonText().disabled(busy)
-            Button(action: onFinish) { Text(busy ? String(localized: "Speichert …") : remaining > 0 ? String(localized: "Trotzdem beenden") : String(localized: "Training beenden")).frame(maxWidth: .infinity).padding(.vertical, 7) }
-                .buttonStyle(.bordered).disabled(busy)
+            let continueButton = Button(action: onContinue) { Text("Weitertrainieren").frame(maxWidth: .infinity).padding(.vertical, 7) }
+            let finishButton = Button(action: onFinish) { Text(busy ? String(localized: "Speichert …") : remaining > 0 ? String(localized: "Trotzdem beenden") : String(localized: "Training beenden")).frame(maxWidth: .infinity).padding(.vertical, 7) }
+            if remaining > 0 {
+                continueButton.buttonStyle(.borderedProminent).thrymButtonText().disabled(busy)
+                finishButton.buttonStyle(.bordered).disabled(busy)
+            } else {
+                finishButton.buttonStyle(.borderedProminent).thrymButtonText().disabled(busy)
+                continueButton.buttonStyle(.bordered).disabled(busy)
+            }
             Text("Nur absolvierte Sätze zählen zum Ergebnis.").font(.geist(.caption)).thrymSecondaryText()
-        }.padding(24).presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+        }.padding(24).presentationDetents(remaining > 0 ? [.medium, .large] : [.height(300), .medium]).presentationDragIndicator(.visible)
     }
 }
 

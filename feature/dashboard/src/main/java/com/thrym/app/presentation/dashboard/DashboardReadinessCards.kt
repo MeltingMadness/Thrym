@@ -548,7 +548,7 @@ fun DailyCheckInCard(
 }
 
 @Composable
-private fun CheckInNoticeRow(notice: DashboardCheckInNotice?, onDismissNotice: () -> Unit) {
+internal fun CheckInNoticeRow(notice: DashboardCheckInNotice?, onDismissNotice: () -> Unit) {
     if (notice == null) return
     LaunchedEffect(notice) {
         delay(2_500)
@@ -669,74 +669,7 @@ private fun nextScaleValue(value: Int?): Int? =
  * wurden.
  */
 @Composable
-fun MuscleContextCard(
-    muscleGroups: List<MuscleGroupContext>,
-    nowEpochMillis: Long,
-    modifier: Modifier = Modifier
-) {
-    if (muscleGroups.isEmpty()) return
-    var detailsExpanded by remember { mutableStateOf(false) }
-    val planned = muscleGroups.filter { it.plannedToday }
-    val ordered = muscleGroups.sortedWith(
-        compareByDescending<MuscleGroupContext> { it.plannedToday }
-            .thenByDescending { it.lastTrainedEpochMillis ?: Long.MIN_VALUE }
-    )
-
-    DashboardPanel(modifier = modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_muscles_title),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = if (planned.isEmpty()) {
-                    stringResource(R.string.dashboard_muscles_no_plan)
-                } else {
-                    stringResource(
-                        R.string.dashboard_muscles_planned,
-                        planned.map { it.muscleGroup.label() }.joinToString()
-                    )
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            TextButton(
-                onClick = { detailsExpanded = !detailsExpanded },
-                modifier = Modifier.flushStartLink(),
-                colors = ThrymInteractiveColors.textButton()
-            ) {
-                Text(
-                    text = stringResource(
-                        if (detailsExpanded) {
-                            R.string.dashboard_muscles_detail_hide
-                        } else {
-                            R.string.dashboard_muscles_detail_show
-                        }
-                    )
-                )
-            }
-
-            if (detailsExpanded) {
-                ordered.forEach { context ->
-                    MuscleContextRow(context = context, nowEpochMillis = nowEpochMillis)
-                }
-                Text(
-                    text = stringResource(R.string.dashboard_muscles_no_recovery_note),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MuscleContextRow(context: MuscleGroupContext, nowEpochMillis: Long) {
+internal fun MuscleContextRow(context: MuscleGroupContext, nowEpochMillis: Long) {
     val nameColor = if (context.plannedToday) {
         MaterialTheme.semanticText.teal
     } else {

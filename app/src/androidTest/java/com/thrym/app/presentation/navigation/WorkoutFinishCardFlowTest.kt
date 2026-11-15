@@ -155,7 +155,7 @@ class WorkoutFinishCardFlowTest {
         waitOrDump(20_000) { title in announcements }
 
         ui.onNodeWithTag(FINISH_CARD_BUTTON_TAG).performClick()
-        awaitText(text(R.string.workout_finish_dialog_title))
+        awaitText(text(WorkoutR.string.workout_finish_all_done))
         // The sheet's button has the same text as the card's.
         val sheetFinish = hasText(text(R.string.workout_finish_confirm)) and !hasTestTag(FINISH_CARD_BUTTON_TAG)
         awaitEnabled(sheetFinish)

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="review_plan_changes_hint">Your plan only changes once you apply.</string>
+    <string name="review_notes">Notes</string>
+    <string name="review_earlier_decisions">Earlier decisions</string>
+    <string name="review_expanded">Expanded</string>
+    <string name="review_collapsed">Collapsed</string>
+    <string name="review_adjust">Adjust</string>
+    <string name="review_details">Details</string>
+    <string name="review_target_stays">Target stays</string>
+    <string name="review_new_target">New target: %1$s</string>
+    <string name="review_before">Before: %1$s</string>
+    <plurals name="review_decision_count">
+        <item quantity="one">%1$d decision pending</item>
+        <item quantity="other">%1$d decisions pending</item>
+    </plurals>
+    <plurals name="review_target_reached">
+        <item quantity="one">Target reached in %1$d counted set.</item>
+        <item quantity="other">Target reached in all %1$d counted sets.</item>
+    </plurals>
+    <string name="review_counted_sets">Counted sets</string>
+    <plurals name="review_apply_all_count">
+        <item quantity="one">Apply all %1$d</item>
+        <item quantity="other">Apply all %1$d</item>
+    </plurals>
+    <plurals name="review_reps_change">
+        <item quantity="one">%1$d → %2$d rep</item>
+        <item quantity="other">%1$d → %2$d reps</item>
+    </plurals>
+    <plurals name="review_sets_change">
+        <item quantity="one">%1$d → %2$d set</item>
+        <item quantity="other">%1$d → %2$d sets</item>
+    </plurals>
+    <plurals name="review_reps_value">
+        <item quantity="one">%1$d rep</item>
+        <item quantity="other">%1$d reps</item>
+    </plurals>
+    <plurals name="review_sets_value">
+        <item quantity="one">%1$d set</item>
+        <item quantity="other">%1$d sets</item>
+    </plurals>
+    <plurals name="review_reps_delta">
+        <item quantity="one">%1$s rep</item>
+        <item quantity="other">%1$s reps</item>
+    </plurals>
+    <plurals name="review_sets_delta">
+        <item quantity="one">%1$s set</item>
+        <item quantity="other">%1$s sets</item>
+    </plurals>
+</resources>

@@ -1,9 +1,21 @@
 package com.thrym.app.presentation.progression
 
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
-import com.thrym.app.presentation.theme.accentText
 import com.thrym.app.presentation.common.ThrymTopBar
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
+import com.thrym.app.presentation.theme.semantic
+import com.thrym.app.presentation.theme.semanticText
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.FlowRow
@@ -94,79 +106,53 @@ fun ProgressionReviewScreen(
                 }
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            if (state.safePendingItems.size > 1) {
+                Surface(tonalElevation = 3.dp) {
+                    Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (state.edits.isNotEmpty()) Text(stringResource(ProgressionR.string.review_finish_edit_first), style = MaterialTheme.typography.bodySmall)
+                        Button(onClick = viewModel::acceptAllSafe, enabled = !state.isWorking && state.edits.isEmpty(), modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                            Text(pluralStringResource(ProgressionR.plurals.review_apply_all_count, state.safePendingItems.size, state.safePendingItems.size))
+                        }
+                    }
+                }
+            }
+        }
     ) { padding ->
         LazyColumn(
             modifier = Modifier.padding(padding),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val safePendingCount = state.safePendingItems.size
-            val hasSafePending = safePendingCount > 0
-            if (hasSafePending) {
-                item(key = "accept_all") {
-                    Text(stringResource(ProgressionR.string.review_confirmation_hint))
-                    if (state.edits.isNotEmpty()) {
-                        Text(stringResource(ProgressionR.string.review_finish_edit_first))
-                    }
-                    Button(
-                        onClick = viewModel::acceptAllSafe,
-                        enabled = !state.isWorking && state.edits.isEmpty(),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(ProgressionR.string.review_accept_count, safePendingCount))
+            if (state.decisionItems.isNotEmpty()) {
+                item(key = "header") {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(pluralStringResource(ProgressionR.plurals.review_decision_count, state.decisionItems.size, state.decisionItems.size), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(ProgressionR.string.review_plan_changes_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
-
-            // Open suggestions first; in the global review, past outcomes follow under their
-            // own heading so decisions stay traceable (iOS parity).
-            val openItems = if (state.isSessionScoped) state.items else state.items.filter { it.status == ProgressionSuggestionStatus.PENDING }
-            val pastItems = if (state.isSessionScoped) emptyList() else state.items.filter { it.status != ProgressionSuggestionStatus.PENDING }
-            if (openItems.isEmpty()) {
+            if (state.decisionItems.isEmpty() && state.noteItems.isEmpty()) {
                 item(key = "empty") {
-                    Text(
-                        text = stringResource(when {
-                            state.isLoading -> ProgressionR.string.review_loading
-                            state.isSessionScoped -> ProgressionR.string.review_empty_session
-                            else -> ProgressionR.string.review_empty_all
-                        }),
-                        modifier = Modifier.padding(vertical = 24.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text(stringResource(when {
+                        state.isLoading -> ProgressionR.string.review_loading
+                        state.isSessionScoped -> ProgressionR.string.review_empty_session
+                        else -> ProgressionR.string.review_empty_all
+                    }), modifier = Modifier.padding(vertical = 24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            items(openItems, key = ProgressionReviewItemUi::id) { item ->
-                ProgressionReviewCard(
-                    item = item,
-                    unitSystem = state.unitSystem,
-                    isWorking = state.isWorking,
+            items(state.decisionItems, key = { "decision_${it.id}" }) { item ->
+                ProgressionReviewCard(item, state.unitSystem, state.isWorking,
                     onAccept = { viewModel.acceptOne(item.id) },
-                    onEdit = {
-                        viewModel.beginEdit(item.id)
-                        editingSuggestionId = item.id
-                    },
-                    onReject = { viewModel.reject(item.id) }
-                )
+                    onEdit = { viewModel.beginEdit(item.id); editingSuggestionId = item.id },
+                    onReject = { viewModel.reject(item.id) })
             }
-            if (pastItems.isNotEmpty()) {
-                item(key = "past_header") {
-                    Text(
-                        text = stringResource(ProgressionR.string.review_past_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-                items(pastItems, key = ProgressionReviewItemUi::id) { item ->
-                    ProgressionReviewCard(
-                        item = item,
-                        unitSystem = state.unitSystem,
-                        isWorking = state.isWorking,
-                        onAccept = {},
-                        onEdit = {},
-                        onReject = {}
-                    )
-                }
+            if (state.noteItems.isNotEmpty()) {
+                item(key = "notes") { CompactSection(stringResource(ProgressionR.string.review_notes), state.noteItems, state.unitSystem, false, initiallyExpanded = state.decisionItems.isEmpty()) }
+            }
+            if (state.pastItems.isNotEmpty()) {
+                item(key = "past") { CompactSection(stringResource(ProgressionR.string.review_earlier_decisions), state.pastItems, state.unitSystem, true) }
             }
         }
     }
@@ -195,120 +181,116 @@ fun ProgressionReviewScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ProgressionReviewCard(
-    item: ProgressionReviewItemUi,
-    unitSystem: UnitSystem,
-    isWorking: Boolean,
-    onAccept: () -> Unit,
-    onEdit: () -> Unit,
-    onReject: () -> Unit
-) {
-    ThrymSurfaceCard(
-        modifier = Modifier.fillMaxWidth(),
-        tone = if (item.canDecide) ThrymSurfaceTone.ACCENT else ThrymSurfaceTone.MUTED
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = item.exerciseName?.let { localizedExerciseName(it) }
-                    ?: stringResource(R.string.progression_review_exercise, item.exerciseId),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = stringResource(
-                    R.string.progression_review_scheme,
-                    progressionSchemeText(item.scheme)
-                ),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.accentText
-            )
-            val evidenceDate = item.countedSets.maxOfOrNull { it.completedAt }
-            val date = evidenceDate ?: item.createdAtEpochMillis.takeIf { it > 0 }?.let {
-                Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime()
-            }
-            Text(
-                text = item.planName?.let { stringResource(ProgressionR.string.review_plan, it) }
-                    ?: stringResource(ProgressionR.string.review_plan_unavailable),
-                style = MaterialTheme.typography.bodySmall
-            )
-            date?.let {
-                Text(
-                    text = stringResource(
-                        if (evidenceDate != null) ProgressionR.string.review_training_date else ProgressionR.string.review_created_date,
-                        it.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
-                    ),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = ProgressionReasonText(item, unitSystem),
-                style = MaterialTheme.typography.bodyMedium
-            )
-            ProgressionEvidenceExplanation(item, unitSystem)
-            Spacer(Modifier.height(12.dp))
-            val trainedWeight = uniformCountedWeightKg(item.countedSets)
-            trainedWeight?.let { weight ->
-                Text(stringResource(ProgressionR.string.review_trained_weight,
-                    WeightFormatting.formatWeight(weight, unitSystem)))
-                if (kotlin.math.abs(weight - item.source.weightKg) > 0.1) {
-                    Text(stringResource(ProgressionR.string.review_stored_plan_weight,
-                        WeightFormatting.formatWeight(item.source.weightKg, unitSystem)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                if (item.proposed == null && item.reasonCode == com.thrym.app.domain.model.ProgressionReasonCode.REPEAT_TARGET) {
-                    Text(stringResource(ProgressionR.string.review_repeat_weight,
-                        WeightFormatting.formatWeight(weight, unitSystem)))
-                }
-            }
-            TargetChanges(item = item, unitSystem = unitSystem)
-            Spacer(Modifier.height(12.dp))
-            EvidenceSets(sets = item.countedSets, unitSystem = unitSystem)
-            Spacer(Modifier.height(12.dp))
+private fun exerciseTitle(item: ProgressionReviewItemUi): String =
+    item.exerciseName?.let { localizedExerciseName(it) } ?: stringResource(R.string.progression_review_exercise, item.exerciseId)
 
-            if (item.canDecide) {
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Button(onClick = onAccept, enabled = !isWorking) {
-                        Text(stringResource(R.string.progression_review_accept))
-                    }
-                    OutlinedButton(onClick = onEdit, enabled = !isWorking, colors = ThrymInteractiveColors.outlinedButton()) {
-                        Text(stringResource(R.string.progression_review_edit))
-                    }
-                    TextButton(onClick = onReject, enabled = !isWorking, colors = ThrymInteractiveColors.textButton()) {
-                        Text(stringResource(R.string.progression_review_reject))
+@Composable
+private fun CompactSection(title: String, items: List<ProgressionReviewItemUi>, unitSystem: UnitSystem, showStatus: Boolean, initiallyExpanded: Boolean = false) {
+    var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+    val stateLabel = stringResource(if (expanded) ProgressionR.string.review_expanded else ProgressionR.string.review_collapsed)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { stateDescription = stateLabel }.clickable(role = Role.Button) { expanded = !expanded }, verticalAlignment = Alignment.CenterVertically) {
+            Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+            Text(items.size.toString(), style = MaterialTheme.typography.labelLarge)
+            Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null)
+        }
+        AnimatedVisibility(expanded) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items.forEach { item ->
+                    ThrymSurfaceCard(Modifier.fillMaxWidth(), tone = ThrymSurfaceTone.MUTED) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(exerciseTitle(item), style = MaterialTheme.typography.titleSmall)
+                            Text(ProgressionReasonText(item, unitSystem), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (showStatus) {
+                                Text(progressionStatusText(item.status), style = MaterialTheme.typography.labelMedium)
+                                item.proposed?.let { Text(compactChange(progressionChange(item.source, it), unitSystem), style = MaterialTheme.typography.bodySmall) }
+                            }
+                        }
                     }
                 }
-            } else {
-                Text(
-                    text = progressionStatusText(item.status),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }
 }
 
 @Composable
-private fun TargetChanges(item: ProgressionReviewItemUi, unitSystem: UnitSystem) {
+private fun compactChange(change: ProgressionChange, unitSystem: UnitSystem): String = when (change.kind) {
+    ProgressionChangeKind.WEIGHT -> "${WeightFormatting.formatWeight(change.fromWeightKg, unitSystem)} → ${WeightFormatting.formatWeight(change.toWeightKg, unitSystem)}"
+    ProgressionChangeKind.REPS -> pluralStringResource(ProgressionR.plurals.review_reps_change, change.toCount, change.fromCount, change.toCount)
+    ProgressionChangeKind.SETS -> pluralStringResource(ProgressionR.plurals.review_sets_change, change.toCount, change.fromCount, change.toCount)
+    ProgressionChangeKind.NONE -> stringResource(ProgressionR.string.review_target_stays)
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ProgressionReviewCard(item: ProgressionReviewItemUi, unitSystem: UnitSystem, isWorking: Boolean, onAccept: () -> Unit, onEdit: () -> Unit, onReject: () -> Unit) {
     val proposed = item.proposed ?: return
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (item.source.sets != proposed.sets) {
-            Text(stringResource(R.string.progression_review_change_sets, item.source.sets, proposed.sets))
+    val change = progressionChange(item.source, proposed)
+    var details by rememberSaveable(item.id) { mutableStateOf(false) }
+    ThrymSurfaceCard(modifier = Modifier.fillMaxWidth(), tone = ThrymSurfaceTone.ACCENT) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(exerciseTitle(item), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(item.planName ?: stringResource(ProgressionR.string.review_plan_unavailable), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (change.kind == ProgressionChangeKind.NONE) {
+                    Text(stringResource(ProgressionR.string.review_target_stays), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                } else {
+                    val from = if (change.kind == ProgressionChangeKind.WEIGHT) WeightFormatting.formatWeight(change.fromWeightKg, unitSystem) else change.fromCount.toString()
+                    val to = when (change.kind) {
+                        ProgressionChangeKind.WEIGHT -> WeightFormatting.formatWeight(change.toWeightKg, unitSystem)
+                        ProgressionChangeKind.REPS -> pluralStringResource(ProgressionR.plurals.review_reps_value, change.toCount, change.toCount)
+                        else -> pluralStringResource(ProgressionR.plurals.review_sets_value, change.toCount, change.toCount)
+                    }
+                    Text(from, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("→", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(to, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    val up = change.direction == ProgressionChangeDirection.UP
+                    val delta = when (change.kind) {
+                        ProgressionChangeKind.WEIGHT -> WeightFormatting.formatWeightDelta(change.toWeightKg - change.fromWeightKg, unitSystem).replace('-', '−')
+                        ProgressionChangeKind.REPS -> pluralStringResource(ProgressionR.plurals.review_reps_delta, kotlin.math.abs(change.toCount - change.fromCount), signedCount(change.toCount - change.fromCount))
+                        else -> pluralStringResource(ProgressionR.plurals.review_sets_delta, kotlin.math.abs(change.toCount - change.fromCount), signedCount(change.toCount - change.fromCount))
+                    }
+                    Surface(shape = MaterialTheme.shapes.small, color = (if (up) MaterialTheme.semantic.success else MaterialTheme.semantic.warning).copy(alpha = 0.16f)) {
+                        Text(delta, Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = if (up) MaterialTheme.semanticText.success else MaterialTheme.semanticText.warning, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
+            val also = listOfNotNull(change.alsoReps?.let { pluralStringResource(ProgressionR.plurals.review_reps_change, it.second, it.first, it.second) }, change.alsoSets?.let { pluralStringResource(ProgressionR.plurals.review_sets_change, it.second, it.first, it.second) })
+            if (also.isNotEmpty()) Text(also.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(ProgressionR.string.review_new_target, targetText(proposed, unitSystem)), style = MaterialTheme.typography.bodyMedium)
+            val count = item.reasonArguments["countedWorkSets"]?.takeIf { it.isFinite() && it >= 1 && it <= Int.MAX_VALUE && it % 1.0 == 0.0 }?.toInt()
+            val shortReason = if (count != null && item.reasonCode in setOf(com.thrym.app.domain.model.ProgressionReasonCode.LOAD_ADVANCED, com.thrym.app.domain.model.ProgressionReasonCode.REP_TARGET_ADVANCED)) pluralStringResource(ProgressionR.plurals.review_target_reached, count, count) else ProgressionReasonText(item, unitSystem)
+            Text(shortReason, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Button(onClick = onAccept, enabled = !isWorking, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(stringResource(R.string.progression_review_accept)) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onEdit, enabled = !isWorking, modifier = Modifier.weight(1f), colors = ThrymInteractiveColors.textButton()) { Text(stringResource(ProgressionR.string.review_adjust)) }
+                TextButton(onClick = onReject, enabled = !isWorking, modifier = Modifier.weight(1f), colors = ThrymInteractiveColors.textButton()) { Text(stringResource(R.string.progression_review_reject)) }
+                TextButton(onClick = { details = !details }, enabled = !isWorking, modifier = Modifier.weight(1f), colors = ThrymInteractiveColors.textButton()) { Text(stringResource(ProgressionR.string.review_details)); Icon(if (details) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null) }
+            }
+            AnimatedVisibility(details) { ProgressionDetails(item, unitSystem) }
         }
-        if (item.source.reps != proposed.reps) {
-            Text(stringResource(R.string.progression_review_change_reps, item.source.reps, proposed.reps))
+    }
+}
+
+private fun signedCount(value: Int): String = if (value > 0) "+$value" else "−${-value}"
+private fun targetText(target: com.thrym.app.domain.model.ProgressionTarget, unitSystem: UnitSystem): String = "${target.sets} × ${target.reps} · ${WeightFormatting.formatWeight(target.weightKg, unitSystem)}"
+
+@Composable
+private fun ProgressionDetails(item: ProgressionReviewItemUi, unitSystem: UnitSystem) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(ProgressionR.string.review_before, targetText(item.source, unitSystem)))
+        EvidenceSets(item.countedSets, unitSystem)
+        ProgressionEvidenceExplanation(item, unitSystem)
+        Text(ProgressionReasonText(item, unitSystem), style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.progression_review_scheme, progressionSchemeText(item.scheme)), style = MaterialTheme.typography.bodySmall)
+        val evidenceDate = item.countedSets.maxOfOrNull { it.completedAt }
+        val date = evidenceDate ?: item.createdAtEpochMillis.takeIf { it > 0 }?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime() }
+        date?.let { Text(stringResource(if (evidenceDate != null) ProgressionR.string.review_training_date else ProgressionR.string.review_created_date, it.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))), style = MaterialTheme.typography.bodySmall) }
+        uniformCountedWeightKg(item.countedSets)?.let { weight ->
+            Text(stringResource(ProgressionR.string.review_trained_weight, WeightFormatting.formatWeight(weight, unitSystem)))
+            if (kotlin.math.abs(weight - item.source.weightKg) > 0.1) Text(stringResource(ProgressionR.string.review_stored_plan_weight, WeightFormatting.formatWeight(item.source.weightKg, unitSystem)), style = MaterialTheme.typography.bodySmall)
         }
-        Text(stringResource(
-            ProgressionR.string.review_next_weight,
-            WeightFormatting.formatWeight(proposed.weightKg, unitSystem)
-        ))
     }
 }
 
@@ -317,7 +299,7 @@ private fun EvidenceSets(sets: List<WorkoutSet>, unitSystem: UnitSystem) {
     val workSets = sets.filterNot(WorkoutSet::isWarmup)
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            text = stringResource(R.string.progression_review_evidence_title),
+            text = stringResource(ProgressionR.string.review_counted_sets),
             style = MaterialTheme.typography.labelLarge
         )
         if (workSets.isEmpty()) {

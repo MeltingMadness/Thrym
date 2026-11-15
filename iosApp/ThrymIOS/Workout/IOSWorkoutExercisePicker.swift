@@ -4,6 +4,8 @@ struct IOSWorkoutExercisePicker: View {
     @Environment(\.dismiss) private var dismiss
     let exercises: [ILExercise]
     let excludedIDs: Set<Int64>
+    /// Exercises of the latest workouts, newest first; shown on top while nothing is filtered.
+    var recentIDs: [Int64] = []
     let onSelect: (ILExercise) -> Void
     @State private var searchText = ""
     @State private var group: String?
@@ -14,6 +16,10 @@ struct IOSWorkoutExercisePicker: View {
             (group == nil || $0.primaryMuscleGroupDisplayName == group) &&
             (query.isEmpty || $0.nameMatches(query) || $0.categoryDisplayName.localizedCaseInsensitiveContains(query))
         }
+    }
+    private var recent: [ILExercise] {
+        guard group == nil, searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [] }
+        return recentIDs.compactMap { id in exercises.first { $0.id == id } }
     }
     var body: some View {
         NavigationStack {
@@ -29,27 +35,11 @@ struct IOSWorkoutExercisePicker: View {
                     Spacer()
                     Button("Auswahl leeren") { selected = [] }
                 }.font(.geist(.subheadline)).padding(.horizontal)
-                List(filtered) { exercise in
-                    Group {
-                        Button {
-                            if selected.contains(exercise.id) { selected.removeAll { $0 == exercise.id } }
-                            else { selected.append(exercise.id) }
-                        } label: {
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text(exercise.displayName).font(.geist(.headline)).foregroundStyle(.primary)
-                                    Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)").font(.geist(.caption)).thrymSecondaryText()
-                                }
-                                Spacer()
-                                Image(systemName: selected.contains(exercise.id) || excludedIDs.contains(exercise.id) ? "checkmark.square.fill" : "square")
-                                    .font(.title2).foregroundStyle(.tint)
-                            }.frame(minHeight: 48).contentShape(Rectangle())
-                        }
-                        .disabled(excludedIDs.contains(exercise.id))
-                        .listRowBackground(selected.contains(exercise.id) ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemGroupedBackground))
-                        .accessibilityValue(selected.contains(exercise.id) ? String(localized: "Ausgewählt") : excludedIDs.contains(exercise.id) ? String(localized: "Bereits hinzugefügt") : String(localized: "Nicht ausgewählt"))
+                List {
+                    if !recent.isEmpty {
+                        Section("Zuletzt trainiert") { ForEach(recent) { row($0) } }
                     }
-                    .thrymListRows()
+                    Section(recent.isEmpty ? "" : String(localized: "Alle Übungen")) { ForEach(filtered) { row($0) } }
                 }.listStyle(.insetGrouped)
             }
             .searchable(text: $searchText, prompt: "Übung suchen")
@@ -70,6 +60,28 @@ struct IOSWorkoutExercisePicker: View {
                 }
             }
         }
+    }
+    private func row(_ exercise: ILExercise) -> some View {
+        Button {
+            if selected.contains(exercise.id) { selected.removeAll { $0 == exercise.id } }
+            else { selected.append(exercise.id) }
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(exercise.displayName).font(.geist(.headline)).foregroundStyle(.primary)
+                    Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)").font(.geist(.caption)).thrymSecondaryText()
+                }
+                Spacer()
+                Image(systemName: selected.contains(exercise.id) || excludedIDs.contains(exercise.id) ? "checkmark.square.fill" : "square")
+                    .font(.title2).foregroundStyle(.tint)
+            }.frame(minHeight: 48).contentShape(Rectangle())
+        }
+        // Plain, so the name keeps the text color instead of the button tint.
+        .buttonStyle(.plain)
+        .disabled(excludedIDs.contains(exercise.id))
+        .listRowBackground(selected.contains(exercise.id) ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemGroupedBackground))
+        .accessibilityValue(selected.contains(exercise.id) ? String(localized: "Ausgewählt") : excludedIDs.contains(exercise.id) ? String(localized: "Bereits hinzugefügt") : String(localized: "Nicht ausgewählt"))
+        .thrymListRows()
     }
     private func filter(_ name: String, value: String?) -> some View {
         Button(name) { group = value }

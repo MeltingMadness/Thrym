@@ -465,6 +465,22 @@
         }
       }
     },
+    "%@ → %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ → %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ → %2$@"
+          }
+        }
+      }
+    },
     "%@, %lld mehr als bisher": {
       "localizations": {
         "de": {
@@ -1328,7 +1344,7 @@
         }
       }
     },
-    "%lld Vorschläge warten auf deine Entscheidung.": {
+    "%lld Vorschläge warten": {
       "localizations": {
         "de": {
           "variations": {
@@ -1336,13 +1352,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld Vorschlag wartet auf deine Entscheidung."
+                  "value": "%lld Vorschlag wartet"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld Vorschläge warten auf deine Entscheidung."
+                  "value": "%lld Vorschläge warten"
                 }
               }
             }
@@ -1354,13 +1370,41 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld suggestion awaiting your decision."
+                  "value": "%lld suggestion waiting"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld suggestions awaiting your decision."
+                  "value": "%lld suggestions waiting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Wdh": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Wdh"
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rep"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld reps"
                 }
               }
             }
@@ -2523,6 +2567,38 @@
         }
       }
     },
+    "%lld → %lld Sätze": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld → %2$lld Sätze"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld → %2$lld sets"
+          }
+        }
+      }
+    },
+    "%lld → %lld Wdh": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld → %2$lld Wdh"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld → %2$lld reps"
+          }
+        }
+      }
+    },
     "%lld-%@-Marke": {
       "localizations": {
         "de": {
@@ -3259,6 +3335,22 @@
         }
       }
     },
+    "Alle %lld anzeigen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle %lld anzeigen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show all %lld"
+          }
+        }
+      }
+    },
     "Alle %lld geplanten Sätze geschafft": {
       "localizations": {
         "de": {
@@ -3295,6 +3387,38 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Alle %lld geplanten Sätze sind geloggt.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle %lld geplanten Sätze sind geloggt."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All %lld planned sets are logged."
+          }
+        }
+      }
+    },
+    "Alle %lld übernehmen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle %lld übernehmen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply all %lld"
           }
         }
       }
@@ -3459,18 +3583,34 @@
         }
       }
     },
-    "Alle sicheren übernehmen (%lld)": {
+    "Alle Übungen": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alle sicheren übernehmen (%lld)"
+            "value": "Alle Übungen"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Apply safe suggestions (%lld)"
+            "value": "All exercises"
+          }
+        }
+      }
+    },
+    "Alles geschafft": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles geschafft"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All done"
           }
         }
       }
@@ -3518,18 +3658,34 @@
         }
       }
     },
-    "Andere Pläne wählen": {
+    "Anderer Plan": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Andere Pläne wählen"
+            "value": "Anderer Plan"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose another plan"
+            "value": "Other plan"
+          }
+        }
+      }
+    },
+    "Anpassen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anpassen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adjust"
           }
         }
       }
@@ -4366,22 +4522,6 @@
         }
       }
     },
-    "Bereit für dein Training?": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bereit für dein Training?"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ready for your workout?"
-          }
-        }
-      }
-    },
     "Bereits hinzugefügt": {
       "localizations": {
         "de": {
@@ -4534,6 +4674,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "To failure"
+          }
+        }
+      }
+    },
+    "Bisher: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bisher: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Before: %@"
           }
         }
       }
@@ -5352,18 +5508,18 @@
         }
       }
     },
-    "Dein Training, klar und nachvollziehbar.": {
+    "Dein Plan ändert sich erst, wenn du übernimmst.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dein Training, klar und nachvollziehbar."
+            "value": "Dein Plan ändert sich erst, wenn du übernimmst."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your training, clear and transparent."
+            "value": "Your plan only changes when you apply a suggestion."
           }
         }
       }
@@ -6594,22 +6750,6 @@
         }
       }
     },
-    "Dieser Monat": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dieser Monat"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This month"
-          }
-        }
-      }
-    },
     "Dieser Vorgang kann nicht rückgängig gemacht werden. Zugehörige Trainingsdaten bleiben erhalten.": {
       "localizations": {
         "de": {
@@ -6846,22 +6986,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "A sub-plan is no longer available. Remove it and choose a valid plan."
-          }
-        }
-      }
-    },
-    "Ein Vorschlag ändert dein Planziel erst nach einer bewussten Übernahme. Bearbeitete Quellen bleiben unverändert.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ein Vorschlag ändert dein Planziel erst nach einer bewussten Übernahme. Bearbeitete Quellen bleiben unverändert."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A suggestion only changes your plan target once you deliberately apply it. Edited sources stay unchanged."
           }
         }
       }
@@ -7198,22 +7322,6 @@
         }
       }
     },
-    "Erfasste Muskelgruppen": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erfasste Muskelgruppen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tracked muscle groups"
-          }
-        }
-      }
-    },
     "Erfasste Muskeln": {
       "localizations": {
         "de": {
@@ -7520,22 +7628,6 @@
         }
       }
     },
-    "Fakten aus deiner Historie: letzte Belastung und Arbeitssätze der letzten 7 Tage. Keine Erholungsprognose.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fakten aus deiner Historie: letzte Belastung und Arbeitssätze der letzten 7 Tage. Keine Erholungsprognose."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Facts from your history: last trained and work sets from the past 7 days. No recovery forecast."
-          }
-        }
-      }
-    },
     "Fehlende RPE neutral behandelt": {
       "localizations": {
         "de": {
@@ -7680,38 +7772,6 @@
         }
       }
     },
-    "Final (bearbeitet)": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Final (bearbeitet)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Final (edited)"
-          }
-        }
-      }
-    },
-    "Final übernommen": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Final übernommen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Final (as suggested)"
-          }
-        }
-      }
-    },
     "Forge": {
       "localizations": {
         "de": {
@@ -7803,18 +7863,34 @@
         }
       }
     },
-    "Freiwillige Selbsteinschätzung. Ohne Angabe bleibt alles offen; es wird kein Wert vorausgefüllt.": {
+    "Freiwillig · 20 Sekunden": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Freiwillige Selbsteinschätzung. Ohne Angabe bleibt alles offen; es wird kein Wert vorausgefüllt."
+            "value": "Freiwillig · 20 Sekunden"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Optional self-assessment. Anything you skip stays blank; no values are prefilled."
+            "value": "Optional · 20 seconds"
+          }
+        }
+      }
+    },
+    "Frühere Entscheidungen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frühere Entscheidungen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Earlier decisions"
           }
         }
       }
@@ -8387,6 +8463,22 @@
         }
       }
     },
+    "Gewertete Sätze": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gewertete Sätze"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Counted sets"
+          }
+        }
+      }
+    },
     "Gewicht": {
       "localizations": {
         "de": {
@@ -8796,22 +8888,6 @@
         }
       }
     },
-    "Heute bereits %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Heute bereits %@"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Already %@ today"
-          }
-        }
-      }
-    },
     "Heute dran": {
       "localizations": {
         "de": {
@@ -8860,22 +8936,6 @@
         }
       }
     },
-    "Heute geplant: %lld": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Heute geplant: %lld"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Planned today: %lld"
-          }
-        }
-      }
-    },
     "Heute trainiert": {
       "localizations": {
         "de": {
@@ -8908,22 +8968,6 @@
         }
       }
     },
-    "Heutiges Training": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Heutiges Training"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Today's workout"
-          }
-        }
-      }
-    },
     "Hinweis": {
       "localizations": {
         "de": {
@@ -8936,6 +8980,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Info"
+          }
+        }
+      }
+    },
+    "Hinweise": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hinweise"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes"
           }
         }
       }
@@ -9359,22 +9419,6 @@
         }
       }
     },
-    "Kein Tagesbezug: Es ist keine Einheit geplant und keine Muskelgruppe gemeldet.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kein Tagesbezug: Es ist keine Einheit geplant und keine Muskelgruppe gemeldet."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nothing for today: no session planned and no muscle group reported."
-          }
-        }
-      }
-    },
     "Kein Wiederherstellungspunkt ist verfügbar.": {
       "localizations": {
         "de": {
@@ -9403,22 +9447,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "No restore point available"
-          }
-        }
-      }
-    },
-    "Kein neuer Zielwert vorgeschlagen; dieser Hinweis bleibt informativ.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kein neuer Zielwert vorgeschlagen; dieser Hinweis bleibt informativ."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No new target suggested; this item is for information only."
           }
         }
       }
@@ -9887,22 +9915,6 @@
         }
       }
     },
-    "Lege zuerst unter Pläne einen Trainingsplan an.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lege zuerst unter Pläne einen Trainingsplan an."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Create a plan under Plans first."
-          }
-        }
-      }
-    },
     "Leichter einsteigen": {
       "localizations": {
         "de": {
@@ -10298,38 +10310,6 @@
         }
       }
     },
-    "MEV · MAV · MRV für die aktuelle Woche": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MEV · MAV · MRV für die aktuelle Woche"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MEV · MAV · MRV for the current week"
-          }
-        }
-      }
-    },
-    "MEV · MAV · MRV für die ausgewählte Woche": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MEV · MAV · MRV für die ausgewählte Woche"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MEV · MAV · MRV for the selected week"
-          }
-        }
-      }
-    },
     "Manuell": {
       "localizations": {
         "de": {
@@ -10536,6 +10516,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Units"
+          }
+        }
+      }
+    },
+    "Mehr": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mehr"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More"
           }
         }
       }
@@ -11488,6 +11484,22 @@
         }
       }
     },
+    "Neues Ziel: %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neues Ziel: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New target: %@"
+          }
+        }
+      }
+    },
     "Nicht angegeben": {
       "localizations": {
         "de": {
@@ -12076,22 +12088,6 @@
         }
       }
     },
-    "Nächsten Teilplan überspringen": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nächsten Teilplan überspringen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skip next sub-plan"
-          }
-        }
-      }
-    },
     "Nächster Satz %@": {
       "localizations": {
         "de": {
@@ -12230,6 +12226,22 @@
         }
       },
       "shouldTranslate": false
+    },
+    "Offen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To do"
+          }
+        }
+      }
     },
     "Offene Übungen und Sätze bleiben im Plan.": {
       "localizations": {
@@ -12552,6 +12564,22 @@
         }
       }
     },
+    "Plan anlegen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan anlegen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create plan"
+          }
+        }
+      }
+    },
     "Plan bearbeiten": {
       "localizations": {
         "de": {
@@ -12680,22 +12708,6 @@
         }
       }
     },
-    "Plan starten": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plan starten"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start plan"
-          }
-        }
-      }
-    },
     "Plan unverändert lassen": {
       "localizations": {
         "de": {
@@ -12776,22 +12788,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Planned workout"
-          }
-        }
-      }
-    },
-    "Plan: %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plan: %@"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plan: %@"
           }
         }
       }
@@ -13096,22 +13092,6 @@
         }
       },
       "shouldTranslate": false
-    },
-    "Quelle (unverändert)": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quelle (unverändert)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Source (unchanged)"
-          }
-        }
-      }
     },
     "Quellwerte pro abgeschlossener Einheit": {
       "localizations": {
@@ -14162,22 +14142,6 @@
         }
       }
     },
-    "Schließe die Bearbeitung zuerst ab.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schließe die Bearbeitung zuerst ab."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Finish editing first."
-          }
-        }
-      }
-    },
     "Schließen": {
       "localizations": {
         "de": {
@@ -14334,22 +14298,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shared status"
-          }
-        }
-      }
-    },
-    "Sichere Vorschläge gesammelt übernehmen": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sichere Vorschläge gesammelt übernehmen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apply all safe suggestions"
           }
         }
       }
@@ -14626,22 +14574,6 @@
         }
       }
     },
-    "Starte eine freie Session oder wähle einen gespeicherten Plan. Die Planziele werden beim Start für diese Session übernommen.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Starte eine freie Session oder wähle einen gespeicherten Plan. Die Planziele werden beim Start für diese Session übernommen."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start a free workout or choose a saved plan. The plan's targets are applied to this workout when you start."
-          }
-        }
-      }
-    },
     "Statistiken": {
       "localizations": {
         "de": {
@@ -14654,6 +14586,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Statistics"
+          }
+        }
+      }
+    },
+    "Statistiken ansehen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Statistiken ansehen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View statistics"
           }
         }
       }
@@ -15174,22 +15122,6 @@
         }
       }
     },
-    "Tatsächliche Evidenz": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tatsächliche Evidenz"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Actual evidence"
-          }
-        }
-      }
-    },
     "Teilplan": {
       "localizations": {
         "de": {
@@ -15389,6 +15321,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Workout %lld"
+          }
+        }
+      }
+    },
+    "Training abschließen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training abschließen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wrap up workout"
           }
         }
       }
@@ -16067,22 +16015,6 @@
         }
       }
     },
-    "Trainingsrhythmus": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trainingsrhythmus"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Workout frequency"
-          }
-        }
-      }
-    },
     "Trainingstrend": {
       "localizations": {
         "de": {
@@ -16111,6 +16043,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Training trend: %@"
+          }
+        }
+      }
+    },
+    "Trend, Volumen und Rekorde": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trend, Volumen und Rekorde"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trend, volume and records"
           }
         }
       }
@@ -16755,22 +16703,6 @@
         }
       }
     },
-    "Vorgeschlagen": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vorgeschlagen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Suggested"
-          }
-        }
-      }
-    },
     "Vorherige Trainingsdaten wiederherstellen": {
       "localizations": {
         "de": {
@@ -17003,6 +16935,22 @@
         }
       }
     },
+    "Wechselt zu den Plänen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wechselt zu den Plänen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switches to the plans"
+          }
+        }
+      }
+    },
     "Weiter": {
       "localizations": {
         "de": {
@@ -17067,22 +17015,6 @@
         }
       }
     },
-    "Weitere erfasste Muskeln": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weitere erfasste Muskeln"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Other tracked muscles"
-          }
-        }
-      }
-    },
     "Weitertrainieren": {
       "localizations": {
         "de": {
@@ -17143,6 +17075,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Values from your last set · editable"
+          }
+        }
+      }
+    },
+    "Werte aus dem letzten Training · editierbar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Werte aus dem letzten Training · editierbar"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Values from your last workout · editable"
           }
         }
       }
@@ -17613,22 +17561,6 @@
         }
       }
     },
-    "Wochenvolumen": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wochenvolumen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weekly volume"
-          }
-        }
-      }
-    },
     "Wochenvolumen konnte nicht geladen werden.": {
       "localizations": {
         "de": {
@@ -17769,22 +17701,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose up to 3 more muscle groups. The primary muscle group is excluded here."
-          }
-        }
-      }
-    },
-    "Wähle einen Plan für diese Session.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wähle einen Plan für diese Session."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choose a plan for this workout."
           }
         }
       }
@@ -18007,6 +17923,22 @@
         }
       }
     },
+    "Ziel bleibt": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ziel bleibt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target stays"
+          }
+        }
+      }
+    },
     "Ziel geändert: neue Reihe": {
       "localizations": {
         "de": {
@@ -18019,6 +17951,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Target changed: new series"
+          }
+        }
+      }
+    },
+    "Ziel in allen %lld gewerteten Sätzen erreicht.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ziel in allen %lld gewerteten Sätzen erreicht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target reached in all %lld counted sets."
           }
         }
       }
@@ -18231,22 +18179,6 @@
         }
       }
     },
-    "Zuletzt am %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zuletzt am %@"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Last trained on %@"
-          }
-        }
-      }
-    },
     "Zuletzt erfasst": {
       "localizations": {
         "de": {
@@ -18307,6 +18239,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Last trained today"
+          }
+        }
+      }
+    },
+    "Zuletzt trainiert": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt trainiert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently trained"
           }
         }
       }
@@ -19100,22 +19048,6 @@
       },
       "shouldTranslate": false
     },
-    "Öffnet den heutigen Check-in zum Ändern oder Löschen": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Öffnet den heutigen Check-in zum Ändern oder Löschen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens today's check-in to edit or delete it"
-          }
-        }
-      }
-    },
     "Öffnet die Details dieses Trainings": {
       "localizations": {
         "de": {
@@ -19176,22 +19108,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Opens search to add another exercise"
-          }
-        }
-      }
-    },
-    "Öffnet die offenen Progressionsvorschläge": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Öffnet die offenen Progressionsvorschläge"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens pending progression suggestions"
           }
         }
       }

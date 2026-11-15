@@ -112,20 +112,24 @@ struct IOSProgressionReviewScreen: View {
         }
     }
 
+    /// Open proposals with a target: the decisions the athlete is here for.
+    private var openSuggestions: [ILProgressionSuggestion] {
+        suggestions.filter { $0.status.uppercased() == "PENDING" && $0.suggestedTarget != nil }
+    }
+
+    /// Results without a decision: notes of the latest evaluation.
+    private var noteSuggestions: [ILProgressionSuggestion] {
+        suggestions.filter { ["PENDING", "INFORMATIONAL"].contains($0.status.uppercased()) && $0.suggestedTarget == nil }
+    }
+
+    private var decidedSuggestions: [ILProgressionSuggestion] {
+        suggestions.filter { !["PENDING", "INFORMATIONAL"].contains($0.status.uppercased()) }
+    }
+
     @ViewBuilder
     private var reviewContent: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 14) {
-                if pendingCount > 0 {
-                    ThrymCard(tone: .muted) {
-                        Label("\(pendingCount) Entscheidungen ausstehend", systemImage: "checkmark.circle")
-                            .font(.geist(.headline))
-                        Text("Ein Vorschlag ändert dein Planziel erst nach einer bewussten Übernahme. Bearbeitete Quellen bleiben unverändert.")
-                            .font(.geist(.subheadline))
-                            .thrymSecondaryText()
-                    }
-                }
-
                 if suggestions.isEmpty {
                     ContentUnavailableView(
                         sessionId == nil ? String(localized: "Keine Progressionshinweise") : String(localized: "Keine Hinweise für dieses Training"),
@@ -138,48 +142,48 @@ struct IOSProgressionReviewScreen: View {
                     )
                     .padding(.top, 24)
                 } else {
-                    if !safePendingSuggestions.isEmpty {
-                        ThrymCard(tone: .muted) {
-                            Text("Sichere Vorschläge gesammelt übernehmen")
-                                .font(.geist(.headline))
-                            if editingSuggestion != nil {
-                                Text("Schließe die Bearbeitung zuerst ab.")
-                                    .font(.geist(.subheadline))
-                                    .thrymSecondaryText()
-                            }
-                            Button {
-                                acceptAllSafe()
-                            } label: {
-                                Label(
-                                    "Alle sicheren übernehmen (\(safePendingSuggestions.count))",
-                                    systemImage: "checkmark.circle"
-                                )
-                            }
-                            .buttonStyle(.borderedProminent).thrymButtonText()
-                            .disabled(store.isBusy || editingSuggestion != nil)
-                            .accessibilityHint("Übernimmt je Position nur den neuesten ausstehenden Vorschlag")
+                    if !openSuggestions.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("\(pendingCount) Entscheidungen ausstehend")
+                                .font(.geist(.title3, weight: .bold))
+                            Text("Dein Plan ändert sich erst, wenn du übernimmst.")
+                                .font(.geist(.subheadline))
+                                .thrymSecondaryText()
+                        }
+                        .padding(.horizontal, 4)
+                        ForEach(openSuggestions) { suggestion in
+                            IOSProgressionDecisionCard(
+                                suggestion: suggestion,
+                                exerciseName: exerciseName(for: suggestion),
+                                planName: planName(for: suggestion),
+                                evidence: evidence(for: suggestion),
+                                unitSystem: settings.state.unitSystem,
+                                isWorking: store.isBusy,
+                                onAccept: {
+                                    guard let target = suggestion.suggestedTarget else { return }
+                                    accept(suggestion, target: target)
+                                },
+                                onEdit: { editingSuggestion = suggestion },
+                                onReject: { reject(suggestion) }
+                            )
                         }
                     }
-                    ForEach(suggestions) { suggestion in
-                        IOSProgressionSuggestionCard(
-                            suggestion: suggestion,
-                            exerciseName: exerciseName(for: suggestion),
-                            planName: planName(for: suggestion),
-                            evidence: evidence(for: suggestion),
-                            evidenceIDsWerePresent: !suggestion.countedSetIds.isEmpty,
+                    if !noteSuggestions.isEmpty {
+                        IOSProgressionCompactSection(
+                            title: String(localized: "Hinweise"),
+                            suggestions: noteSuggestions,
                             unitSystem: settings.state.unitSystem,
-                            isWorking: store.isBusy,
-                            onAccept: {
-                                guard let target = suggestion.suggestedTarget,
-                                      suggestion.status.uppercased() == "PENDING" else { return }
-                                accept(suggestion, target: target)
-                            },
-                            onEdit: {
-                                guard suggestion.status.uppercased() == "PENDING",
-                                      suggestion.suggestedTarget != nil else { return }
-                                editingSuggestion = suggestion
-                            },
-                            onReject: { reject(suggestion) }
+                            initiallyExpanded: openSuggestions.isEmpty,
+                            exerciseName: exerciseName(for:)
+                        )
+                    }
+                    if !decidedSuggestions.isEmpty {
+                        IOSProgressionCompactSection(
+                            title: String(localized: "Frühere Entscheidungen"),
+                            suggestions: decidedSuggestions,
+                            unitSystem: settings.state.unitSystem,
+                            initiallyExpanded: false,
+                            exerciseName: exerciseName(for:)
                         )
                     }
                 }
@@ -187,6 +191,24 @@ struct IOSProgressionReviewScreen: View {
             .padding(16)
         }
         .thrymScreenBackground(ember: Color(uiColor: .systemGroupedBackground))
+        // One tap for the usual case: every open proposal is fine as it is.
+        .safeAreaInset(edge: .bottom) {
+            if safePendingSuggestions.count > 1 {
+                Button {
+                    acceptAllSafe()
+                } label: {
+                    Text("Alle \(safePendingSuggestions.count) übernehmen")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                }
+                .buttonStyle(.borderedProminent).thrymButtonText()
+                .disabled(store.isBusy || editingSuggestion != nil)
+                .accessibilityHint("Übernimmt je Position nur den neuesten ausstehenden Vorschlag")
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(.ultraThinMaterial)
+            }
+        }
     }
 
     private func exerciseName(for suggestion: ILProgressionSuggestion) -> String? {
@@ -278,90 +300,246 @@ struct IOSProgressionReviewScreen: View {
     }
 }
 
-private struct IOSProgressionSuggestionCard: View {
+/// What a proposal changes, reduced to the one line the athlete decides on.
+struct IOSProgressionChange: Equatable {
+    enum Direction { case up, down, same }
+
+    /// Old and new value of the dimension that moves, e.g. "100 kg" and "102,5 kg".
+    let from: String
+    let to: String
+    /// Signed difference, e.g. "+2,5 kg" or "−1 Wdh"; nil when nothing changes.
+    let delta: String?
+    let direction: Direction
+    /// A second dimension that moves along, e.g. the reps falling back when the weight rises.
+    let also: String?
+
+    static func between(_ old: ILProgressionTarget, _ new: ILProgressionTarget, unitSystem: String) -> IOSProgressionChange {
+        func weight(_ kg: Double) -> String { IOSWeightFormatter.format(kg, unitSystem: unitSystem) }
+        func signed(_ difference: Double, _ text: String) -> String { (difference > 0 ? "+" : "−") + text }
+        let weightDifference = new.weightKg - old.weightKg
+        let repsDifference = new.reps - old.reps
+        let setsDifference = new.sets - old.sets
+        let repsText = repsDifference == 0 ? nil : String(localized: "\(old.reps) → \(new.reps) Wdh")
+        let setsText = setsDifference == 0 ? nil : String(localized: "\(old.sets) → \(new.sets) Sätze")
+        if abs(weightDifference) > 0.001 {
+            return IOSProgressionChange(
+                from: weight(old.weightKg), to: weight(new.weightKg),
+                delta: signed(weightDifference, weight(abs(weightDifference))),
+                direction: weightDifference > 0 ? .up : .down,
+                also: [repsText, setsText].compactMap { $0 }.joined(separator: " · ").nilIfEmpty
+            )
+        }
+        if repsDifference != 0 {
+            return IOSProgressionChange(
+                from: "\(old.reps)", to: String(localized: "\(new.reps) Wdh"),
+                delta: signed(Double(repsDifference), String(localized: "\(abs(repsDifference)) Wdh")),
+                direction: repsDifference > 0 ? .up : .down,
+                also: setsText
+            )
+        }
+        if setsDifference != 0 {
+            return IOSProgressionChange(
+                from: "\(old.sets)", to: ilSetCountText(new.sets),
+                delta: signed(Double(setsDifference), ilSetCountText(abs(setsDifference))),
+                direction: setsDifference > 0 ? .up : .down,
+                also: nil
+            )
+        }
+        return IOSProgressionChange(from: weight(old.weightKg), to: weight(new.weightKg), delta: nil, direction: .same, also: nil)
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
+}
+
+private func ilProgressionTargetText(_ target: ILProgressionTarget, unitSystem: String) -> String {
+    String(localized: "\(target.sets) Sätze × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
+}
+
+/// One open proposal: what changes in large type, one button to take it, the reasoning on demand.
+private struct IOSProgressionDecisionCard: View {
+    @Environment(\.thrymTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+
     let suggestion: ILProgressionSuggestion
     let exerciseName: String?
     let planName: String?
     let evidence: [ILWorkoutSet]
-    let evidenceIDsWerePresent: Bool
     let unitSystem: String
     let isWorking: Bool
     let onAccept: () -> Void
     let onEdit: () -> Void
     let onReject: () -> Void
 
-    private var isPending: Bool { suggestion.status.uppercased() == "PENDING" }
+    @State private var showsDetails = false
+
+    /// Why the proposal is there. A plain increase already shows its step above, so the line
+    /// says what earned it instead of repeating the number.
+    private var reason: String {
+        if ["LOAD_ADVANCED", "REP_TARGET_ADVANCED"].contains(suggestion.reasonCode.uppercased()),
+           let counted = suggestion.reasonArguments["countedWorkSets"], counted >= 1, counted.rounded() == counted {
+            return String(localized: "Ziel in allen \(Int(counted)) gewerteten Sätzen erreicht.")
+        }
+        return IOSProgressionReasonText.text(for: suggestion, unitSystem: unitSystem)
+    }
 
     var body: some View {
-        ThrymCard(tone: isPending ? .elevated : .muted) {
+        let palette = theme.palette(for: colorScheme)
+        let target = suggestion.suggestedTarget ?? suggestion.sourceTarget
+        let change = IOSProgressionChange.between(suggestion.sourceTarget, target, unitSystem: unitSystem)
+        let deltaColor: Color = change.direction == .down ? .orange : palette.success
+        ThrymCard(tone: .elevated) {
             HStack(alignment: .firstTextBaseline) {
                 Text(exerciseName ?? String(localized: "Übung \(suggestion.exerciseId)"))
                     .font(.geist(.headline))
                 Spacer(minLength: 8)
-                IOSProgressionStatusBadge(status: suggestion.status)
-            }
-            Text("Schema: \(suggestion.sourceProgression.schemeDisplayName)")
-                .font(.geist(.subheadline))
-                .thrymAccentText()
-            if let planName {
-                Text("Plan: \(planName)")
-                    .font(.geist(.caption))
-                    .thrymSecondaryText()
-            }
-            Text("Bewertung: \(IOSProgressionFormatting.date(suggestion.createdAt))")
-                .font(.geist(.caption))
-                .thrymSecondaryText()
-            if let decidedAt = suggestion.decidedAt {
-                Text("Entschieden: \(IOSProgressionFormatting.date(decidedAt))")
-                    .font(.geist(.caption))
-                    .thrymSecondaryText()
-            }
-
-            IOSProgressionTargetBlock(
-                title: String(localized: "Quelle (unverändert)"),
-                target: suggestion.sourceTarget,
-                unitSystem: unitSystem,
-                tone: .secondary
-            )
-
-            IOSProgressionEvidenceBlock(
-                sets: evidence,
-                idsWerePresent: evidenceIDsWerePresent,
-                unitSystem: unitSystem
-            )
-
-            Text(IOSProgressionReasonText.text(for: suggestion, unitSystem: unitSystem))
-                .font(.geist(.body))
-
-            if let explanation = IOSProgressionReasonText.evidence(for: suggestion, unitSystem: unitSystem) {
-                Text(explanation).font(.geist(.footnote)).thrymSecondaryText()
-            }
-            if let suggestedTarget = suggestion.suggestedTarget {
-                IOSProgressionTargetBlock(title: String(localized: "Vorgeschlagen"), target: suggestedTarget, unitSystem: unitSystem, tone: .primary)
-            } else {
-                Text("Kein neuer Zielwert vorgeschlagen; dieser Hinweis bleibt informativ.")
-                    .font(.geist(.subheadline))
-                    .thrymSecondaryText()
-            }
-
-            if let finalTarget = suggestion.finalTarget {
-                IOSProgressionTargetBlock(title: suggestion.wasEdited ? String(localized: "Final (bearbeitet)") : String(localized: "Final übernommen"), target: finalTarget, unitSystem: unitSystem, tone: .success)
-            }
-
-            if isPending, suggestion.suggestedTarget != nil {
-                HStack(spacing: 8) {
-                    Button("Übernehmen", action: onAccept)
-                        .buttonStyle(.borderedProminent).thrymButtonText()
-                        .disabled(isWorking)
-                    Button("Bearbeiten", action: onEdit)
-                        .buttonStyle(.bordered)
-                        .disabled(isWorking)
-                    Button("Verwerfen", role: .destructive, action: onReject)
-                        .buttonStyle(.borderless)
-                        .disabled(isWorking)
+                if let planName {
+                    Text(planName).font(.geist(.caption)).thrymSecondaryText().lineLimit(1)
                 }
-                .controlSize(.small)
-                .accessibilityElement(children: .contain)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                if change.direction == .same {
+                    Text("Ziel bleibt")
+                        .font(.geist(.title2, weight: .bold))
+                } else {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(change.from)
+                            .font(.geist(.title3).monospacedDigit())
+                            .thrymSecondaryText()
+                        Image(systemName: "arrow.right")
+                            .font(.subheadline.weight(.bold))
+                            .thrymSecondaryText()
+                        Text(change.to)
+                            .font(.geist(.title, weight: .bold).monospacedDigit())
+                        if let delta = change.delta {
+                            Text(delta)
+                                .font(.geist(.caption, weight: .bold).monospacedDigit())
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .foregroundStyle(deltaColor)
+                                .background(deltaColor.opacity(0.16), in: Capsule())
+                        }
+                    }
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    if let also = change.also {
+                        Text(also).font(.geist(.subheadline, weight: .semibold).monospacedDigit())
+                    }
+                }
+                Text("Neues Ziel: \(ilProgressionTargetText(target, unitSystem: unitSystem))")
+                    .font(.geist(.subheadline).monospacedDigit())
+                    .thrymSecondaryText()
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(change.direction == .same
+                ? String(localized: "Ziel bleibt")
+                : String(localized: "\(change.from) → \(change.to)"))
+            .accessibilityValue(String(localized: "Neues Ziel: \(ilProgressionTargetText(target, unitSystem: unitSystem))"))
+
+            Text(reason)
+                .font(.geist(.subheadline))
+
+            Button(action: onAccept) {
+                Text("Übernehmen").frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent).thrymButtonText()
+            .disabled(isWorking)
+
+            HStack(spacing: 8) {
+                Button("Anpassen", action: onEdit)
+                    .buttonStyle(.bordered)
+                Button("Verwerfen", action: onReject)
+                    .buttonStyle(.borderless)
+                Spacer(minLength: 0)
+                Button {
+                    showsDetails.toggle()
+                } label: {
+                    Label("Details", systemImage: showsDetails ? "chevron.up" : "chevron.down")
+                }
+                .buttonStyle(.borderless)
+                .accessibilityValue(showsDetails ? String(localized: "Geöffnet") : String(localized: "Geschlossen"))
+            }
+            .controlSize(.small)
+            .disabled(isWorking)
+
+            if showsDetails {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Bisher: \(ilProgressionTargetText(suggestion.sourceTarget, unitSystem: unitSystem))")
+                    IOSProgressionEvidenceBlock(sets: evidence, idsWerePresent: !suggestion.countedSetIds.isEmpty, unitSystem: unitSystem)
+                    if let explanation = IOSProgressionReasonText.evidence(for: suggestion, unitSystem: unitSystem) {
+                        Text(explanation)
+                    }
+                    Text("Schema: \(suggestion.sourceProgression.schemeDisplayName)")
+                    Text("Bewertung: \(IOSProgressionFormatting.date(suggestion.createdAt))")
+                }
+                .font(.geist(.footnote))
+                .thrymSecondaryText()
+            }
+        }
+    }
+}
+
+/// Notes and earlier decisions: one line each, folded away under the open proposals.
+private struct IOSProgressionCompactSection: View {
+    let title: String
+    let suggestions: [ILProgressionSuggestion]
+    let unitSystem: String
+    let exerciseName: (ILProgressionSuggestion) -> String?
+    @State private var expanded: Bool
+
+    init(title: String, suggestions: [ILProgressionSuggestion], unitSystem: String, initiallyExpanded: Bool, exerciseName: @escaping (ILProgressionSuggestion) -> String?) {
+        self.title = title
+        self.suggestions = suggestions
+        self.unitSystem = unitSystem
+        self.exerciseName = exerciseName
+        _expanded = State(initialValue: initiallyExpanded)
+    }
+
+    var body: some View {
+        ThrymCard(tone: .muted) {
+            Button {
+                expanded.toggle()
+            } label: {
+                HStack {
+                    Text(title).font(.geist(.headline))
+                    Text(verbatim: "\(suggestions.count)").font(.geist(.subheadline).monospacedDigit()).thrymSecondaryText()
+                    Spacer()
+                    Image(systemName: expanded ? "chevron.up" : "chevron.down").thrymSecondaryText()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(expanded ? String(localized: "Geöffnet") : String(localized: "Geschlossen"))
+
+            if expanded {
+                ForEach(suggestions) { suggestion in
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(exerciseName(suggestion) ?? String(localized: "Übung \(suggestion.exerciseId)"))
+                                .font(.geist(.subheadline, weight: .semibold))
+                            Spacer(minLength: 8)
+                            IOSProgressionStatusBadge(status: suggestion.status)
+                        }
+                        if let target = suggestion.finalTarget ?? suggestion.suggestedTarget {
+                            let change = IOSProgressionChange.between(suggestion.sourceTarget, target, unitSystem: unitSystem)
+                            Text(change.direction == .same
+                                ? ilProgressionTargetText(target, unitSystem: unitSystem)
+                                : String(localized: "\(change.from) → \(change.to)"))
+                                .font(.geist(.subheadline).monospacedDigit())
+                        }
+                        Text(IOSProgressionReasonText.text(for: suggestion, unitSystem: unitSystem))
+                            .font(.geist(.caption))
+                            .thrymSecondaryText()
+                        Text(suggestion.decidedAt.map { String(localized: "Entschieden: \(IOSProgressionFormatting.date($0))") }
+                            ?? String(localized: "Bewertung: \(IOSProgressionFormatting.date(suggestion.createdAt))"))
+                            .font(.geist(.caption))
+                            .thrymSecondaryText()
+                    }
+                    .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
+                }
             }
         }
     }
@@ -389,41 +567,6 @@ private struct IOSProgressionStatusBadge: View {
     }
 }
 
-private struct IOSProgressionTargetBlock: View {
-    @Environment(\.thrymTheme) private var theme
-    @Environment(\.colorScheme) private var colorScheme
-
-    let title: String
-    let target: ILProgressionTarget
-    let unitSystem: String
-    let tone: IOSProgressionTargetTone
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.geist(.subheadline, weight: .semibold))
-            Text("\(target.sets) Sätze × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
-                .font(.geist(.body).monospacedDigit())
-                .foregroundStyle(tone.color(for: theme.palette(for: colorScheme)))
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title): \(ilSetCountText(target.sets)), \(ilRepCountText(target.reps)), \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
-    }
-}
-
-private enum IOSProgressionTargetTone {
-    case primary
-    case secondary
-    case success
-
-    func color(for palette: ThrymTheme.Palette) -> Color {
-        switch self {
-        case .primary: return palette.accentText
-        case .secondary: return palette.textPrimary
-        case .success: return palette.success
-        }
-    }
-}
-
 private struct IOSProgressionEvidenceBlock: View {
     let sets: [ILWorkoutSet]
     let idsWerePresent: Bool
@@ -431,11 +574,9 @@ private struct IOSProgressionEvidenceBlock: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Tatsächliche Evidenz").font(.geist(.subheadline, weight: .semibold))
+            Text("Gewertete Sätze").font(.geist(.footnote, weight: .semibold))
             if sets.isEmpty {
                 Text(idsWerePresent ? String(localized: "Die gespeicherte Evidenz ist nicht verfügbar.") : String(localized: "Keine verwertbaren Arbeitssätze gespeichert."))
-                    .font(.geist(.caption))
-                    .thrymSecondaryText()
             } else {
                 ForEach(sets) { set in
                     HStack(spacing: 6) {
@@ -446,8 +587,6 @@ private struct IOSProgressionEvidenceBlock: View {
                             Text("· RPE \(IOSProgressionFormatting.number(rpe))")
                         }
                     }
-                    .font(.geist(.caption))
-                    .thrymSecondaryText()
                 }
             }
         }

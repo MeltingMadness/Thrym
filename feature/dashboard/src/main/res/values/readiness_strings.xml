@@ -95,15 +95,10 @@
 
     <string name="dashboard_muscles_title">Muscle groups at a glance</string>
     <string name="dashboard_muscles_planned_marker">planned</string>
-    <string name="dashboard_muscles_detail_show">Show muscle details</string>
-    <string name="dashboard_muscles_detail_hide">Hide muscle details</string>
-    <string name="dashboard_muscles_planned">Planned today: %1$s</string>
-    <string name="dashboard_muscles_no_plan">No plan scheduled for today.</string>
     <string name="dashboard_muscles_last_trained">Last trained: %1$s</string>
     <string name="dashboard_muscles_trained_today">today</string>
     <string name="dashboard_muscles_never">No training logged</string>
     <string name="dashboard_muscles_soreness">Soreness %1$d/5</string>
-    <string name="dashboard_muscles_no_recovery_note">No recovery percentage. MEV/MAV thresholds are planning targets, not measurements.</string>
     <plurals name="dashboard_trend_evidence_exercises">
         <item quantity="one">%1$d exercise analyzed</item>
         <item quantity="other">%1$d exercises analyzed</item>

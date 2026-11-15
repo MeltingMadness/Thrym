@@ -159,6 +159,9 @@ internal fun GlassCommandCenterCard(
     planExercises: Map<Long, Exercise>,
     onStartWorkout: () -> Unit,
     onChoosePlan: () -> Unit,
+    onFreeWorkout: () -> Unit,
+    onSkipPlan: (Long) -> Unit,
+    skippingMetaPlanId: Long?,
     onContinueWorkout: () -> Unit
 ) {
     val accent = MaterialTheme.colorScheme.primary
@@ -192,8 +195,10 @@ internal fun GlassCommandCenterCard(
                 style = AthleticLabel,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
+            SkipPlanMenu(recommended?.metaPlan?.takeIf { !hasActiveSession && it.canSkip }, skippingMetaPlanId, onSkipPlan)
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -210,8 +215,6 @@ internal fun GlassCommandCenterCard(
                 fontWeight = FontWeight.Bold,
                 letterSpacing = (-1.5).sp,
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
             )
             val subtitle = when {
                 hasActiveSession -> stringResource(R.string.dashboard_command_subtitle_active)
@@ -287,14 +290,8 @@ internal fun GlassCommandCenterCard(
             onClick = if (hasActiveSession) onContinueWorkout else onStartWorkout
         )
 
-        if (!hasActiveSession && recommended != null) {
-            TextButton(onClick = onChoosePlan, modifier = Modifier.align(Alignment.CenterHorizontally), colors = ThrymInteractiveColors.textButton()) {
-                Text(
-                    text = stringResource(R.string.dashboard_hero_choose_other),
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        if (!hasActiveSession) {
+            CommandSecondaryActions(recommended != null, onChoosePlan, onFreeWorkout)
         }
     }
 }
@@ -357,21 +354,16 @@ internal fun GlassWeekStrip(
     if (days.isEmpty()) return
     val strings = rememberUiStrings()
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val done = if (dark) Color.White else Color(0xFF0B0D12)
-    val onDone = if (dark) Color(0xFF0B0D12) else Color.White
-    val open = if (dark) Color.White.copy(alpha = 0.08f) else Color(0xFF0B0D12).copy(alpha = 0.06f)
+    val done = MaterialTheme.colorScheme.onSurface
+    val onDone = MaterialTheme.colorScheme.surface
+    val open = MaterialTheme.colorScheme.onSurface.copy(alpha = if (dark) 0.08f else 0.06f)
     val accent = MaterialTheme.colorScheme.primary
     val trainedLabel = stringResource(DashboardR.string.dashboard_glass_day_trained)
     val todayLabel = stringResource(DashboardR.string.dashboard_glass_day_today)
     val openLabel = stringResource(DashboardR.string.dashboard_glass_day_open)
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .liquidGlass(GlassLevel.STANDARD, RoundedCornerShape(28.dp))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    DashboardPanel(modifier = Modifier.fillMaxWidth()) {
+      Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         val weekDescription = weeklyGoal?.let { strings.weekProgressDescription(it) }
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -443,6 +435,7 @@ internal fun GlassWeekStrip(
         weeklyGoal?.let(strings::weekFooterText)?.let { footer ->
             WeekGoalFooter(footer)
         }
+    }
     }
 }
 

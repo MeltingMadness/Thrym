@@ -102,4 +102,10 @@ class PlanSlotWeightPrefillTest {
     fun `last workout without a work set gives no weight`() {
         assertNull(previousWorkoutWorkSetWeightKg(listOf(previousSet(1, 5.0, SetType.DROP_SET, 0))))
     }
+    @Test
+    fun `previous reps use newest normal or failure set and break ties by id`() {
+        val sets = listOf(previousSet(2, 12.5, SetType.FAILURE, 5).copy(reps = 9), previousSet(1, 10.0, SetType.NORMAL, 5).copy(reps = 8), previousSet(3, 5.0, SetType.DROP_SET, 9).copy(reps = 20))
+        assertEquals(9, previousWorkoutWorkSetReps(sets))
+        assertNull(previousWorkoutWorkSetReps(sets.takeLast(1)))
+    }
 }

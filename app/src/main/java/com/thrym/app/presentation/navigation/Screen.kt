@@ -11,6 +11,7 @@ import com.thrym.core.designsystem.R
 
 sealed class Screen(val route: String) {
     data object Dashboard : Screen("dashboard")
+    data object Statistics : Screen("statistics")
     data object Onboarding : Screen("onboarding")
     data object Settings : Screen("settings")
     data object ActiveWorkout : Screen("active_workout/{sessionId}?planId={planId}&metaPlanId={metaPlanId}") {
