@@ -15,6 +15,7 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isSelectable
@@ -720,7 +721,7 @@ class NavigationSmokeTest {
             composeRule.onAllNodes(hasText(finishConfirm) and isEnabled())
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText(finishConfirm).performClick()
+        composeRule.onNode(hasText(finishConfirm) and hasClickAction()).performClick()
         // Jedes beendete Training beginnt mit der Feier; die Zusammenfassung kommt danach.
         val skipCelebration = text(WorkoutR.string.workout_celebration_skip)
         waitOrDump(30_000L) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="workout_finish_all_done">All done</string>
-    <string name="workout_finish_free_title">Finish workout</string>
+    <string name="workout_finish_free_title">Wrap up workout</string>
     <string name="workout_previous_values_editable">Values from your last workout · editable</string>
     <string name="workout_picker_recent">Recently trained</string>
     <string name="workout_picker_all">All exercises</string>
